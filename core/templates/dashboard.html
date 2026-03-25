@@ -1,0 +1,260 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold text-white">Tarefas do Dia</h2>
+    <p class="text-gray-500 text-sm">{{ now.strftime('%d de %B, %Y') if now else '' }}</p>
+</div>
+
+<!-- Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <!-- Stat Card 1 -->
+    <!-- Stat Card 1 -->
+    <div class="card p-5 flex items-center justify-between border border-gray-800">
+        <div>
+            <p class="text-sm text-gray-500 font-medium">Total de Tarefas</p>
+            <h4 class="text-2xl font-bold text-white mt-1 count-up" data-target="{{ stats.total }}">0</h4>
+            <p class="text-blue-500 text-xs mt-1 flex items-center gap-1">
+                <i class="fas fa-clipboard-list"></i>
+                <span class="text-gray-600 ml-1">Tarefas cadastradas</span>
+            </p>
+        </div>
+        <div class="w-12 h-12 bg-blue-500/10 rounded-lg flex items-center justify-center text-blue-500">
+            <i class="fas fa-clipboard-list text-xl"></i>
+        </div>
+    </div>
+
+    <!-- Stat Card 2 -->
+    <!-- Stat Card 2 -->
+    <div class="card p-5 flex items-center justify-between border border-gray-800">
+        <div>
+            <p class="text-sm text-gray-500 font-medium">Concluídas</p>
+            <h4 class="text-2xl font-bold text-white mt-1 count-up" data-target="{{ stats.done }}">0</h4>
+            <p class="text-emerald-500 text-xs mt-1 flex items-center gap-1">
+                <i class="fas fa-check-circle"></i>
+                <span class="text-gray-600 ml-1">Tarefas finalizadas</span>
+            </p>
+        </div>
+        <div class="w-12 h-12 bg-emerald-500/10 rounded-lg flex items-center justify-center text-emerald-500">
+            <i class="fas fa-check-circle text-xl"></i>
+        </div>
+    </div>
+
+    <!-- Stat Card 3 -->
+    <!-- Stat Card 3 -->
+    <div class="card p-5 flex items-center justify-between border border-gray-800">
+        <div>
+            <p class="text-sm text-gray-500 font-medium">Em Andamento</p>
+            <h4 class="text-2xl font-bold text-white mt-1 count-up" data-target="{{ stats.doing }}">0</h4>
+            <p class="text-purple-500 text-xs mt-1 flex items-center gap-1">
+                <i class="fas fa-spinner"></i>
+                <span class="text-gray-600 ml-1">Sendo executadas</span>
+            </p>
+        </div>
+        <div class="w-12 h-12 bg-purple-500/10 rounded-lg flex items-center justify-center text-purple-500">
+            <i class="fas fa-spinner text-xl"></i>
+        </div>
+    </div>
+
+    <!-- Stat Card 4 -->
+    <!-- Stat Card 4 -->
+    <div class="card p-5 flex items-center justify-between border border-gray-800">
+        <div>
+            <p class="text-sm text-gray-500 font-medium">A Fazer</p>
+            <h4 class="text-2xl font-bold text-white mt-1 count-up" data-target="{{ stats.todo }}">0</h4>
+            <p class="text-amber-500 text-xs mt-1 flex items-center gap-1">
+                <i class="fas fa-hourglass-start"></i>
+                <span class="text-gray-600 ml-1">Aguardando início</span>
+            </p>
+        </div>
+        <div class="w-12 h-12 bg-amber-500/10 rounded-lg flex items-center justify-center text-amber-500">
+            <i class="fas fa-hourglass-half text-xl"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Chart 1 -->
+    <div class="card p-6 lg:col-span-2 border border-gray-800">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-bold text-white">Tarefas Criadas (7 Dias)</h3>
+            <button class="text-gray-500 hover:text-white"><i class="fas fa-ellipsis-h"></i></button>
+        </div>
+        <canvas id="salesChart" height="100"></canvas>
+    </div>
+
+    <!-- Chart 2 -->
+    <div class="card p-6 border border-gray-800">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-bold text-white">Distribuição por Status</h3>
+            <button class="text-gray-500 hover:text-white"><i class="fas fa-ellipsis-h"></i></button>
+        </div>
+        <canvas id="orderChart" height="200"></canvas>
+        <div class="mt-6 flex justify-center gap-4 text-xs font-medium">
+            <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-green-500"></span>
+                Concluídos</div>
+            <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-orange-400"></span>
+                Fazendo</div>
+            <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-red-400"></span>
+                A Fazer</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Variáveis globais para controlar as instâncias
+    let salesChartInstance = null;
+    let orderChartInstance = null;
+
+    // Animation for Numbers (Count Up)
+    function animateValue(obj, start, end, duration) {
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            obj.innerHTML = Math.floor(progress * (end - start) + start);
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            } else {
+                obj.innerHTML = end;
+            }
+        };
+        window.requestAnimationFrame(step);
+    }
+
+    // Configuração do Gráfico de Vendas (Linha)
+    function initSalesChart() {
+        const ctxSales = document.getElementById('salesChart').getContext('2d');
+        const gradient = ctxSales.createLinearGradient(0, 0, 0, 400);
+        gradient.addColorStop(0, 'rgba(59, 130, 246, 0.2)');
+        gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
+
+        salesChartInstance = new Chart(ctxSales, {
+            type: 'line',
+            data: {
+                labels: {{ chart_data.dates | tojson }},
+    datasets: [{
+        label: 'Criadas',
+        data: {{ chart_data.counts | tojson }},
+        borderColor: '#3b82f6',
+        borderWidth: 2,
+        tension: 0.4,
+        fill: true,
+        backgroundColor: gradient,
+        pointBackgroundColor: '#1d4ed8',
+        pointBorderColor: '#fff',
+        pointHoverBackgroundColor: '#fff',
+        pointHoverBorderColor: '#1d4ed8'
+                }]
+            },
+    options: {
+        responsive: true,
+            // maintainAspectRatio: true, // Default is true, safer for layout
+            resizeDelay: 200,
+                animation: {
+            x: {
+                duration: 1000,
+                    from: 0
+            },
+            y: {
+                duration: 1000,
+                    delay: 500
+            }
+        },
+        plugins: { legend: { display: false } },
+        interaction: { intersect: false, mode: 'index' },
+        scales: {
+            y: {
+                grid: { color: '#1f2937' },
+                ticks: { color: '#9ca3af', stepSize: 1 },
+                beginAtZero: true
+            },
+            x: {
+                grid: { display: false },
+                ticks: { color: '#9ca3af' }
+            }
+        }
+    }
+        });
+    }
+
+    // Configuração do Gráfico de Barras (Rosca)
+    function initOrderChart() {
+        const ctxOrder = document.getElementById('orderChart').getContext('2d');
+        orderChartInstance = new Chart(ctxOrder, {
+            type: 'doughnut',
+            data: {
+                labels: ['Concluídos', 'Fazendo', 'A Fazer'],
+                datasets: [{
+                    data: [{{ stats.done }}, {{ stats.doing }}, {{ stats.todo }}],
+    backgroundColor: ['#22c55e', '#fb923c', '#f87171'],
+        borderWidth: 0,
+            hoverOffset: 4
+                }]
+            },
+    options: {
+        responsive: true,
+            // maintainAspectRatio: true, // Default is true, safer for layout
+            cutout: '80%',
+                animation: {
+            animateScale: false,
+                animateRotate: true,
+                    duration: 1500,
+                        easing: 'easeOutQuart'
+        },
+        plugins: { legend: { display: false } },
+        layout: {
+            padding: 10
+        }
+    }
+        });
+    }
+
+    // Intersection Observer
+    const observerOptions = {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.1
+    };
+
+    const chartObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                // Charts
+                if (entry.target.id === 'salesChart' && !salesChartInstance) {
+                    initSalesChart();
+                } else if (entry.target.id === 'orderChart' && !orderChartInstance) {
+                    initOrderChart();
+                }
+
+                // Counters
+                if (entry.target.classList.contains('count-up')) {
+                    const target = parseInt(entry.target.getAttribute('data-target'));
+                    // Check if already animated to prevent multiple triggers
+                    if (!entry.target.dataset.animated) {
+                        animateValue(entry.target, 0, target, 2000);
+                        entry.target.dataset.animated = "true";
+                        chartObserver.unobserve(entry.target);
+                    }
+                }
+            }
+        });
+    }, observerOptions);
+
+    // Observar
+    document.addEventListener('DOMContentLoaded', () => {
+        const salesCanvas = document.getElementById('salesChart');
+        const orderCanvas = document.getElementById('orderChart');
+        const counters = document.querySelectorAll('.count-up');
+
+        if (salesCanvas) chartObserver.observe(salesCanvas);
+        if (orderCanvas) chartObserver.observe(orderCanvas);
+        counters.forEach(counter => chartObserver.observe(counter));
+    });
+</script>
+{% endblock %}

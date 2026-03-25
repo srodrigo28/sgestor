@@ -1,0 +1,7 @@
+ALTER TABLE users
+ADD COLUMN address_cep VARCHAR(20) DEFAULT '',
+ADD COLUMN address_street VARCHAR(255) DEFAULT '',
+ADD COLUMN address_number VARCHAR(50) DEFAULT '',
+ADD COLUMN address_district VARCHAR(100) DEFAULT '',
+ADD COLUMN address_city VARCHAR(100) DEFAULT '',
+ADD COLUMN address_state VARCHAR(2) DEFAULT '';

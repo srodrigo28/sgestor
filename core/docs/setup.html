@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Entendendo o setup.py</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        base: "var(--color-base)",
+                        accent: "var(--color-accent)",
+                        text: "var(--color-text)",
+                        muted: "var(--color-muted)",
+                        card: "var(--color-card)",
+                        border: "var(--color-border)",
+                    },
+                },
+            },
+        };
+    </script>
+    <style>
+        :root {
+            --color-base: #0f172a;
+            --color-accent: #7c3aed;
+            --color-text: #f8fafc;
+            --color-muted: #94a3b8;
+            --color-card: #1e293b;
+            --color-border: #334155;
+        }
+
+        .bg-pattern {
+            background-image:
+                radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.05) 1px, transparent 0),
+                radial-gradient(circle at 12px 12px, rgba(124, 58, 237, 0.1) 1px, transparent 0);
+            background-size: 24px 24px, 24px 24px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--color-base);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--color-border);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--color-accent);
+        }
+
+        pre {
+            background-color: #0d1117;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            border: 1px solid var(--color-border);
+        }
+
+        code {
+            font-family: 'Fira Code', 'Courier New', monospace;
+            font-size: 0.875rem;
+            color: #e2e8f0;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen bg-base text-text bg-pattern p-6 md:p-12">
+
+    <div class="max-w-4xl mx-auto space-y-8">
+
+        <!-- Header -->
+        <header
+            class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-border pb-6">
+            <div>
+                <a href="index.html" class="text-muted hover:text-white text-sm mb-2 inline-block transition">&larr;
+                    Voltar para o Curso</a>
+                <h1
+                    class="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-violet-400 to-fuchsia-400">
+                    Anatomia do setup.py
+                </h1>
+                <p class="text-muted mt-2">Entenda como funciona o script de automação que criamos.</p>
+            </div>
+        </header>
+
+        <!-- Step 1: Venv Logic -->
+        <section class="space-y-4">
+            <h2 class="text-2xl font-semibold text-white flex items-center gap-3">
+                <span class="grid place-items-center w-8 h-8 rounded-full bg-accent text-sm">1</span>
+                O Segredo da Venv
+            </h2>
+            <p class="text-muted leading-relaxed">
+                O principal desafio de scripts de automação em Python é rodar as dependências <em>antes</em> de tê-las
+                instaladas.
+                Usamos um truque inteligente: <strong>reiniciar o script</strong>.
+            </p>
+
+            <div class="bg-card rounded-xl border border-border p-6 space-y-4">
+                <h3 class="font-medium text-white">Lógica do bootstrapper:</h3>
+                <pre><code class="language-python">def main():
+    # 1. Checa se já estamos na Venv
+    if not is_venv():
+        # Se não existir a pasta venv, cria
+        if not VENV_DIR.exists():
+            venv.create(VENV_DIR, with_pip=True)
+        
+        # O TRUQUE: Chama o script novamente, mas usando o Python da Venv
+        venv_python = get_venv_python()
+        subprocess.call([str(venv_python), __file__] + sys.argv[1:])
+        return # Encerra o script "pai"</code></pre>
+                <p class="text-sm text-muted">
+                    O script detecta que não está no ambiente virtual, cria ele se necessário, e então "chama a si
+                    mesmo" usando o executável do Python de dentro da Venv.
+                </p>
+            </div>
+        </section>
+
+        <!-- Step 2: Dependencies -->
+        <section class="space-y-4">
+            <h2 class="text-2xl font-semibold text-white flex items-center gap-3">
+                <span class="grid place-items-center w-8 h-8 rounded-full bg-accent text-sm">2</span>
+                Instalação de Dependências
+            </h2>
+            <p class="text-muted leading-relaxed">
+                Agora rodando dentro da Venv, precisamos das bibliotecas. O script tenta importar; se falhar, instala.
+            </p>
+
+            <div class="bg-card rounded-xl border border-border p-6 space-y-4">
+                <pre><code class="language-python">def install_dependencies():
+    try:
+        # Tenta usar as libs
+        import flask
+        import mysql.connector
+    except ImportError:
+        # Se falhar, usa o pip para instalar
+        subprocess.check_call([sys.executable, "-m", "pip", "install"] + REQUIREMENTS)</code></pre>
+            </div>
+        </section>
+
+        <!-- Step 3: Migration Pattern -->
+        <section class="space-y-4">
+            <h2 class="text-2xl font-semibold text-white flex items-center gap-3">
+                <span class="grid place-items-center w-8 h-8 rounded-full bg-accent text-sm">3</span>
+                Arquitetura: Setup vs Migration
+            </h2>
+            <p class="text-muted leading-relaxed">
+                Separamos as responsabilidades para manter o projeto organizado e seguro:
+            </p>
+
+            <div class="grid md:grid-cols-2 gap-4">
+                <div class="bg-card rounded-xl border border-border p-4 space-y-2">
+                    <h3 class="font-medium text-white flex items-center gap-2">
+                        <span class="text-accent">⚙️</span> setup.py
+                    </h3>
+                    <p class="text-xs text-muted">Cuida da infraestrutura.</p>
+                    <ul class="list-disc pl-4 text-xs text-muted space-y-1">
+                        <li>Cria a <code class="text-accent">venv</code></li>
+                        <li>Instala dependências (`pip`)</li>
+                        <li>Chama o `migration.py`</li>
+                        <li>Inicia o `main.py`</li>
+                    </ul>
+                </div>
+
+                <div class="bg-card rounded-xl border border-border p-4 space-y-2">
+                    <h3 class="font-medium text-white flex items-center gap-2">
+                        <span class="text-accent">🗄️</span> migration.py
+                    </h3>
+                    <p class="text-xs text-muted">Cuida dos dados.</p>
+                    <ul class="list-disc pl-4 text-xs text-muted space-y-1">
+                        <li>Conecta no MySQL</li>
+                        <li>Cria o Banco se não existir</li>
+                        <li>Lê scripts da pasta `sql/`</li>
+                        <li>Executa mudanças de schema</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="pt-8 border-t border-border text-center">
+            <a href="index.html"
+                class="inline-flex items-center justify-center rounded-lg bg-accent px-6 py-3 text-sm font-medium text-white transition hover:brightness-110">
+                Voltar para o Tutorial
+            </a>
+        </footer>
+
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <title>Treinamento Docker para Devs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-900 text-white">
+
+  <!-- HEADER -->
+  <header class="bg-black p-6 shadow-lg">
+    <h1 class="text-3xl font-bold text-center">
+      🐳 Treinamento: Docker para PHP, React e Python
+    </h1>
+    <p class="text-center text-gray-400">
+      Portas • Imagens • Versões • Como rodar
+    </p>
+  </header>
+
+  <!-- CONTAINER -->
+  <main class="max-w-5xl mx-auto p-6 space-y-10">
+
+    <!-- O QUE É -->
+    <section class="bg-gray-800 p-6 rounded-xl">
+      <h2 class="text-2xl font-bold mb-4">📦 O que é Docker?</h2>
+      <p>
+        Docker é uma plataforma que permite rodar aplicações em containers,
+        isolando dependências e versões.
+      </p>
+      <p class="mt-2 text-green-400">
+        ✔ Resolve o problema: "na minha máquina funciona"
+      </p>
+    </section>
+
+    <!-- POR QUE HYPADO -->
+    <section class="bg-gray-800 p-6 rounded-xl">
+      <h2 class="text-2xl font-bold mb-4">🔥 Por que é tão hypado?</h2>
+      <ul class="list-disc ml-6 space-y-2">
+        <li>Padroniza ambientes</li>
+        <li>Facilita deploy</li>
+        <li>Permite rodar qualquer projeto</li>
+        <li>Usado por grandes empresas</li>
+      </ul>
+    </section>
+
+    <!-- PORTAS -->
+    <section class="bg-gray-800 p-6 rounded-xl">
+      <h2 class="text-2xl font-bold mb-4">🔌 Portas</h2>
+      <p>As portas conectam seu computador ao container.</p>
+
+      <div class="mt-4 grid grid-cols-3 gap-4 text-center">
+        <div class="bg-gray-700 p-4 rounded">React → 3000</div>
+        <div class="bg-gray-700 p-4 rounded">PHP → 8000</div>
+        <div class="bg-gray-700 p-4 rounded">Python → 5000</div>
+      </div>
+    </section>
+
+    <!-- IMAGENS -->
+    <section class="bg-gray-800 p-6 rounded-xl">
+      <h2 class="text-2xl font-bold mb-4">🖼️ Tipos de Imagens</h2>
+      <ul class="list-disc ml-6 space-y-2">
+        <li>node:20 → React</li>
+        <li>php:8.2-apache → PHP</li>
+        <li>python:3.11 → Python</li>
+      </ul>
+    </section>
+
+    <!-- COMO RODAR -->
+    <section class="bg-gray-800 p-6 rounded-xl">
+      <h2 class="text-2xl font-bold mb-4">🚀 Como Rodar</h2>
+
+      <button onclick="mostrarComando()" 
+        class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded">
+        Mostrar comando docker run
+      </button>
+
+      <pre id="comando" class="mt-4 bg-black p-4 rounded hidden"></pre>
+    </section>
+
+  </main>
+
+  <!-- SCRIPT -->
+  <script>
+    function mostrarComando() {
+      const comando = `
+docker run -p 3000:3000 node:20
+docker run -p 8000:80 php:8.2-apache
+docker run -p 5000:5000 python:3.11
+      `;
+      const pre = document.getElementById("comando");
+      pre.textContent = comando;
+      pre.classList.remove("hidden");
+    }
+  </script>
+
+</body>
+</html>

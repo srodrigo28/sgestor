@@ -1,0 +1,25 @@
+<!-- ... código existente ... -->
+
+<div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3">
+    <div class="breadcrumb-title pe-3">Administração</div>
+    <div class="ps-3">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0 p-0">
+                <li class="breadcrumb-item"><a href="javascript:;"><i class="bx bx-home-alt"></i></a></li>
+                <li class="breadcrumb-item active" aria-current="page">Usuários</li>
+            </ol>
+        </nav>
+    </div>
+    
+    <!-- ADICIONE ISSO AQUI: Botão de Backup à direita -->
+    <div class="ms-auto">
+        <div class="btn-group">
+            <a href="{{ url_for('db_manager.index') }}" class="btn btn-warning">
+                <i class="fas fa-database"></i> Backup / Restaurar
+            </a>
+            <!-- Se tiver botão de Novo Usuário, mantém aqui -->
+        </div>
+    </div>
+</div>
+
+<!-- ... tabela de usuários code ... -->

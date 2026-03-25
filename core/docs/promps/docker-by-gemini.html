@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Treinamento Docker: O Guia Full-Stack</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Transição suave para as abas */
+        .tab-content { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen">
+
+    <header class="bg-blue-600 text-white py-8 shadow-md">
+        <div class="max-w-5xl mx-auto px-6">
+            <h1 class="text-3xl font-bold">Treinamento Docker Full-Stack</h1>
+            <p class="mt-2 text-blue-100 text-lg">Dominando ambientes isolados para PHP, React e Python.</p>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-6 py-10 flex flex-col md:flex-row gap-8">
+        
+        <aside class="w-full md:w-1/4">
+            <nav class="flex flex-col gap-2 sticky top-6">
+                <button onclick="openTab('hype')" class="tab-btn active text-left px-4 py-3 rounded-lg font-medium bg-blue-100 text-blue-700 transition-colors">O que resolve & O Hype</button>
+                <button onclick="openTab('portas')" class="tab-btn text-left px-4 py-3 rounded-lg font-medium text-slate-600 hover:bg-slate-200 transition-colors">Portas & Versões</button>
+                <button onclick="openTab('imagens')" class="tab-btn text-left px-4 py-3 rounded-lg font-medium text-slate-600 hover:bg-slate-200 transition-colors">Tipos de Imagens</button>
+                <button onclick="openTab('pratica')" class="tab-btn text-left px-4 py-3 rounded-lg font-medium text-slate-600 hover:bg-slate-200 transition-colors">Como Rodar (Na Prática)</button>
+            </nav>
+        </aside>
+
+        <section class="w-full md:w-3/4 bg-white rounded-xl shadow-sm border border-slate-200 p-8 min-h-[500px]">
+            
+            <div id="hype" class="tab-content active">
+                <h2 class="text-2xl font-bold mb-4 text-slate-900">Por que o Docker é tão hypado?</h2>
+                <div class="space-y-4 text-slate-600 leading-relaxed">
+                    <p><strong>O que ele resolve:</strong> A maior dor da programação é o conflito de ambientes. Você tem o PHP 8 instalado na sua máquina, mas pega um projeto antigo que exige o PHP 7.4. Sem o Docker, você teria que desinstalar ou usar gerenciadores complexos. O Docker cria "caixas isoladas" (containers) onde cada projeto tem seu próprio ecossistema, sem sujar o seu sistema operacional principal.</p>
+                    <p><strong>O Hype:</strong> O hype existe porque ele padroniza o ciclo de vida do software. O mesmo código, rodando na mesma versão da linguagem, vai se comportar de forma idêntica no notebook do desenvolvedor, no ambiente de testes e no servidor de produção (como uma VPS). Ele é a base da infraestrutura moderna e de arquiteturas de Micro-SaaS.</p>
+                </div>
+            </div>
+
+            <div id="portas" class="tab-content">
+                <h2 class="text-2xl font-bold mb-4 text-slate-900">Entendendo Portas e Versões</h2>
+                
+                <h3 class="text-lg font-semibold mt-6 mb-2">Mapeamento de Portas (Host : Container)</h3>
+                <p class="text-slate-600 mb-4">Um container roda isolado. Para acessar um site dentro dele, precisamos fazer um "furo" nessa caixa. Usamos a sintaxe <code>porta_do_seu_pc : porta_do_container</code>.</p>
+                <div class="bg-slate-800 text-green-400 p-4 rounded-md font-mono text-sm mb-6">
+                    ports:<br>
+                    &nbsp;&nbsp;- "8080:80" # Acessa localhost:8080 para ver o Nginx (porta 80) do container<br>
+                    &nbsp;&nbsp;- "3000:3000" # Típico para rodar o frontend React/Next.js
+                </div>
+
+                <h3 class="text-lg font-semibold mt-6 mb-2">A importância das Versões (Tags)</h3>
+                <p class="text-slate-600 mb-4">Nunca use a tag <code>latest</code> (última versão) em produção. O seu projeto pode quebrar se a linguagem atualizar de surpresa. Sempre "trave" a versão exata que você está usando.</p>
+                <ul class="list-disc pl-5 text-slate-600 space-y-2">
+                    <li><strong>Ruim:</strong> <code>image: python:latest</code></li>
+                    <li><strong>Bom:</strong> <code>image: python:3.11.4</code></li>
+                </ul>
+            </div>
+
+            <div id="imagens" class="tab-content">
+                <h2 class="text-2xl font-bold mb-4 text-slate-900">Os Tipos de Imagens no Docker Hub</h2>
+                <p class="text-slate-600 mb-6">Quando escrevemos um <code>Dockerfile</code>, sempre começamos com uma imagem base usando a instrução <code>FROM</code>. Existem diferentes categorias:</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="border border-slate-200 p-4 rounded-lg">
+                        <h4 class="font-bold text-blue-600">Imagens Oficiais</h4>
+                        <p class="text-sm text-slate-600 mt-2">Mantidas pelos próprios criadores das linguagens (ex: <code>php:8.2-fpm</code>). São as mais seguras para se usar.</p>
+                    </div>
+                    <div class="border border-slate-200 p-4 rounded-lg">
+                        <h4 class="font-bold text-blue-600">Alpine Linux</h4>
+                        <p class="text-sm text-slate-600 mt-2">Versões minúsculas (ex: <code>node:18-alpine</code>). São ótimas para produção pois são muito leves (geralmente sob 50MB) e seguras, mas podem faltar algumas bibliotecas C padrão.</p>
+                    </div>
+                    <div class="border border-slate-200 p-4 rounded-lg">
+                        <h4 class="font-bold text-blue-600">Ubuntu / Debian Based</h4>
+                        <p class="text-sm text-slate-600 mt-2">Imagens mais parrudas. Pesam mais, mas são completas. Ideais quando seu projeto precisa compilar bibliotecas complexas (comum em Python).</p>
+                    </div>
+                    <div class="border border-slate-200 p-4 rounded-lg">
+                        <h4 class="font-bold text-blue-600">Scratch</h4>
+                        <p class="text-sm text-slate-600 mt-2">Uma imagem totalmente vazia. Usada geralmente para rodar binários compilados (como Go ou Rust) para obter o menor tamanho possível.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="pratica" class="tab-content">
+                <h2 class="text-2xl font-bold mb-4 text-slate-900">Como Rodar Multi-Stack</h2>
+                <p class="text-slate-600 mb-4">Veja como subiríamos um ecossistema com React, Python (API) e PHP (Admin) rodando juntos através do comando <code>docker-compose up -d</code>:</p>
+                
+                <div class="bg-slate-800 text-slate-200 p-4 rounded-md font-mono text-xs overflow-x-auto">
+<pre><code>version: '3.8'
+
+services:
+  # 1. Frontend em React
+  frontend:
+    image: node:18-alpine
+    working_dir: /app
+    volumes:
+      - ./react-app:/app
+    command: npm start
+    ports:
+      - "3000:3000"
+
+  # 2. Backend em Python (Flask/FastAPI)
+  api_python:
+    image: python:3.11
+    working_dir: /app
+    volumes:
+      - ./python-api:/app
+    command: python app.py
+    ports:
+      - "5000:5000"
+
+  # 3. Painel Administrativo em PHP nativo
+  admin_php:
+    image: php:8.2-apache
+    volumes:
+      - ./php-admin:/var/www/html
+    ports:
+      - "8080:80"
+</code></pre>
+                </div>
+                <p class="text-slate-600 mt-4 text-sm">Com este único arquivo, o Docker baixa o Node, o Python e o PHP, mapeia as pastas do seu computador para dentro dos containers e expõe as portas corretas. Tudo em segundos.</p>
+            </div>
+
+        </section>
+    </main>
+
+    <script>
+        function openTab(tabId) {
+            // Esconde todos os conteúdos
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove a classe ativa de todos os botões e reseta a cor
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-blue-100', 'text-blue-700');
+                btn.classList.add('text-slate-600');
+            });
+
+            // Mostra o conteúdo clicado
+            document.getElementById(tabId).classList.add('active');
+            
+            // Destaca o botão clicado
+            const activeBtn = event.currentTarget;
+            activeBtn.classList.remove('text-slate-600');
+            activeBtn.classList.add('active', 'bg-blue-100', 'text-blue-700');
+        }
+    </script>
+</body>
+</html>

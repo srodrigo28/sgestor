@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orçamento #{{ budget.id }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print {
+            @page {
+                size: A4;
+                margin: 0; /* Important for full page background */
+            }
+
+            body {
+                margin: 0;
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+                background: white;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+            .print-container {
+                box-shadow: none !important;
+                margin: 0 !important;
+                padding: 1.5cm !important; /* Internal padding for A4 */
+                width: 100% !important;
+                min-height: 100vh !important;
+            }
+        }
+        
+        /* Screen Styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #e5e7eb; /* gray-200 */
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="flex flex-col items-center py-8 print:py-0">
+
+    <!-- Print Controls -->
+    <div class="no-print fixed top-4 right-4 flex gap-2 z-50">
+        <button onclick="window.print()"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-lg font-medium transition flex items-center gap-2">
+            <i class="fas fa-print"></i> Imprimir
+        </button>
+        <button onclick="window.close()"
+            class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg shadow-lg font-medium transition">
+            Fechar
+        </button>
+    </div>
+
+    <!-- Paper Sheet -->
+    <div class="print-container w-[21cm] min-h-[29.7cm] bg-white shadow-2xl p-[1.5cm] relative mx-auto">
+
+        <!-- Header -->
+        <div class="flex justify-between items-start border-b-2 border-gray-800 pb-6 mb-8">
+            <div class="flex items-center gap-4">
+                <!-- Logo -->
+                {% if session.get('logo') %}
+                <div class="w-20 h-20 relative">
+                    <img src="{{ session.get('logo') }}" alt="Logo" class="w-full h-full object-contain">
+                </div>
+                {% endif %}
+                
+                <div>
+                    <h1 class="text-xl font-bold text-gray-900 uppercase leading-tight">{{ session.get('store_name') or session.get('name', 'Minha Empresa') }}</h1>
+                    
+                    {% if session.get('cnpj') %}
+                    <p class="text-xs text-gray-600 font-bold mt-1">CNPJ: {{ session.get('cnpj') }}</p>
+                    {% endif %}
+                    
+                    {% if session.get('address') %}
+                    <p class="text-xs text-gray-600 max-w-sm mt-0.5">{{ session.get('address') }}</p>
+                    {% endif %}
+                    
+                    {% if session.get('phone') or session.get('email') %}
+                    <div class="flex gap-2 text-xs text-gray-600 mt-1">
+                        {% if session.get('phone') %}
+                        <span><i class="fas fa-phone mr-1"></i>{{ session.get('phone') }}</span>
+                        {% endif %}
+                        {% if session.get('email') %}
+                        <span><i class="fas fa-envelope mr-1"></i>{{ session.get('email') }}</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="text-right">
+                <h2 class="text-2xl font-bold text-gray-900 tracking-wide">ORÇAMENTO</h2>
+                <p class="text-lg text-gray-600 font-mono font-bold">#{{ "%06d"|format(budget.id) }}</p>
+                <div class="mt-2 text-xs text-gray-500">
+                    <p>Emissão: {{ budget.created_at.strftime('%d/%m/%Y') }}</p>
+                    <p>Validade: 15 dias</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Grid -->
+        <div class="grid grid-cols-2 gap-8 mb-8 text-sm">
+            <!-- Client Info -->
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 border-b border-gray-200 pb-1">Cliente</h3>
+                <p class="font-bold text-gray-900 text-base">{{ budget.client_name }}</p>
+                
+                {% if budget.client_cpf %}
+                <p class="text-gray-600 mt-1">CPF/CNPJ: {{ budget.client_cpf }}</p>
+                {% endif %}
+                
+                {% if budget.client_phone %}
+                <p class="text-gray-600">Tel: {{ budget.client_phone }}</p>
+                {% endif %}
+                
+                {# Check if client_address exists in context (safeguard) #}
+                {% if budget.client_address is defined and budget.client_address %}
+                <p class="text-gray-600 mt-1">{{ budget.client_address }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Vehicle Info (Conditional) -->
+            {% if budget.vehicle_plate or budget.vehicle_brand %}
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 border-b border-gray-200 pb-1">Veículo</h3>
+                <p class="font-bold text-gray-900 text-base">
+                    {{ budget.vehicle_brand or '' }} {{ budget.vehicle_model or '' }}
+                </p>
+                
+                <div class="grid grid-cols-2 gap-2 mt-2">
+                    {% if budget.vehicle_plate %}
+                    <div>
+                        <span class="text-xs text-gray-500 block">Placa</span>
+                        <span class="font-mono font-bold bg-white px-1.5 py-0.5 border rounded text-xs">{{ budget.vehicle_plate }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if budget.vehicle_year %}
+                    <div>
+                        <span class="text-xs text-gray-500 block">Ano</span>
+                        <span class="text-gray-700 font-medium">{{ budget.vehicle_year }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if budget.vehicle_km %}
+                    <div>
+                        <span class="text-xs text-gray-500 block">KM</span>
+                        <span class="text-gray-700 font-medium">{{ budget.vehicle_km }}</span>
+                    </div>
+                    {% endif %}
+                     
+                    {% if budget.vehicle_color %}
+                    <div>
+                        <span class="text-xs text-gray-500 block">Cor</span>
+                        <span class="text-gray-700 font-medium">{{ budget.vehicle_color }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <!-- Spacer if no vehicle -->
+            <div></div> 
+            {% endif %}
+        </div>
+
+        <!-- Details / Symptoms -->
+        {% if budget.notes %}
+        <div class="mb-8">
+            <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 px-1">Observações</h3>
+            <div class="p-3 bg-gray-50 border border-gray-200 rounded text-sm text-gray-700 italic">
+                {{ budget.notes }}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Items Table -->
+        <div class="mb-8 overflow-hidden rounded-lg border border-gray-200">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-gray-900 text-white uppercase text-[10px] tracking-wider">
+                        <th class="py-2 px-4 text-left font-medium">Descrição</th>
+                        <th class="py-2 px-4 text-center font-medium w-24">Qtd.</th>
+                        <th class="py-2 px-4 text-right font-medium w-32">Unitário</th>
+                        <th class="py-2 px-4 text-right font-medium w-32">Total</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 bg-white">
+                    {% if items %}
+                        {% for item in items %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="py-3 px-4 text-gray-900 font-medium">{{ item.description }}</td>
+                            <td class="py-3 px-4 text-center text-gray-600">{{ item.quantity }}</td>
+                            <td class="py-3 px-4 text-right text-gray-600">
+                                R$ {{ "%.2f"|format(item.unit_price or 0)|replace('.', ',') }}
+                            </td>
+                            <td class="py-3 px-4 text-right font-bold text-gray-900">
+                                R$ {{ "%.2f"|format(item.total or 0)|replace('.', ',') }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="4" class="py-8 text-center text-gray-400 italic">Nenhum item adicionado.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Totals -->
+        <div class="flex flex-col items-end mb-16">
+            <div class="w-72 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                {% set subtotal = 0 %}
+                {% if items %}
+                    {% set subtotal = items | map(attribute='total') | sum %}
+                {% endif %}
+                
+                <div class="flex justify-between text-sm text-gray-600 mb-2">
+                    <span>Subtotal:</span>
+                    <span>R$ {{ "%.2f"|format(subtotal or 0)|replace('.', ',') }}</span>
+                </div>
+                
+                {% if budget.discount and budget.discount > 0 %}
+                <div class="flex justify-between text-sm text-red-600 mb-2">
+                    <span>Desconto:</span>
+                    <span>- R$ {{ "%.2f"|format(budget.discount)|replace('.', ',') }}</span>
+                </div>
+                {% endif %}
+                
+                <div class="flex justify-between text-xl font-bold text-gray-900 border-t-2 border-gray-300 pt-3 mt-1">
+                    <span>Total:</span>
+                    <span>R$ {{ "%.2f"|format(budget.total_value or 0)|replace('.', ',') }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Signatures -->
+        <div class="grid grid-cols-2 gap-16 mt-auto">
+            <div class="text-center">
+                <div class="border-t border-gray-400 px-8 pt-3">
+                    <p class="font-bold text-sm text-gray-900 uppercase mb-1">{{ session.get('store_name') or session.get('name', 'Oficina') }}</p>
+                    <p class="text-[10px] text-gray-500 uppercase tracking-widest">Assinatura do Responsável</p>
+                </div>
+            </div>
+            <div class="text-center">
+                <div class="border-t border-gray-400 px-8 pt-3">
+                    <p class="font-bold text-sm text-gray-900 uppercase mb-1">{{ budget.client_name }}</p>
+                    <p class="text-[10px] text-gray-500 uppercase tracking-widest">Assinatura do Cliente</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="absolute bottom-4 left-0 w-full text-center">
+            <p class="text-[10px] text-gray-400">
+                Documento gerado em {{ budget.created_at.strftime('%d/%m/%Y às %H:%M') }} • Não possui valor fiscal.
+            </p>
+        </div>
+
+    </div>
+</body>
+</html>

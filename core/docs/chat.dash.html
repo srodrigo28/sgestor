@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="h-full">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rocker Dashboard (Tailwind + JS)</title>
+
+    <!-- Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ["Inter", "ui-sans-serif", "system-ui"] },
+                    boxShadow: {
+                        card: "0 10px 30px rgba(0,0,0,.35)",
+                    },
+                    colors: {
+                        panel: {
+                            900: "#0b1117",
+                            950: "#070b10",
+                        },
+                        stroke: "rgba(255,255,255,.08)",
+                    },
+                },
+            },
+        };
+    </script>
+
+    <!-- ApexCharts -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+    <style>
+        /* Scrollbar suave (parecido com dashboards) */
+        *::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        *::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 999px;
+            border: 2px solid rgba(0, 0, 0, 0.35);
+        }
+
+        *::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.35);
+        }
+
+        /* ApexCharts tweaks para ficar “flat” e elegante */
+        .apexcharts-tooltip,
+        .apexcharts-xaxistooltip {
+            background: #0b1117 !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            color: rgba(255, 255, 255, 0.9) !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35) !important;
+        }
+
+        .apexcharts-menu {
+            background: #0b1117 !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        }
+
+        .apexcharts-menu-item:hover {
+            background: rgba(255, 255, 255, 0.06) !important;
+        }
+    </style>
+</head>
+
+<body class="h-full bg-panel-950 text-white/90 antialiased">
+    <div class="flex h-full">
+        <!-- SIDEBAR -->
+        <aside class="w-[290px] shrink-0 border-r border-stroke bg-panel-900">
+            <div class="flex items-center gap-3 px-6 py-5">
+                <!-- Logo “swirl” -->
+                <div class="grid place-items-center">
+                    <svg width="36" height="36" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+                        <path d="M10 30c8-10 22-14 34-8 4 2 7 5 10 8" stroke="rgba(255,255,255,.9)" stroke-width="4"
+                            stroke-linecap="round" />
+                        <path d="M10 38c10 8 26 8 38 0 3-2 5-4 6-6" stroke="rgba(255,255,255,.55)" stroke-width="4"
+                            stroke-linecap="round" />
+                        <path d="M18 42c10 4 20 3 28-3" stroke="rgba(255,255,255,.35)" stroke-width="4"
+                            stroke-linecap="round" />
+                    </svg>
+                </div>
+
+                <div class="text-xl font-semibold tracking-wide">Rocker</div>
+            </div>
+
+            <nav class="px-3 pb-6 text-[13px]">
+                <!-- Dashboard -->
+                <button
+                    class="group flex w-full items-center justify-between rounded-xl px-4 py-3 text-left font-semibold text-white/90 hover:bg-white/[0.06]"
+                    data-accordion="dash">
+                    <span class="flex items-center gap-3">
+                        <span class="grid h-9 w-9 place-items-center rounded-xl bg-white/[0.06] ring-1 ring-stroke">
+                            <!-- home -->
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                <path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V10.5Z"
+                                    stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+                            </svg>
+                        </span>
+                        Dashboard
+                    </span>
+                    <svg class="h-4 w-4 text-white/60 transition group-[.open]:rotate-180" viewBox="0 0 20 20"
+                        fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z"
+                            clip-rule="evenodd" />
+                    </svg>
+                </button>
+
+                <div class="mt-2 space-y-1 pl-14" data-accordion-panel="dash">
+                    <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-white/60 hover:bg-white/[0.05] hover:text-white/90"
+                        href="#">
+                        <span class="h-2 w-2 rounded-full bg-white/30"></span> Default
+                    </a>
+                    <a class="flex items-center gap-3 rounded-lg bg-white/[0.07] px-3 py-2 text-white/90 ring-1 ring-stroke"
+                        href="#">
+                        <span class="h-2 w-2 rounded-full bg-white/80"></span> Alternate
+                    </a>
+                    <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-white/60 hover:bg-white/[0.05] hover:text-white/90"
+                        href="#">
+                        <span class="h-2 w-2 rounded-full bg-white/30"></span> Graphical
+                    </a>
+                </div>
+
+                <!-- Application -->
+                <div class="mt-5">
+                    <button
+                        class="group flex w-full items-center justify-between rounded-xl px-4 py-3 text-left font-semibold text-white/80 hover:bg-white/[0.06]"
+                        data-accordion="app">
+                        <span class="flex items-center gap-3">
+                            <span class="grid h-9 w-9 place-items-center rounded-xl bg-white/[0.06] ring-1 ring-stroke">
+                                <!-- grid -->
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                    <path d="M4 4h7v7H4V4Zm9 0h7v7h-7V4ZM4 13h7v7H4v-7Zm9 0h7v7h-7v-7Z"
+                                        stroke="currentColor" stroke-width="1.7" />
+                                </svg>
+                            </span>
+                            Application
+                        </span>
+                        <svg class="h-4 w-4 text-white/60 transition group-[.open]:rotate-180" viewBox="0 0 20 20"
+                            fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    <div class="mt-2 space-y-1 pl-14 hidden" data-accordion-panel="app">
+                        <a class="block rounded-lg px-3 py-2 text-white/60 hover:bg-white/[0.05] hover:text-white/90"
+                            href="#">Widgets</a>
+                        <a class="block rounded-lg px-3 py-2 text-white/60 hover:bg-white/[0.05] hover:text-white/90"
+                            href="#">eCommerce</a>
+                        <a class="block rounded-lg px-3 py-2 text-white/60 hover:bg-white/[0.05] hover:text-white/90"
+                            href="#">Components</a>
+                        <a class="block rounded-lg px-3 py-2 text-white/60 hover:bg-white/[0.05] hover:text-white/90"
+                            href="#">Content</a>
+                        <a class="block rounded-lg px-3 py-2 text-white/60 hover:bg-white/[0.05] hover:text-white/90"
+                            href="#">Icons</a>
+                        <a class="block rounded-lg px-3 py-2 text-white/60 hover:bg-white/[0.05] hover:text-white/90"
+                            href="#">Froala Editor</a>
+                    </div>
+                </div>
+
+                <!-- Forms & Tables -->
+                <div class="mt-6 px-4 text-[11px] font-semibold tracking-wider text-white/35">
+                    FORMS & TABLES
+                </div>
+                <div class="mt-2 space-y-1">
+                    <a class="flex items-center justify-between rounded-xl px-4 py-3 text-white/70 hover:bg-white/[0.06]"
+                        href="#">
+                        <span class="flex items-center gap-3">
+                            <span class="grid h-9 w-9 place-items-center rounded-xl bg-white/[0.06] ring-1 ring-stroke">
+                                <!-- form -->
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                    <path d="M7 4h10a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"
+                                        stroke="currentColor" stroke-width="1.7" />
+                                    <path d="M9 8h8M9 12h8M9 16h6" stroke="currentColor" stroke-width="1.7"
+                                        stroke-linecap="round" />
+                                </svg>
+                            </span>
+                            Forms
+                        </span>
+                        <svg class="h-4 w-4 text-white/50" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M7.21 14.77a.75.75 0 0 1 .02-1.06L10.94 10 7.23 6.29a.75.75 0 1 1 1.06-1.06l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06.02Z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </a>
+
+                    <a class="flex items-center justify-between rounded-xl px-4 py-3 text-white/70 hover:bg-white/[0.06]"
+                        href="#">
+                        <span class="flex items-center gap-3">
+                            <span class="grid h-9 w-9 place-items-center rounded-xl bg-white/[0.06] ring-1 ring-stroke">
+                                <!-- table -->
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                    <path d="M4 6h16v12H4V6Z" stroke="currentColor" stroke-width="1.7"
+                                        stroke-linejoin="round" />
+                                    <path d="M4 10h16M8 6v12M16 6v12" stroke="currentColor" stroke-width="1.7" />
+                                </svg>
+                            </span>
+                            Tables
+                        </span>
+                        <svg class="h-4 w-4 text-white/50" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M7.21 14.77a.75.75 0 0 1 .02-1.06L10.94 10 7.23 6.29a.75.75 0 1 1 1.06-1.06l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06.02Z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </a>
+                </div>
+
+                <!-- Pages -->
+                <div class="mt-6 px-4 text-[11px] font-semibold tracking-wider text-white/35">
+                    PAGES
+                </div>
+                <div class="mt-2 space-y-1">
+                    <a class="flex items-center gap-3 rounded-xl px-4 py-3 text-white/70 hover:bg-white/[0.06]"
+                        href="#">
+                        <span class="grid h-9 w-9 place-items-center rounded-xl bg-white/[0.06] ring-1 ring-stroke">
+                            <!-- lock -->
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                <path d="M7 11V8a5 5 0 0 1 10 0v3" stroke="currentColor" stroke-width="1.7"
+                                    stroke-linecap="round" />
+                                <path d="M6 11h12v9H6v-9Z" stroke="currentColor" stroke-width="1.7"
+                                    stroke-linejoin="round" />
+                            </svg>
+                        </span>
+                        Authentication
+                    </a>
+                    <a class="flex items-center gap-3 rounded-xl px-4 py-3 text-white/70 hover:bg-white/[0.06]"
+                        href="#">
+                        <span class="grid h-9 w-9 place-items-center rounded-xl bg-white/[0.06] ring-1 ring-stroke">
+                            <!-- user -->
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                <path d="M20 21a8 8 0 0 0-16 0" stroke="currentColor" stroke-width="1.7"
+                                    stroke-linecap="round" />
+                                <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="currentColor"
+                                    stroke-width="1.7" />
+                            </svg>
+                        </span>
+                        User Profile
+                    </a>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- MAIN -->
+        <div class="flex min-w-0 flex-1 flex-col">
+            <!-- TOPBAR -->
+            <header class="flex items-center justify-between gap-4 border-b border-stroke bg-panel-900 px-6 py-4">
+                <div class="flex items-center gap-4">
+                    <button
+                        class="grid h-10 w-10 place-items-center rounded-xl bg-white/[0.06] ring-1 ring-stroke hover:bg-white/[0.08]">
+                        <!-- back arrow -->
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                            <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg>
+                    </button>
+
+                    <div class="relative w-[520px] max-w-[55vw]">
+                        <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/45">
+                            <!-- search -->
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                <path d="M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z" stroke="currentColor"
+                                    stroke-width="1.7" />
+                                <path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="1.7"
+                                    stroke-linecap="round" />
+                            </svg>
+                        </span>
+                        <input
+                            class="w-full rounded-2xl border border-stroke bg-white/[0.05] py-3 pl-11 pr-4 text-sm text-white/90 outline-none placeholder:text-white/35 focus:ring-2 focus:ring-white/10"
+                            placeholder="Search" />
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <!-- flag -->
+                    <button
+                        class="grid h-10 w-10 place-items-center rounded-xl bg-white/[0.06] ring-1 ring-stroke hover:bg-white/[0.08]">
+                        <span class="text-lg">🇺🇸</span>
+                    </button>
+
+                    <!-- theme -->
+                    <button id="themeBtn"
+                        class="grid h-10 w-10 place-items-center rounded-xl bg-white/[0.06] ring-1 ring-stroke hover:bg-white/[0.08]">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                            <path d="M21 12.8A8.5 8.5 0 0 1 11.2 3a6.8 6.8 0 1 0 9.8 9.8Z" stroke="currentColor"
+                                stroke-width="1.7" stroke-linejoin="round" />
+                        </svg>
+                    </button>
+
+                    <!-- apps -->
+                    <button
+                        class="grid h-10 w-10 place-items-center rounded-xl bg-white/[0.06] ring-1 ring-stroke hover:bg-white/[0.08]">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                            <path d="M5 5h4v4H5V5Zm10 0h4v4h-4V5ZM5 15h4v4H5v-4Zm10 0h4v4h-4v-4Z" stroke="currentColor"
+                                stroke-width="1.7" />
+                        </svg>
+                    </button>
+
+                    <!-- bell with badge -->
+                    <button
+                        class="relative grid h-10 w-10 place-items-center rounded-xl bg-white/[0.06] ring-1 ring-stroke hover:bg-white/[0.08]">
+                        <span
+                            class="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-red-500 text-[11px] font-bold text-white">7</span>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                            <path d="M18 8a6 6 0 1 0-12 0c0 7-3 7-3 7h18s-3 0-3-7Z" stroke="currentColor"
+                                stroke-width="1.7" stroke-linejoin="round" />
+                            <path d="M14 19a2 2 0 0 1-4 0" stroke="currentColor" stroke-width="1.7"
+                                stroke-linecap="round" />
+                        </svg>
+                    </button>
+
+                    <!-- cart with badge -->
+                    <button
+                        class="relative grid h-10 w-10 place-items-center rounded-xl bg-white/[0.06] ring-1 ring-stroke hover:bg-white/[0.08]">
+                        <span
+                            class="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-red-500 text-[11px] font-bold text-white">8</span>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                            <path d="M6 6h15l-1.5 9H7.2L6 6Z" stroke="currentColor" stroke-width="1.7"
+                                stroke-linejoin="round" />
+                            <path d="M6 6 5 3H2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                            <path
+                                d="M8.5 21a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM18 21a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"
+                                stroke="currentColor" stroke-width="1.7" />
+                        </svg>
+                    </button>
+
+                    <!-- user -->
+                    <div class="ml-2 flex items-center gap-3 rounded-2xl bg-white/[0.06] px-3 py-2 ring-1 ring-stroke">
+                        <img alt="avatar" class="h-10 w-10 rounded-xl object-cover"
+                            src="https://images.unsplash.com/photo-1524503033411-f7a2fe8c7b7b?auto=format&fit=crop&w=200&q=60" />
+                        <div class="leading-tight">
+                            <div class="text-sm font-semibold">Pauline Seitz</div>
+                            <div class="text-xs text-white/45">Web Designer</div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- CONTENT -->
+            <main class="min-w-0 flex-1 overflow-auto p-6">
+                <div class="grid grid-cols-12 gap-6">
+                    <!-- Sales Overview (big) -->
+                    <section
+                        class="col-span-12 xl:col-span-8 rounded-2xl border border-stroke bg-panel-900 shadow-card">
+                        <div class="flex items-center justify-between px-6 pt-5">
+                            <h2 class="text-base font-semibold">Sales Overview</h2>
+                            <button class="grid h-9 w-9 place-items-center rounded-xl hover:bg-white/[0.06]">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                    <path
+                                        d="M12 6.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM12 13.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM12 20.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"
+                                        fill="currentColor" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div class="flex items-center justify-center gap-6 px-6 pt-2 text-xs">
+                            <div class="flex items-center gap-2 text-white/70">
+                                <span class="h-2.5 w-8 rounded-sm border-2 border-yellow-300/90"></span>
+                                Visits
+                            </div>
+                            <div class="flex items-center gap-2 text-white/70">
+                                <span class="h-2.5 w-8 rounded-sm border-2 border-sky-500/90"></span>
+                                Sales
+                            </div>
+                        </div>
+
+                        <div class="px-4 pb-4 pt-2">
+                            <div id="salesOverviewChart" class="h-[360px]"></div>
+                        </div>
+                    </section>
+
+                    <!-- Order Status (right) -->
+                    <section
+                        class="col-span-12 xl:col-span-4 rounded-2xl border border-stroke bg-panel-900 shadow-card">
+                        <div class="flex items-center justify-between px-6 pt-5">
+                            <h2 class="text-base font-semibold">Order Status</h2>
+                            <button class="grid h-9 w-9 place-items-center rounded-xl hover:bg-white/[0.06]">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                    <path
+                                        d="M12 6.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM12 13.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM12 20.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"
+                                        fill="currentColor" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="px-4 pb-4 pt-2">
+                            <div id="orderStatusChart" class="h-[360px]"></div>
+                        </div>
+                    </section>
+
+                    <!-- Donut (left bottom) -->
+                    <section
+                        class="col-span-12 xl:col-span-5 rounded-2xl border border-stroke bg-panel-900 shadow-card">
+                        <div class="px-6 pt-5">
+                            <div class="h-[320px]" id="brandDonutChart"></div>
+                        </div>
+                        <div class="flex items-center justify-between border-t border-stroke px-6 py-4">
+                            <div class="text-sm font-semibold text-white/85">Apple</div>
+                            <span
+                                class="grid h-7 w-7 place-items-center rounded-full bg-red-500 text-xs font-bold text-white">20</span>
+                        </div>
+                    </section>
+
+                    <!-- Metrics (right bottom) -->
+                    <section class="col-span-12 xl:col-span-7 space-y-6">
+                        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                            <!-- Total Orders -->
+                            <div class="rounded-2xl border border-stroke bg-panel-900 shadow-card">
+                                <div class="flex items-start justify-between px-6 pt-5">
+                                    <div>
+                                        <div class="text-xs text-white/55">Total Orders</div>
+                                        <div class="mt-1 text-2xl font-semibold">8052</div>
+                                    </div>
+                                    <div
+                                        class="grid h-10 w-10 place-items-center rounded-2xl bg-sky-500/10 ring-1 ring-sky-500/20">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                            <path d="M7 7h14l-1.4 8H8.2L7 7Z" stroke="currentColor" stroke-width="1.7"
+                                                stroke-linejoin="round" />
+                                            <path d="M7 7 6 4H3" stroke="currentColor" stroke-width="1.7"
+                                                stroke-linecap="round" />
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-between px-6 pb-5">
+                                    <div id="sparkOrders" class="h-16 w-[70%]"></div>
+                                    <div class="text-right">
+                                        <div class="text-sm font-semibold text-emerald-400">+25%</div>
+                                        <div class="text-xs text-white/40">This week</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Total Revenue -->
+                            <div class="rounded-2xl border border-stroke bg-panel-900 shadow-card">
+                                <div class="flex items-start justify-between px-6 pt-5">
+                                    <div>
+                                        <div class="text-xs text-white/55">Total Revenue</div>
+                                        <div class="mt-1 text-2xl font-semibold">$6.2K</div>
+                                    </div>
+                                    <div
+                                        class="grid h-10 w-10 place-items-center rounded-2xl bg-pink-500/10 ring-1 ring-pink-500/20">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                            <path d="M12 3v18" stroke="currentColor" stroke-width="1.7"
+                                                stroke-linecap="round" />
+                                            <path
+                                                d="M16 7.5c0-2-2-3.5-4-3.5S8 5.5 8 7.5 10 10.5 12 10.5s4 1.5 4 3.5-2 3.5-4 3.5-4-1.5-4-3.5"
+                                                stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+                                                stroke-linejoin="round" />
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-between px-6 pb-5">
+                                    <div id="sparkRevenue" class="h-16 w-[70%]"></div>
+                                    <div class="text-right">
+                                        <div class="text-sm font-semibold text-emerald-400">+15%</div>
+                                        <div class="text-xs text-white/40">This week</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- New Users -->
+                            <div class="rounded-2xl border border-stroke bg-panel-900 shadow-card">
+                                <div class="flex items-start justify-between px-6 pt-5">
+                                    <div>
+                                        <div class="text-xs text-white/55">New Users</div>
+                                        <div class="mt-1 text-2xl font-semibold">1.3K</div>
+                                    </div>
+                                    <div
+                                        class="grid h-10 w-10 place-items-center rounded-2xl bg-emerald-500/10 ring-1 ring-emerald-500/20">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                            <path d="M16 11a4 4 0 1 0-8 0" stroke="currentColor" stroke-width="1.7"
+                                                stroke-linecap="round" />
+                                            <path d="M4 21a8 8 0 0 1 16 0" stroke="currentColor" stroke-width="1.7"
+                                                stroke-linecap="round" />
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-between px-6 pb-5">
+                                    <div id="sparkUsers" class="h-16 w-[70%]"></div>
+                                    <div class="text-right">
+                                        <div class="text-sm font-semibold text-red-400">-10%</div>
+                                        <div class="text-xs text-white/40">This week</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sold Items -->
+                            <div class="rounded-2xl border border-stroke bg-panel-900 shadow-card">
+                                <div class="flex items-start justify-between px-6 pt-5">
+                                    <div>
+                                        <div class="text-xs text-white/55">Sold Items</div>
+                                        <div class="mt-1 text-2xl font-semibold">956</div>
+                                    </div>
+                                    <div
+                                        class="grid h-10 w-10 place-items-center rounded-2xl bg-amber-500/10 ring-1 ring-amber-500/20">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                            <path d="M6 6h14v14H6V6Z" stroke="currentColor" stroke-width="1.7" />
+                                            <path d="M9 9h8M9 13h8M9 17h6" stroke="currentColor" stroke-width="1.7"
+                                                stroke-linecap="round" />
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-between px-6 pb-5">
+                                    <div id="sparkItems" class="h-16 w-[70%]"></div>
+                                    <div class="text-right">
+                                        <div class="text-sm font-semibold text-red-400">-14%</div>
+                                        <div class="text-xs text-white/40">This week</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Extra row (como na imagem aparece mais cards embaixo) -->
+                        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                            <!-- Total Visits -->
+                            <div class="rounded-2xl border border-stroke bg-panel-900 shadow-card">
+                                <div class="flex items-start justify-between px-6 pt-5">
+                                    <div>
+                                        <div class="text-xs text-white/55">Total Visits</div>
+                                        <div class="mt-1 text-2xl font-semibold">12M</div>
+                                    </div>
+                                    <div
+                                        class="grid h-10 w-10 place-items-center rounded-2xl bg-sky-500/10 ring-1 ring-sky-500/20">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                            <path d="M4 19V5" stroke="currentColor" stroke-width="1.7"
+                                                stroke-linecap="round" />
+                                            <path d="M4 19h16" stroke="currentColor" stroke-width="1.7"
+                                                stroke-linecap="round" />
+                                            <path d="M8 15l3-3 3 2 4-6" stroke="currentColor" stroke-width="1.7"
+                                                stroke-linecap="round" stroke-linejoin="round" />
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between px-6 pb-5">
+                                    <div id="sparkVisits" class="h-16 w-[70%]"></div>
+                                    <div class="text-right">
+                                        <div class="text-sm font-semibold text-emerald-400">+8%</div>
+                                        <div class="text-xs text-white/40">This week</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Total Returns -->
+                            <div class="rounded-2xl border border-stroke bg-panel-900 shadow-card">
+                                <div class="flex items-start justify-between px-6 pt-5">
+                                    <div>
+                                        <div class="text-xs text-white/55">Total Returns</div>
+                                        <div class="mt-1 text-2xl font-semibold">170</div>
+                                    </div>
+                                    <div
+                                        class="grid h-10 w-10 place-items-center rounded-2xl bg-white/10 ring-1 ring-white/15">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                            <path d="M21 12a8.5 8.5 0 0 1-14.5 6" stroke="currentColor"
+                                                stroke-width="1.7" stroke-linecap="round" />
+                                            <path d="M3 12A8.5 8.5 0 0 1 17.5 6" stroke="currentColor"
+                                                stroke-width="1.7" stroke-linecap="round" />
+                                            <path d="M6 18v-4h4" stroke="currentColor" stroke-width="1.7"
+                                                stroke-linecap="round" stroke-linejoin="round" />
+                                            <path d="M18 6v4h-4" stroke="currentColor" stroke-width="1.7"
+                                                stroke-linecap="round" stroke-linejoin="round" />
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between px-6 pb-5">
+                                    <div id="sparkReturns" class="h-16 w-[70%]"></div>
+                                    <div class="text-right">
+                                        <div class="text-sm font-semibold text-emerald-400">+2%</div>
+                                        <div class="text-xs text-white/40">This week</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <footer class="mt-10 text-center text-xs text-white/35">
+                    Copyright © 2023. All right reserved.
+                </footer>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // ---------- Sidebar accordions ----------
+        const accordionBtns = document.querySelectorAll("[data-accordion]");
+        accordionBtns.forEach((btn) => {
+            const key = btn.getAttribute("data-accordion");
+            const panel = document.querySelector(`[data-accordion-panel="${key}"]`);
+            const isDash = key === "dash";
+            // dashboard aberto por padrão como na imagem
+            if (isDash) btn.classList.add("open");
+            if (!isDash && panel) panel.classList.add("hidden");
+
+            btn.addEventListener("click", () => {
+                btn.classList.toggle("open");
+                if (!panel) return;
+                panel.classList.toggle("hidden");
+            });
+        });
+
+        // ---------- Charts ----------
+        const baseGrid = {
+            borderColor: "rgba(255,255,255,.08)",
+            strokeDashArray: 4,
+        };
+
+        // Sales Overview (area lines)
+        const salesOverview = new ApexCharts(document.querySelector("#salesOverviewChart"), {
+            chart: {
+                type: "area",
+                height: 360,
+                toolbar: { show: false },
+                foreColor: "rgba(255,255,255,.55)",
+            },
+            series: [
+                { name: "Sales", data: [5, 30, 16, 23, 8, 14, 11] },
+                { name: "Visits", data: [5, 20, 14, 12, 17, 8, 10] },
+            ],
+            colors: ["#0ea5ff", "#ff6a3d"],
+            stroke: { curve: "smooth", width: 3 },
+            fill: {
+                type: "gradient",
+                gradient: {
+                    shadeIntensity: 0.5,
+                    opacityFrom: 0.25,
+                    opacityTo: 0.02,
+                    stops: [0, 80, 100],
+                },
+            },
+            dataLabels: { enabled: false },
+            grid: baseGrid,
+            legend: { show: false }, // legenda custom acima
+            xaxis: {
+                categories: ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
+                axisBorder: { color: "rgba(255,255,255,.08)" },
+                axisTicks: { color: "rgba(255,255,255,.08)" },
+            },
+            yaxis: {
+                min: 0,
+                max: 30,
+                tickAmount: 6,
+            },
+            tooltip: { theme: "dark" },
+        });
+        salesOverview.render();
+
+        // Order Status (bar)
+        const orderStatus = new ApexCharts(document.querySelector("#orderStatusChart"), {
+            chart: {
+                type: "bar",
+                height: 360,
+                toolbar: { show: false },
+                foreColor: "rgba(255,255,255,.55)",
+            },
+            series: [
+                {
+                    name: "Orders",
+                    data: [9, 7, 14, 10, 12, 8],
+                },
+            ],
+            plotOptions: {
+                bar: {
+                    borderRadius: 10,
+                    columnWidth: "32%",
+                    distributed: false,
+                },
+            },
+            fill: {
+                type: "gradient",
+                gradient: {
+                    type: "vertical",
+                    shadeIntensity: 0.65,
+                    opacityFrom: 0.95,
+                    opacityTo: 0.95,
+                    stops: [0, 100],
+                    colorStops: [
+                        { offset: 0, color: "#ff6a00", opacity: 1 },
+                        { offset: 100, color: "#ff2fb3", opacity: 1 },
+                    ],
+                },
+            },
+            dataLabels: { enabled: false },
+            grid: baseGrid,
+            xaxis: {
+                categories: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+                axisBorder: { color: "rgba(255,255,255,.08)" },
+                axisTicks: { color: "rgba(255,255,255,.08)" },
+            },
+            yaxis: { min: 0, max: 14, tickAmount: 7 },
+            tooltip: { theme: "dark" },
+        });
+        orderStatus.render();
+
+        // Donut (Brands)
+        const donut = new ApexCharts(document.querySelector("#brandDonutChart"), {
+            chart: { type: "donut", height: 320, foreColor: "rgba(255,255,255,.6)" },
+            series: [45, 25, 30],
+            labels: ["Green", "Red", "Blue"],
+            colors: ["#22c55e", "#ff4d6d", "#0ea5ff"],
+            stroke: { width: 4, colors: ["#0b1117"] },
+            legend: { show: false },
+            plotOptions: {
+                pie: {
+                    donut: {
+                        size: "72%",
+                        labels: {
+                            show: true,
+                            name: { show: true, offsetY: 10, color: "rgba(255,255,255,.55)", fontSize: "13px" },
+                            value: { show: true, offsetY: -10, color: "rgba(255,255,255,.9)", fontSize: "36px", fontWeight: 700 },
+                            total: {
+                                show: true,
+                                label: "Nokia",
+                                color: "rgba(255,255,255,.55)",
+                                formatter: () => "30",
+                            },
+                        },
+                    },
+                },
+            },
+            dataLabels: { enabled: false },
+            tooltip: { theme: "dark" },
+        });
+        donut.render();
+
+        // ---------- Sparklines ----------
+        function sparkBar(el, data, color) {
+            return new ApexCharts(document.querySelector(el), {
+                chart: { type: "bar", height: 64, sparkline: { enabled: true } },
+                series: [{ data }],
+                plotOptions: { bar: { columnWidth: "55%", borderRadius: 4 } },
+                colors: [color],
+                tooltip: { theme: "dark" },
+            }).render();
+        }
+
+        sparkBar("#sparkOrders", [6, 7, 8, 7, 9, 8, 10, 9, 8, 11, 9, 10], "#0ea5ff");
+        sparkBar("#sparkRevenue", [5, 6, 7, 6, 8, 7, 9, 8, 7, 10, 8, 9], "#ff2fb3");
+        sparkBar("#sparkUsers", [7, 6, 6, 5, 6, 5, 5, 4, 5, 4, 4, 3], "#22c55e");
+        sparkBar("#sparkItems", [6, 6, 5, 5, 6, 5, 4, 4, 5, 4, 3, 3], "#f59e0b");
+        sparkBar("#sparkVisits", [6, 7, 6, 8, 7, 9, 8, 9, 10, 9, 10, 11], "#0ea5ff");
+        sparkBar("#sparkReturns", [3, 4, 4, 3, 4, 5, 4, 4, 5, 4, 4, 5], "rgba(255,255,255,.65)");
+
+        // (Opcional) botão de tema – aqui só faz “piscar” um highlight
+        document.getElementById("themeBtn").addEventListener("click", () => {
+            document.body.classList.add("ring-4", "ring-white/10");
+            setTimeout(() => document.body.classList.remove("ring-4", "ring-white/10"), 250);
+        });
+    </script>
+</body>
+
+</html>

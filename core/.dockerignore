@@ -1,0 +1,14 @@
+.git
+.gitignore
+__pycache__
+venv
+*.pyc
+.env
+.env-
+.env-*
+.env.dev
+.env.prod
+.env.local
+.env.*.local
+.env copy.example
+docs

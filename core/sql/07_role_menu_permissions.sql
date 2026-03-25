@@ -1,0 +1,43 @@
+CREATE TABLE IF NOT EXISTS role_menu_permissions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    role ENUM('admin','oficina','loja','pessoal') NOT NULL,
+    menu_key VARCHAR(50) NOT NULL,
+    can_view TINYINT(1) NOT NULL DEFAULT 1,
+    UNIQUE KEY role_menu_unique (role, menu_key)
+);
+
+-- Seed defaults
+INSERT IGNORE INTO role_menu_permissions (role, menu_key, can_view) VALUES
+('admin','dashboard',1),
+('admin','tasks',1),
+('admin','financial',1),
+('admin','products',1),
+('admin','clients',1),
+('admin','budgets',1),
+('admin','services',1),
+('admin','admin_users',1),
+('oficina','dashboard',1),
+('oficina','tasks',1),
+('oficina','financial',1),
+('oficina','products',1),
+('oficina','clients',1),
+('oficina','budgets',1),
+('oficina','services',1),
+('oficina','admin_users',0),
+('loja','dashboard',1),
+('loja','tasks',1),
+('loja','financial',1),
+('loja','products',1),
+('loja','clients',1),
+('loja','budgets',1),
+('loja','services',1),
+('loja','admin_users',0),
+('pessoal','dashboard',1),
+('pessoal','tasks',1),
+('pessoal','financial',1),
+('pessoal','products',1),
+('pessoal','clients',1),
+('pessoal','budgets',1),
+('pessoal','services',1),
+('pessoal','admin_users',0)
+ON DUPLICATE KEY UPDATE can_view = VALUES(can_view);

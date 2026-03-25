@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="pt-BR" class="dark">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Entrar - Rocker Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        background: "#0f1214",
+                        surface: "#171d21",
+                        primary: "#3b82f6",     // Blue-500
+                        secondary: "#8b5cf6",   // Violet-500
+                        text: "#a3aab1",
+                        heading: "#ffffff",
+                        border: "#2d3748",
+                    },
+                },
+            },
+        };
+    </script>
+    <style>
+        body {
+            background-color: #0f1214;
+            color: #a3aab1;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .input-field {
+            background-color: #11161a;
+            border: 1px solid #2d3748;
+            color: white;
+            transition: all 0.3s;
+        }
+
+        .input-field:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .input-field:placeholder-shown+.input-label {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        /* Custom Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex items-center justify-center p-6 relative overflow-hidden">
+
+    <!-- Background Elements -->
+    <div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
+        <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/10 rounded-full blur-[100px]"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-600/10 rounded-full blur-[100px]">
+        </div>
+    </div>
+
+    <div id="auth-container"
+        class="w-full max-w-md bg-surface border border-border rounded-2xl p-5 shadow-2xl backdrop-blur-sm animate-fade-in transition-all duration-300 my-2">
+
+        <div class="text-center mb-4">
+            <div
+                class="w-8 h-8 bg-blue-600 rounded-lg shadow-lg shadow-blue-500/30 flex items-center justify-center mx-auto mb-2">
+                <i class="fas fa-bolt text-white text-sm"></i>
+            </div>
+            <h1 class="text-lg font-bold text-white tracking-tight">
+                Bem-vindo de volta
+            </h1>
+            <p class="text-text text-[10px] mt-0.5">Gerencie seus projetos com eficiência</p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex p-0.5 bg-[#11161a] rounded-lg mb-4 border border-border">
+            <button onclick="switchTab('login')" id="tab-login"
+                class="flex-1 py-1.5 text-xs font-medium rounded-md bg-surface text-white shadow-sm transition-all duration-300">Login</button>
+            <button onclick="switchTab('register')" id="tab-register"
+                class="flex-1 py-1.5 text-xs font-medium rounded-md text-text hover:text-white transition-all duration-300">Criar
+                Conta</button>
+        </div>
+
+        <!-- Login Form -->
+        <form id="form-login" action="/login" method="POST" class="space-y-3">
+            <div class="input-group">
+                <label class="block text-[10px] uppercase tracking-wide text-text font-bold mb-1 ml-1">Email</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
+                        <i class="fas fa-envelope text-xs"></i>
+                    </span>
+                    <input type="email" name="email" required placeholder="seu@email.com"
+                        class="input-field w-full rounded-lg py-2 pl-9 pr-3 text-sm focus:outline-none placeholder-gray-600">
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label class="block text-[10px] uppercase tracking-wide text-text font-bold mb-1 ml-1">Senha</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
+                        <i class="fas fa-lock text-xs"></i>
+                    </span>
+                    <input type="password" name="password" required placeholder="••••••••"
+                        class="input-field w-full rounded-lg py-2 pl-9 pr-3 text-sm focus:outline-none placeholder-gray-600">
+                </div>
+            </div>
+
+            {% with messages = get_flashed_messages(category_filter=["error"]) %}
+            {% if messages %}
+            {% for message in messages %}
+            <div class="flex items-center gap-2 text-red-400 text-xs bg-red-500/10 p-3 rounded-lg border border-red-500/20">
+                <i class="fas fa-exclamation-circle"></i> {{ message }}
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <div class="flex items-center justify-between text-xs mt-2">
+                <label class="flex items-center gap-2 cursor-pointer text-text hover:text-white transition">
+                    <input type="checkbox" class="rounded bg-surface border-border text-primary focus:ring-0">
+                    Lembrar de mim
+                </label>
+                <a href="#" class="text-primary hover:text-blue-400 transition">Esqueceu a senha?</a>
+            </div>
+
+            <button type="submit"
+                class="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-2 rounded-lg transition shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2 group">
+                Entrar na Plataforma
+                <i class="fas fa-arrow-right text-xs group-hover:translate-x-1 transition-transform"></i>
+            </button>
+
+            <div class="relative flex py-1.5 items-center">
+                <div class="flex-grow border-t border-gray-700"></div>
+                <span class="flex-shrink-0 mx-3 text-gray-500 text-[10px]">Ou continue com</span>
+                <div class="flex-grow border-t border-gray-700"></div>
+            </div>
+
+            <!-- Fake Google Button -->
+            <a href="/login/google"
+                class="w-full flex items-center justify-center gap-2 bg-[#11161a] border border-border text-white hover:bg-white hover:text-black font-medium py-2 rounded-lg transition duration-300">
+                <i class="fab fa-google text-xs"></i>
+                <span class="text-xs">Google</span>
+            </a>
+        </form>
+
+        <!-- Register Form -->
+        <form id="form-register" action="/register" method="POST" class="hidden space-y-3">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div class="input-group md:col-span-2">
+                    <label class="block text-[10px] uppercase tracking-wide text-text font-bold mb-1 ml-1">Nome Completo</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
+                            <i class="fas fa-user text-xs"></i>
+                        </span>
+                        <input type="text" name="name" required placeholder="Seu Nome"
+                            class="input-field w-full rounded-lg py-2 pl-9 pr-3 text-sm focus:outline-none placeholder-gray-600">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label class="block text-[10px] uppercase tracking-wide text-text font-bold mb-1 ml-1">Telefone</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
+                            <i class="fas fa-phone text-xs"></i>
+                        </span>
+                        <input type="tel" id="mobile" name="phone" placeholder="(00) 00000-0000" maxlength="15"
+                            class="input-field w-full rounded-lg py-2 pl-9 pr-3 text-sm focus:outline-none placeholder-gray-600">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label class="block text-[10px] uppercase tracking-wide text-text font-bold mb-1 ml-1">Tipo de Conta</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
+                            <i class="fas fa-briefcase text-xs"></i>
+                        </span>
+                        <select name="role" required class="input-field w-full rounded-lg py-2 pl-9 pr-3 text-sm focus:outline-none placeholder-gray-600 bg-[#11161a] appearance-none cursor-pointer">
+                            <option value="pessoal">Pessoal</option>
+                            <option value="loja">Minha Loja</option>
+                            <option value="oficina">Minha Oficina</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-gray-500">
+                            <i class="fas fa-chevron-down text-[10px]"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-group md:col-span-2">
+                    <label class="block text-[10px] uppercase tracking-wide text-text font-bold mb-1 ml-1">Email</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
+                            <i class="fas fa-envelope text-xs"></i>
+                        </span>
+                        <input type="email" name="email" required placeholder="seu@email.com"
+                            class="input-field w-full rounded-lg py-2 pl-9 pr-3 text-sm focus:outline-none placeholder-gray-600">
+                    </div>
+                </div>
+
+                <div class="input-group md:col-span-2">
+                    <label class="block text-[10px] uppercase tracking-wide text-text font-bold mb-1 ml-1">Senha</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
+                            <i class="fas fa-lock text-xs"></i>
+                        </span>
+                        <input type="password" name="password" required placeholder="Crie uma senha forte"
+                            class="input-field w-full rounded-lg py-2 pl-9 pr-3 text-sm focus:outline-none placeholder-gray-600">
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit"
+                class="w-full bg-secondary hover:bg-purple-500 text-white font-medium py-2 rounded-lg transition shadow-lg shadow-purple-600/30 flex items-center justify-center gap-2 mt-3">
+                Criar Minha Conta
+            </button>
+        </form>
+
+    </div>
+
+    <script>
+        function switchTab(tab) {
+            const loginForm = document.getElementById('form-login');
+            const registerForm = document.getElementById('form-register');
+            const loginTab = document.getElementById('tab-login');
+            const registerTab = document.getElementById('tab-register');
+            const container = document.getElementById('auth-container');
+
+            if (tab === 'login') {
+                loginForm.classList.remove('hidden');
+                loginForm.classList.add('animate-fade-in');
+                registerForm.classList.add('hidden');
+                registerForm.classList.remove('animate-fade-in');
+
+                loginTab.classList.add('bg-surface', 'text-white', 'shadow-sm');
+                loginTab.classList.remove('text-text', 'hover:text-white');
+
+                registerTab.classList.remove('bg-surface', 'text-white', 'shadow-sm');
+                registerTab.classList.add('text-text', 'hover:text-white');
+                
+                // Adjust width for login
+                container.classList.remove('max-w-2xl');
+                container.classList.add('max-w-md');
+            } else {
+                loginForm.classList.add('hidden');
+                loginForm.classList.remove('animate-fade-in');
+                registerForm.classList.remove('hidden');
+                registerForm.classList.add('animate-fade-in');
+
+                registerTab.classList.add('bg-surface', 'text-white', 'shadow-sm');
+                registerTab.classList.remove('text-text', 'hover:text-white');
+
+                loginTab.classList.remove('bg-surface', 'text-white', 'shadow-sm');
+                loginTab.classList.add('text-text', 'hover:text-white');
+                
+                // Adjust width for register to accommodate grid
+                container.classList.remove('max-w-md');
+                container.classList.add('max-w-2xl');
+            }
+        }
+
+        // Máscara de Telefone (Vanilla JS)
+        const phoneInput = document.getElementById('mobile');
+        phoneInput.addEventListener('input', function (e) {
+            var x = e.target.value.replace(/\D/g, '').match(/(\d{0,2})(\d{0,5})(\d{0,4})/);
+            e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
+        });
+    </script>
+</body>
+
+</html>

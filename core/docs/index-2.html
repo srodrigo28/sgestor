@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Treinamento Python - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              base: "var(--color-base)",
+              accent: "var(--color-accent)",
+              text: "var(--color-text)",
+              muted: "var(--color-muted)",
+              card: "var(--color-card)",
+              border: "var(--color-border)",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      :root {
+        --color-base: #0f172a; /* bg-slate-900 */
+        --color-accent: #7c3aed; /* bg-violet-600 */
+        --color-text: #ffffff;
+        --color-muted: #cbd5f5;
+        --color-card: #111827;
+        --color-border: #1f2937;
+      }
+      .bg-pattern {
+        background-image:
+          radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.08) 1px, transparent 0),
+          radial-gradient(circle at 12px 12px, rgba(124, 58, 237, 0.18) 1px, transparent 0);
+        background-size: 24px 24px, 24px 24px;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen bg-base text-text bg-pattern">
+    <div class="mx-auto max-w-6xl px-6 py-10">
+      <header class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p class="text-xs uppercase tracking-[0.3em] text-muted">Treinamento</p>
+          <h1 class="text-3xl font-semibold">Dashboard de Usuários</h1>
+          <p class="mt-1 text-sm text-muted">CRUD minimalista para perfis e avatar.</p>
+        </div>
+        <button
+          id="createUser"
+          class="inline-flex items-center justify-center rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition hover:brightness-110"
+          type="button"
+        >
+          + Novo usuário
+        </button>
+      </header>
+
+      <main class="mt-8 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+        <section class="rounded-2xl border border-border bg-card/70 p-6 backdrop-blur">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-semibold">Lista de usuários</h2>
+            <span class="text-xs text-muted" id="userCount">0 usuários</span>
+          </div>
+          <div class="mt-6 space-y-4" id="userList"></div>
+        </section>
+
+        <section class="rounded-2xl border border-border bg-card/70 p-6 backdrop-blur">
+          <h2 class="text-lg font-semibold">Editar perfil</h2>
+          <p class="text-sm text-muted">Atualize avatar, nome, email, senha e telefone.</p>
+
+          <form id="userForm" class="mt-6 space-y-4">
+            <div class="flex items-center gap-4">
+              <div
+                id="avatarPreview"
+                class="grid h-16 w-16 place-items-center overflow-hidden rounded-full bg-accent text-lg font-semibold"
+              >
+                ?
+              </div>
+              <div class="flex-1">
+                <label class="text-xs uppercase tracking-wide text-muted" for="avatarInput">
+                  URL do avatar
+                </label>
+                <input
+                  id="avatarInput"
+                  class="mt-1 w-full rounded-lg border border-border bg-transparent px-3 py-2 text-sm text-text placeholder:text-muted/70"
+                  placeholder="https://exemplo.com/avatar.png"
+                  type="url"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label class="text-xs uppercase tracking-wide text-muted" for="nameInput">Nome</label>
+              <input
+                id="nameInput"
+                class="mt-1 w-full rounded-lg border border-border bg-transparent px-3 py-2 text-sm text-text"
+                placeholder="Nome completo"
+                type="text"
+                required
+              />
+            </div>
+
+            <div>
+              <label class="text-xs uppercase tracking-wide text-muted" for="emailInput">Email</label>
+              <input
+                id="emailInput"
+                class="mt-1 w-full rounded-lg border border-border bg-transparent px-3 py-2 text-sm text-text"
+                placeholder="email@dominio.com"
+                type="email"
+                required
+              />
+            </div>
+
+            <div>
+              <label class="text-xs uppercase tracking-wide text-muted" for="passwordInput">Senha</label>
+              <input
+                id="passwordInput"
+                class="mt-1 w-full rounded-lg border border-border bg-transparent px-3 py-2 text-sm text-text"
+                placeholder="Nova senha"
+                type="password"
+                required
+              />
+            </div>
+
+            <div>
+              <label class="text-xs uppercase tracking-wide text-muted" for="phoneInput">Telefone</label>
+              <input
+                id="phoneInput"
+                class="mt-1 w-full rounded-lg border border-border bg-transparent px-3 py-2 text-sm text-text"
+                placeholder="(00) 90000-0000"
+                type="tel"
+              />
+            </div>
+
+            <div class="flex items-center gap-3 pt-2">
+              <button
+                id="saveUser"
+                class="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition hover:brightness-110"
+                type="submit"
+              >
+                Salvar alterações
+              </button>
+              <button
+                id="resetForm"
+                class="rounded-lg border border-border px-4 py-2 text-sm text-muted transition hover:bg-white/5"
+                type="button"
+              >
+                Limpar
+              </button>
+            </div>
+          </form>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const state = {
+        users: [
+          {
+            id: "u1",
+            name: "Ana Souza",
+            email: "ana@exemplo.com",
+            password: "••••••••",
+            phone: "(11) 98888-1234",
+            avatar: "",
+          },
+          {
+            id: "u2",
+            name: "Carlos Lima",
+            email: "carlos@exemplo.com",
+            password: "••••••••",
+            phone: "(21) 97777-9988",
+            avatar: "",
+          },
+        ],
+        selectedId: null,
+      };
+
+      const userList = document.getElementById("userList");
+      const userCount = document.getElementById("userCount");
+      const avatarPreview = document.getElementById("avatarPreview");
+      const avatarInput = document.getElementById("avatarInput");
+      const nameInput = document.getElementById("nameInput");
+      const emailInput = document.getElementById("emailInput");
+      const passwordInput = document.getElementById("passwordInput");
+      const phoneInput = document.getElementById("phoneInput");
+      const userForm = document.getElementById("userForm");
+      const resetForm = document.getElementById("resetForm");
+      const createUser = document.getElementById("createUser");
+
+      const getInitials = (name) =>
+        name
+          .split(" ")
+          .filter(Boolean)
+          .slice(0, 2)
+          .map((part) => part[0].toUpperCase())
+          .join("");
+
+      const renderUsers = () => {
+        userList.innerHTML = "";
+        userCount.textContent = `${state.users.length} usuários`;
+
+        state.users.forEach((user) => {
+          const card = document.createElement("article");
+          card.className =
+            "flex items-center justify-between gap-4 rounded-xl border border-border bg-base/40 p-4 transition hover:border-accent";
+          if (user.id === state.selectedId) {
+            card.classList.add("ring-1", "ring-accent");
+          }
+
+          const profile = document.createElement("div");
+          profile.className = "flex items-center gap-4";
+
+          const avatar = document.createElement("div");
+          avatar.className =
+            "grid h-12 w-12 place-items-center overflow-hidden rounded-full bg-accent text-sm font-semibold text-white";
+          if (user.avatar) {
+            const img = document.createElement("img");
+            img.src = user.avatar;
+            img.alt = user.name;
+            img.className = "h-full w-full object-cover";
+            avatar.appendChild(img);
+          } else {
+            avatar.textContent = getInitials(user.name);
+          }
+
+          const info = document.createElement("div");
+          info.innerHTML = `
+            <p class="text-sm font-semibold">${user.name}</p>
+            <p class="text-xs text-muted">${user.email}</p>
+            <p class="text-xs text-muted">${user.phone || "Telefone não informado"}</p>
+          `;
+
+          profile.append(avatar, info);
+
+          const actions = document.createElement("div");
+          actions.className = "flex items-center gap-2";
+
+          const editBtn = document.createElement("button");
+          editBtn.className =
+            "rounded-lg border border-border px-3 py-1 text-xs text-muted transition hover:bg-white/5";
+          editBtn.textContent = "Editar";
+          editBtn.type = "button";
+          editBtn.addEventListener("click", () => selectUser(user.id));
+
+          const deleteBtn = document.createElement("button");
+          deleteBtn.className =
+            "rounded-lg border border-border px-3 py-1 text-xs text-muted transition hover:bg-white/5";
+          deleteBtn.textContent = "Excluir";
+          deleteBtn.type = "button";
+          deleteBtn.addEventListener("click", () => deleteUser(user.id));
+
+          actions.append(editBtn, deleteBtn);
+          card.append(profile, actions);
+          userList.appendChild(card);
+        });
+      };
+
+      const selectUser = (id) => {
+        const user = state.users.find((item) => item.id === id);
+        if (!user) return;
+        state.selectedId = id;
+        avatarInput.value = user.avatar || "";
+        nameInput.value = user.name;
+        emailInput.value = user.email;
+        passwordInput.value = user.password === "••••••••" ? "" : user.password;
+        phoneInput.value = user.phone || "";
+        updateAvatarPreview();
+        renderUsers();
+      };
+
+      const updateAvatarPreview = () => {
+        const url = avatarInput.value.trim();
+        avatarPreview.innerHTML = "";
+        if (url) {
+          const img = document.createElement("img");
+          img.src = url;
+          img.alt = "Avatar";
+          img.className = "h-full w-full object-cover";
+          avatarPreview.appendChild(img);
+        } else {
+          const name = nameInput.value.trim() || "?";
+          avatarPreview.textContent = name === "?" ? "?" : getInitials(name);
+        }
+      };
+
+      const resetFormState = () => {
+        state.selectedId = null;
+        avatarInput.value = "";
+        nameInput.value = "";
+        emailInput.value = "";
+        passwordInput.value = "";
+        phoneInput.value = "";
+        avatarPreview.textContent = "?";
+        renderUsers();
+      };
+
+      const createNewUser = () => {
+        const id = `u${Date.now()}`;
+        const newUser = {
+          id,
+          name: "Novo usuário",
+          email: "novo@exemplo.com",
+          password: "••••••••",
+          phone: "",
+          avatar: "",
+        };
+        state.users.unshift(newUser);
+        selectUser(id);
+      };
+
+      const deleteUser = (id) => {
+        state.users = state.users.filter((user) => user.id !== id);
+        if (state.selectedId === id) {
+          resetFormState();
+        } else {
+          renderUsers();
+        }
+      };
+
+      userForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        if (!state.selectedId) return;
+
+        const user = state.users.find((item) => item.id === state.selectedId);
+        if (!user) return;
+
+        user.avatar = avatarInput.value.trim();
+        user.name = nameInput.value.trim();
+        user.email = emailInput.value.trim();
+        user.password = passwordInput.value.trim() || "••••••••";
+        user.phone = phoneInput.value.trim();
+
+        updateAvatarPreview();
+        renderUsers();
+      });
+
+      avatarInput.addEventListener("input", updateAvatarPreview);
+      nameInput.addEventListener("input", updateAvatarPreview);
+      resetForm.addEventListener("click", resetFormState);
+      createUser.addEventListener("click", createNewUser);
+
+      renderUsers();
+    </script>
+  </body>
+</html>

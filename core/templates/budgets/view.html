@@ -1,0 +1,719 @@
+{% extends 'base.html' %}
+
+{% block title %}Orçamento #{{ budget.id }} | Gestão{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto animate-fade-in-down">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <div class="flex items-center gap-4">
+            <a href="{{ url_for('budgets.list') }}" class="text-gray-400 hover:text-white transition text-sm">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </a>
+            <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                <i class="fas fa-file-invoice text-blue-500"></i> Orçamento #{{ budget.id }}
+            </h2>
+            <!-- Stage + Approval Badges -->
+            {% if budget.stage_status == 'budget' %}
+            <span
+                class="px-3 py-1 rounded-full text-xs font-bold bg-gray-500/10 text-gray-300 border border-gray-500/20">ORÇAMENTO</span>
+            {% elif budget.stage_status == 'ready_for_pickup' %}
+            <span
+                class="px-3 py-1 rounded-full text-xs font-bold bg-blue-500/10 text-blue-500 border border-blue-500/20">RETIRAR</span>
+            {% elif budget.stage_status == 'delivered' %}
+            <span
+                class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">ENTREGUE</span>
+            {% else %}
+            <span
+                class="px-3 py-1 rounded-full text-xs font-bold bg-gray-500/10 text-gray-400 border border-gray-500/20">ETAPA?</span>
+            {% endif %}
+
+            {% if budget.approval_status == 'approved' %}
+            <span
+                class="px-3 py-1 rounded-full text-xs font-bold bg-green-500/10 text-green-500 border border-green-500/20">APROVADO</span>
+            {% elif budget.approval_status == 'sent' %}
+            <span
+                class="px-3 py-1 rounded-full text-xs font-bold bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">AGUARDANDO</span>
+            {% elif budget.approval_status == 'rejected' %}
+            <span
+                class="px-3 py-1 rounded-full text-xs font-bold bg-red-500/10 text-red-500 border border-red-500/20">REPROVADO</span>
+            {% else %}
+            <span
+                class="px-3 py-1 rounded-full text-xs font-bold bg-gray-500/10 text-gray-400 border border-gray-500/20">DECISÃO?</span>
+            {% endif %}
+        </div>
+
+        <div class="flex gap-2">
+            <a href="{{ url_for('budgets.print_budget', id=budget.id) }}" target="_blank"
+                class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition text-sm flex items-center">
+                <i class="fas fa-print mr-2"></i> Imprimir
+            </a>
+            <button onclick="enableEdit()" id="btnEdit"
+                class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition text-sm shadow-lg shadow-blue-500/20">
+                <i class="fas fa-edit mr-2"></i> Editar
+            </button>
+            <button onclick="saveChanges()" id="btnSave"
+                class="hidden bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg transition text-sm shadow-lg shadow-green-500/20">
+                <i class="fas fa-save mr-2"></i> Salvar
+            </button>
+            {% if budget.approval_status == 'approved' %}
+            <button onclick="openApproveModal('edit')" id="btnEditFinancial"
+                class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg transition text-sm shadow-lg shadow-emerald-500/20 flex items-center">
+                <i class="fas fa-pen-to-square mr-2"></i> Editar Recebimento
+            </button>
+            {% elif budget.approval_status in ['sent', 'rejected'] %}
+            <button onclick="openApproveModal('approve')" id="btnApprove"
+                class="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg transition text-sm shadow-lg shadow-green-500/20 flex items-center">
+                <i class="fas fa-check-circle mr-2"></i> Aprovar
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <form id="budgetForm" class="space-y-6">
+        <!-- 1. Cliente e Veículo -->
+        <div class="card p-6 border border-gray-800 bg-[#171d21] rounded-xl relative group">
+            <div class="absolute -left-[1px] top-6 bottom-6 w-1 bg-blue-500 rounded-r"></div>
+            <h3 class="text-lg font-bold text-white mb-4 border-b border-gray-800 pb-2">
+                <i class="fas fa-user{% if session['role'] == 'oficina' %}-car{% endif %} text-blue-500 mr-2"></i> 
+                Dados do Cliente {% if session['role'] == 'oficina' %}e Veículo{% endif %}
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Cliente -->
+                <div>
+                    <label class="block mb-2 text-sm font-medium text-gray-400">Cliente</label>
+                    <input type="text" value="{{ budget.client_name }}" readonly
+                        class="bg-[#0f1316] border border-gray-700 text-gray-300 text-sm rounded-lg block w-full p-2.5 cursor-not-allowed opacity-70">
+                </div>
+
+                {% if session['role'] in ['oficina', 'admin'] %}
+                <!-- Placa -->
+                <div>
+                    <label class="block mb-2 text-sm font-medium text-gray-400">Placa do Veículo (Não editável)</label>
+                    <input type="text" value="{{ budget.vehicle_plate }}" readonly
+                        class="bg-[#0f1316] border border-gray-700 text-gray-300 text-sm rounded-lg block w-full p-2.5 font-mono uppercase cursor-not-allowed opacity-70">
+                </div>
+
+                <!-- Specs -->
+                <div class="md:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block mb-2 text-xs font-medium text-gray-500">Marca/Modelo</label>
+                        <input type="text" value="{{ budget.vehicle_brand }} / {{ budget.vehicle_model }}" readonly
+                            class="bg-[#0f1316]/50 border border-gray-800 text-gray-400 text-sm rounded-lg block w-full p-2">
+                    </div>
+                    <div>
+                        <label class="block mb-2 text-xs font-medium text-gray-500">Ano</label>
+                        <input type="text" value="{{ budget.vehicle_year }}" readonly
+                            class="bg-[#0f1316]/50 border border-gray-800 text-gray-400 text-sm rounded-lg block w-full p-2">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block mb-2 text-xs font-medium text-gray-500 text-yellow-500">KM (Atualizar se
+                            necessário)</label>
+                        <input type="number" name="vehicle_km" id="kmInput" value="{{ budget.vehicle_km }}" readonly
+                            class="bg-[#0f1316] border border-yellow-500/30 text-yellow-500 text-sm rounded-lg focus:ring-yellow-500 focus:border-yellow-500 block w-full p-2 font-bold editable-field transition">
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Mecânico Responsável -->
+        <div class="card p-6 border border-gray-800 bg-[#171d21] rounded-xl">
+             <h3 class="text-lg font-bold text-white mb-4 border-b border-gray-800 pb-2">
+                <i class="fas fa-user-cog text-blue-500 mr-2"></i> Responsável Técnico
+            </h3>
+            <div>
+                 <label class="block mb-2 text-sm font-medium text-gray-400">Selecione o Mecânico</label>
+                 <select name="mechanic_id" id="mechanicInput" disabled class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 editable-field disabled:opacity-50 transition">
+                    <option value="">-- Sem vínculo --</option>
+                    {% for mechanic in mechanics %}
+                    <option value="{{ mechanic.id }}" {% if budget.mechanic_id == mechanic.id %}selected{% endif %}>{{ mechanic.name }}</option>
+                    {% endfor %}
+                 </select>
+            </div>
+        </div>
+
+        <!-- 2. Itens -->
+        <div class="card p-6 border border-gray-800 bg-[#171d21] rounded-xl">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-800 pb-2">
+                <h3 class="text-lg font-bold text-white">
+                    <i class="fas fa-tools text-blue-500 mr-2"></i> Itens e Serviços
+                </h3>
+                <div class="text-xs text-gray-600">Debug: {{ items | length }} items found</div>
+            </div>
+
+            <!-- Add Item Form (Hidden by default, shown on Edit) -->
+            <div id="addItemForm"
+                class="hidden grid grid-cols-12 gap-3 mb-4 items-end bg-gray-900/30 p-3 rounded-lg border border-gray-800/50">
+                
+                <!-- Toggle Service -->
+                <div class="col-span-12 flex justify-end mb-2">
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="itemIsService" class="sr-only peer" onchange="toggleServiceMode()">
+                        <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                        <span class="ml-3 text-sm font-medium text-gray-300" id="serviceLabel">É Serviço?</span>
+                    </label>
+                </div>
+
+                <div class="col-span-12 md:col-span-5">
+                    <label class="block mb-1 text-xs text-gray-500">Descrição</label>
+                    <input type="text" list="productsList" id="itemDescInput"
+                        class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg block w-full p-2">
+                    <datalist id="productsList">
+                        {% for product in products %}
+                        <option value="{{ product.name }}" data-price="{{ product.sell_price }}" data-stock="{{ product.stock_quantity }}" data-id="{{ product.id }}">
+                            {% endfor %}
+                    </datalist>
+
+                    <datalist id="servicesList">
+                        {% for service in services_list %}
+                        <option value="{{ service.name }}" 
+                                data-price="{{ service.price }}"
+                                data-id="{{ service.id }}">
+                        {% endfor %}
+                    </datalist>
+                    
+                    <!-- Stock Indicator -->
+                    <p id="stockIndicator" class="hidden text-xs mt-1 font-bold"></p>
+                </div>
+                <div class="col-span-4 md:col-span-2">
+                    <label class="block mb-1 text-xs text-gray-500">Valor</label>
+                    <input type="number" step="0.01" id="itemPriceInput"
+                        class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg block w-full p-2">
+                </div>
+                <div class="col-span-4 md:col-span-2">
+                    <label class="block mb-1 text-xs text-gray-500">Qtd.</label>
+                    <input type="number" step="0.1" id="itemQtyInput" value="1"
+                        class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg block w-full p-2">
+                </div>
+                
+                <!-- Takeaway Checkbox -->
+                <div class="col-span-12 md:col-span-3 flex items-center justify-between gap-2">
+                    <div class="flex items-center" id="takeawayWrapper">
+                        <input type="checkbox" id="itemIsTakeaway" class="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded">
+                        <label for="itemIsTakeaway" class="ml-2 text-xs font-medium text-gray-300">Levou Peça?</label>
+                    </div>
+                    <button type="button" onclick="addItem()"
+                        class="bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg text-sm px-4 py-2 w-full md:w-auto">
+                        Adicionar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left text-gray-400">
+                    <thead class="text-xs text-gray-500 uppercase bg-gray-900/50 border-b border-gray-800">
+                        <tr>
+                            <th class="px-4 py-3">Descrição</th>
+                            <th class="px-4 py-3 text-right">Valor Unit.</th>
+                            <th class="px-4 py-3 text-center">Qtd.</th>
+                            <th class="px-4 py-3 text-right">Total</th>
+                            <th class="px-4 py-3 text-center w-12">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="itemsTableBody">
+                        <!-- Loaded via JS -->
+                    </tbody>
+                    <tfoot class="border-t border-gray-800 font-bold text-white bg-gray-900/20">
+                        <tr>
+                            <td colspan="3" class="px-4 py-3 text-right">Subtotal:</td>
+                            <td class="px-4 py-3 text-right" id="subtotalDisplay">R$ 0,00</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- 3. Totais e Obs -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="md:col-span-2">
+                <label class="block mb-2 text-sm font-medium text-gray-400">Observações</label>
+                <textarea name="notes" id="notesInput" rows="4" readonly
+                    class="bg-[#171d21] border border-gray-700 text-white text-sm rounded-xl block w-full p-3 resize-none editable-field">{{ budget.notes }}</textarea>
+            </div>
+
+            <div class="card p-6 border border-gray-800 bg-[#171d21] rounded-xl space-y-4">
+                <div class="flex justify-between items-center text-gray-400">
+                    <span>Subtotal</span>
+                    <span id="summarySubtotal">R$ 0,00</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-400">Desconto</span>
+                    <div class="flex items-center gap-2 w-32">
+                        <span class="text-gray-500">R$</span>
+                        <input type="number" step="0.01" id="discountInput" value="{{ budget.discount }}"
+                            oninput="calculateTotal()" readonly
+                            class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg block w-full p-1 text-right editable-field">
+                    </div>
+                </div>
+                <div
+                    class="border-t border-gray-800 pt-4 flex justify-between items-center text-xl font-bold text-white">
+                    <span>Total Final</span>
+                    <span id="finalTotal" class="text-green-500">R$ 0,00</span>
+                </div>
+
+                <!-- Status Select (Only visible in Edit Mode) -->
+                <div id="statusSelectWrapper" class="hidden mt-4 pt-4 border-t border-gray-800">
+                    <label class="block mb-2 text-sm font-medium text-gray-400">Decisão do Orçamento</label>
+                    <select id="approvalStatusSelect"
+                        class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg block w-full p-2.5 mb-3">
+                        <option value="sent" {% if budget.approval_status=='sent' %}selected{% endif %}>Aguardando</option>
+                        <option value="approved" {% if budget.approval_status=='approved' %}selected{% endif %}>Aprovado</option>
+                        <option value="rejected" {% if budget.approval_status=='rejected' %}selected{% endif %}>Reprovado</option>
+                    </select>
+
+                    <label class="block mb-2 text-sm font-medium text-gray-400">Etapa do Veículo</label>
+                    <select id="stageStatusSelect"
+                        class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg block w-full p-2.5">
+                        <option value="budget" {% if budget.stage_status=='budget' %}selected{% endif %}>Orçamento</option>
+                        <option value="ready_for_pickup" {% if budget.stage_status=='ready_for_pickup' %}selected{% endif %}>Retirar</option>
+                        <option value="delivered" {% if budget.stage_status=='delivered' %}selected{% endif %}>Entregue</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Approve Modal -->
+<div id="approveModal"
+    class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div
+        class="bg-[#171d21] w-full max-w-lg rounded-xl border border-gray-700 shadow-2xl relative animate-fade-in-down">
+        <div class="flex justify-between items-center p-6 border-b border-gray-800">
+            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                <i class="fas fa-check-circle text-green-500"></i> Aprovar e Gerar Receita
+            </h3>
+            <button onclick="closeApproveModal()" class="text-gray-400 hover:text-white transition"><i
+                    class="fas fa-times text-xl"></i></button>
+        </div>
+
+        <div class="p-6 space-y-4">
+            <p class="text-sm text-gray-400" id="approveModalSubtitle">Confirme os dados para lançar no financeiro:</p>
+
+            <div>
+                <label class="block mb-1 text-xs font-medium text-gray-500 uppercase">Descrição</label>
+                <input type="text" id="financialDesc" value="Orçamento #{{ budget.id }} - {{ budget.client_name }}"
+                    class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg block w-full p-2.5">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block mb-1 text-xs font-medium text-gray-500 uppercase">Valor (R$)</label>
+                    <input type="number" id="financialAmount" step="0.01" value="{{ budget.total_value }}"
+                        class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg block w-full p-2.5 font-bold">
+                </div>
+                <div>
+                    <label class="block mb-1 text-xs font-medium text-gray-500 uppercase">Data</label>
+                    <input type="date" id="financialDate"
+                        class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg block w-full p-2.5">
+                </div>
+            </div>
+
+            <div>
+                <label class="block mb-1 text-xs font-medium text-gray-500 uppercase">Forma de Pagamento</label>
+                <select id="financialPayment"
+                    class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg block w-full p-2.5">
+                    <option value="pix">PIX</option>
+                    <option value="dinheiro">Dinheiro</option>
+                    <option value="cartao credito">Cartao de Credito</option>
+                    <option value="cartao debito">Cartao de Debito</option>
+                </select>
+            </div>
+            <div>
+                <label class="block mb-1 text-xs font-medium text-gray-500 uppercase">Categoria</label>
+                <input type="text" value="Serviço" readonly
+                    class="bg-[#0f1316] border border-gray-700 text-gray-500 text-sm rounded-lg block w-full p-2.5 cursor-not-allowed">
+            </div>
+        </div>
+
+        <div class="flex justify-end gap-3 p-6 border-t border-gray-800">
+            <button onclick="closeApproveModal()"
+                class="px-4 py-2 text-sm font-medium text-gray-400 hover:text-white transition">Cancelar</button>
+            <button onclick="confirmApproval()" id="approveModalConfirm"
+                class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-500 shadow-lg shadow-green-500/20">
+                Confirmar Aprovação
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const financialData = {{ financial | tojson }};
+    const approveUrl = "{{ url_for('budgets.approve_financial', id=budget.id) }}";
+    const editFinancialUrl = "{{ url_for('budgets.update_financial', id=budget.id) }}";
+
+    // Init items from backend
+    let items = [
+        {% for item in items %}
+    {
+        product_id: {{ item.product_id | tojson }},
+        desc: {{ item.description | tojson }},
+        price: {{ item.unit_price | default(0) | float }},
+        qty: {{ item.quantity | default(1) | float }},
+        total: {{ item.total | default(0) | float }},
+        is_service: {{ 'true' if item.is_service else 'false' }},
+        is_takeaway: {{ 'true' if item.is_takeaway else 'false' }}
+    },
+    {% endfor %}
+    ];
+    console.log('Items loaded:', items);
+
+    let isEditing = false;
+    let selectedStock = null;
+
+    function toggleServiceMode() {
+        const isService = document.getElementById('itemIsService').checked;
+        const stockEl = document.getElementById('stockIndicator');
+        const takeawayEl = document.getElementById('takeawayWrapper');
+        const label = document.getElementById('serviceLabel');
+        const descInput = document.getElementById('itemDescInput');
+
+        label.textContent = isService ? "Serviço" : "Peça";
+        label.className = isService ? "ml-3 text-sm font-medium text-purple-400" : "ml-3 text-sm font-medium text-blue-400";
+        
+        // Swap List and Placeholder
+        if (isService) {
+            descInput.setAttribute('list', 'servicesList');
+            descInput.placeholder = "Selecione um serviço...";
+            stockEl.classList.add('hidden');
+            takeawayEl.classList.add('opacity-50', 'pointer-events-none');
+            document.getElementById('itemIsTakeaway').checked = false;
+        } else {
+            descInput.setAttribute('list', 'productsList');
+            descInput.placeholder = "Buscar produto...";
+            stockEl.classList.remove('hidden');
+            takeawayEl.classList.remove('opacity-50', 'pointer-events-none');
+            checkStock(descInput.value);
+        }
+        
+        // Optional: Clear input when switching modes to prevent confusion?
+        // descInput.value = ''; 
+    }
+
+    function checkStock(val) {
+        if (document.getElementById('itemIsService').checked) return;
+
+        const options = document.getElementById('productsList').options;
+        const stockEl = document.getElementById('stockIndicator');
+        let found = false;
+
+        for (let i = 0; i < options.length; i++) {
+            if (options[i].value === val) {
+                const stock = parseFloat(options[i].getAttribute('data-stock')) || 0;
+                selectedStock = stock;
+                found = true;
+
+                if (stock > 0) {
+                    stockEl.className = "text-xs mt-1 font-bold text-green-500 flex items-center gap-1";
+                    stockEl.innerHTML = `<i class="fas fa-check"></i> Em Estoque: ${stock}`;
+                } else {
+                    stockEl.className = "text-xs mt-1 font-bold text-red-500 flex items-center gap-1";
+                    stockEl.innerHTML = `<i class="fas fa-times"></i> Sem Estoque`;
+                }
+                stockEl.classList.remove('hidden');
+                break;
+            }
+        }
+
+        if (!found) {
+            stockEl.classList.add('hidden');
+            selectedStock = null;
+        }
+    }
+
+    // --- Render Logic ---
+    function renderItems() {
+        const tbody = document.getElementById('itemsTableBody');
+        tbody.innerHTML = '';
+        let subtotal = 0;
+
+        items.forEach((item, index) => {
+            subtotal += item.total;
+            const tr = document.createElement('tr');
+            tr.className = 'border-b border-gray-800/50 hover:bg-gray-800/30 transition';
+
+            // Flags
+            let flags = '';
+            if (item.is_service) {
+                flags += `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20 mr-2">
+                            <i class="fas fa-wrench text-[10px]"></i> Serviço
+                          </span>`;
+            } else {
+                flags += `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20 mr-2">
+                             <i class="fas fa-box text-[10px]"></i> Peça
+                          </span>`;
+                if (item.is_takeaway) {
+                    flags += `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-orange-500/10 text-orange-400 border border-orange-500/20" title="Cliente levou a peça">
+                                <i class="fas fa-walking text-[10px]"></i> Balcão
+                              </span>`;
+                }
+            }
+
+            // Action buttons
+            const actions = isEditing
+                ? `
+                <div class="flex justify-center gap-2">
+                    <button onclick="editItem(${index})" type="button" class="text-blue-500 hover:text-blue-400" title="Editar">
+                        <i class="fas fa-pen"></i>
+                    </button>
+                    <button onclick="removeItem(${index})" type="button" class="text-red-500 hover:text-red-400" title="Remover">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                `
+                : '';
+
+            tr.innerHTML = `
+                <td class="px-4 py-3">
+                    <div class="font-medium text-white">${item.desc}</div>
+                    <div class="mt-1">${flags}</div>
+                </td>
+                <td class="px-4 py-3 text-right">R$ ${item.price.toFixed(2).replace('.', ',')}</td>
+                <td class="px-4 py-3 text-center">${item.qty}</td>
+                <td class="px-4 py-3 text-right font-medium text-white">R$ ${item.total.toFixed(2).replace('.', ',')}</td>
+                <td class="px-4 py-3 text-center">${actions}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        // Totals
+        document.getElementById('subtotalDisplay').innerText = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
+        document.getElementById('summarySubtotal').innerText = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
+        calculateTotal(subtotal);
+    }
+
+    function calculateTotal(currentSubtotal) {
+        if (currentSubtotal === undefined) {
+            currentSubtotal = items.reduce((acc, item) => acc + item.total, 0);
+        }
+        const discount = parseFloat(document.getElementById('discountInput').value) || 0;
+        const total = Math.max(0, currentSubtotal - discount);
+        document.getElementById('finalTotal').innerText = `R$ ${total.toFixed(2).replace('.', ',')}`;
+    }
+
+    // --- Edit Mode Logic ---
+    function enableEdit() {
+        isEditing = true;
+        document.getElementById('btnEdit').classList.add('hidden');
+        document.getElementById('btnSave').classList.remove('hidden');
+
+        // Hide Approve Button in Edit Mode to avoid conflicts
+        const btnApprove = document.getElementById('btnApprove');
+        if (btnApprove) btnApprove.classList.add('hidden');
+
+        document.getElementById('addItemForm').classList.remove('hidden');
+        document.getElementById('statusSelectWrapper').classList.remove('hidden');
+
+        // Enable inputs
+        document.querySelectorAll('.editable-field').forEach(el => {
+            el.removeAttribute('readonly');
+            el.removeAttribute('disabled');
+            el.classList.remove('bg-[#171d21]', 'border-gray-700');
+            el.classList.add('bg-[#0f1316]', 'border-blue-500', 'ring-1', 'ring-blue-500'); // Highlight
+        });
+
+        renderItems(); // Re-render to show delete buttons
+        Toastify({ text: "Modo de edição ativado", backgroundColor: "#3b82f6" }).showToast();
+    }
+
+    // --- CRUD Items ---
+    function addItem() {
+        const descInput = document.getElementById('itemDescInput');
+        const priceInput = document.getElementById('itemPriceInput');
+        const qtyInput = document.getElementById('itemQtyInput');
+        const isService = document.getElementById('itemIsService').checked;
+        const isTakeaway = document.getElementById('itemIsTakeaway').checked;
+
+        const desc = descInput.value.trim();
+        const price = parseFloat(priceInput.value) || 0;
+        const qty = parseFloat(qtyInput.value) || 1;
+
+        if (!desc || price <= 0) return;
+
+        // Find product ID from datalist
+        let productId = null;
+        const listId = isService ? 'servicesList' : 'productsList';
+        const options = document.getElementById(listId).options;
+        for (let i = 0; i < options.length; i++) {
+            if (options[i].value === desc) {
+                productId = options[i].getAttribute('data-id');
+                break;
+            }
+        }
+
+        items.push({ 
+            product_id: productId,
+            desc: desc, 
+            price: price, 
+            qty: qty, 
+            total: price * qty,
+            is_service: isService,
+            is_takeaway: isService ? false : isTakeaway 
+        });
+        renderItems();
+
+        descInput.value = '';
+        priceInput.value = '';
+        qtyInput.value = '1';
+        document.getElementById('itemIsService').checked = false;
+        document.getElementById('itemIsTakeaway').checked = false;
+        toggleServiceMode(); // Reset UI
+        descInput.focus();
+    }
+
+    function editItem(index) {
+        const item = items[index];
+        document.getElementById('itemDescInput').value = item.desc;
+        document.getElementById('itemPriceInput').value = item.price;
+        document.getElementById('itemQtyInput').value = item.qty;
+        
+        document.getElementById('itemIsService').checked = item.is_service;
+        document.getElementById('itemIsTakeaway').checked = item.is_takeaway;
+        toggleServiceMode();
+
+        // Remove from list so user can re-add updated version
+        items.splice(index, 1);
+        renderItems();
+        document.getElementById('itemDescInput').focus();
+    }
+
+    function removeItem(index) {
+        items.splice(index, 1);
+        renderItems();
+    }
+
+    // Auto-fill Product/Service Price and Check Stock
+    document.getElementById('itemDescInput').addEventListener('input', function (e) {
+        const val = e.target.value;
+        const isService = document.getElementById('itemIsService').checked;
+        const listId = isService ? 'servicesList' : 'productsList';
+        const options = document.getElementById(listId).options;
+        
+        if (!isService) {
+             checkStock(val);
+        } else {
+             document.getElementById('stockIndicator').classList.add('hidden');
+        }
+
+        for (let i = 0; i < options.length; i++) {
+            if (options[i].value === val) {
+                const price = options[i].getAttribute('data-price');
+                // Only overwrite if price > 0 to avoid wiping manual entry
+                if (price && parseFloat(price) > 0) {
+                     document.getElementById('itemPriceInput').value = price;
+                }
+                break;
+            }
+        }
+    });
+
+    // --- Save Logic ---
+    async function saveChanges() {
+        const payload = {
+            vehicle_km: document.getElementById('kmInput').value,
+            mechanic_id: document.getElementById('mechanicInput') ? document.getElementById('mechanicInput').value : '',
+            notes: document.getElementById('notesInput').value,
+            discount: document.getElementById('discountInput').value,
+            approval_status: document.getElementById('approvalStatusSelect').value,
+            stage_status: document.getElementById('stageStatusSelect').value,
+            items: items
+        };
+
+        Toastify({ text: "Salvando...", backgroundColor: "#3b82f6" }).showToast();
+
+        try {
+            const response = await fetch("{{ url_for('budgets.update_budget', id=budget.id) }}", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                Toastify({ text: "Orçamento atualizado!", backgroundColor: "#10b981" }).showToast();
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                Toastify({ text: "Erro: " + result.error, backgroundColor: "#ef4444" }).showToast();
+            }
+        } catch (e) {
+            console.error(e);
+            Toastify({ text: "Erro de conexão", backgroundColor: "#ef4444" }).showToast();
+        }
+    }
+
+    // --- Approve Logic ---
+    let approveMode = 'approve';
+
+    function openApproveModal(mode) {
+        approveMode = mode || 'approve';
+        document.getElementById('approveModal').classList.remove('hidden');
+        const titleEl = document.querySelector('#approveModal h3');
+        const subtitleEl = document.getElementById('approveModalSubtitle');
+        const confirmBtn = document.getElementById('approveModalConfirm');
+
+        if (approveMode === 'edit') {
+            if (titleEl) titleEl.innerHTML = '<i class="fas fa-pen-to-square text-emerald-500"></i> Editar Recebimento';
+            if (subtitleEl) subtitleEl.textContent = 'Atualize os dados do recebimento:';
+            if (confirmBtn) confirmBtn.textContent = 'Salvar Alterações';
+        } else {
+            if (titleEl) titleEl.innerHTML = '<i class="fas fa-check-circle text-green-500"></i> Aprovar e Gerar Receita';
+            if (subtitleEl) subtitleEl.textContent = 'Confirme os dados para lançar no financeiro:';
+            if (confirmBtn) confirmBtn.textContent = 'Confirmar Aprovação';
+        }
+
+        if (financialData) {
+            document.getElementById('financialDesc').value = financialData.description || '';
+            document.getElementById('financialAmount').value = financialData.amount || '';
+            document.getElementById('financialPayment').value = financialData.payment_type || 'pix';
+            document.getElementById('financialDate').value = financialData.entry_date || '';
+        } else {
+            document.getElementById('financialDate').valueAsDate = new Date();
+        }
+    }
+
+    function closeApproveModal() {
+        document.getElementById('approveModal').classList.add('hidden');
+    }
+
+    async function confirmApproval() {
+        const payload = {
+            description: document.getElementById('financialDesc').value,
+            amount: document.getElementById('financialAmount').value,
+            payment_type: document.getElementById('financialPayment').value,
+            entry_date: document.getElementById('financialDate').value
+        };
+
+        Toastify({ text: "Processando...", backgroundColor: "#3b82f6" }).showToast();
+
+        try {
+            const url = approveMode === 'edit' ? editFinancialUrl : approveUrl;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                const msg = approveMode === 'edit' ? "Recebimento atualizado!" : "Aprovado e Gerado Receita!";
+                Toastify({ text: msg, backgroundColor: "#10b981" }).showToast();
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                Toastify({ text: "Erro: " + result.error, backgroundColor: "#ef4444" }).showToast();
+            }
+        } catch (e) {
+            console.error(e);
+            Toastify({ text: "Erro de conexão", backgroundColor: "#ef4444" }).showToast();
+        }
+    }
+
+    // Initial Render
+    renderItems();
+</script>
+{% endblock %}

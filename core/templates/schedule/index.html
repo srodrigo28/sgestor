@@ -1,0 +1,554 @@
+{% extends 'base.html' %}
+
+{% block title %}Agendamentos{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/pt-br.js"></script>
+<style>
+    /* Dark Mode Overrides for FullCalendar */
+    .fc {
+        color: #e5e7eb; /* text-gray-200 */
+    }
+    .fc-theme-standard .fc-scrollgrid, 
+    .fc-theme-standard td, 
+    .fc-theme-standard th {
+        border-color: #374151; /* border-gray-700 */
+    }
+    .fc-col-header-cell-cushion, 
+    .fc-daygrid-day-number {
+        color: #e5e7eb;
+        text-decoration: none;
+    }
+    .fc-daygrid-day.fc-day-today {
+        background-color: #1f2937 !important; /* bg-gray-800 */
+    }
+    .fc-button-primary {
+        background-color: #2563eb !important; /* bg-blue-600 */
+        border-color: #2563eb !important;
+    }
+    .fc-button-primary:hover {
+        background-color: #1d4ed8 !important; /* bg-blue-700 */
+        border-color: #1d4ed8 !important;
+    }
+    .fc-button-active {
+        background-color: #1e40af !important;
+    }
+    .fc-daygrid-event {
+        cursor: pointer;
+    }
+    .fc-popover {
+        background-color: #1f2937 !important;
+        border-color: #374151 !important;
+    }
+    .fc-popover-header {
+        background-color: #374151 !important;
+        color: white !important;
+    }
+    .fc-popover-body {
+        color: #e5e7eb !important;
+    }
+    .fc-list-event:hover td {
+        background-color: #374151 !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="flex justify-between items-center mb-6 animate-fade-in-down">
+        <div>
+            <h1 class="text-2xl font-bold text-white flex items-center gap-2">
+                <i class="fas fa-calendar-alt text-blue-500"></i> Agendamentos
+            </h1>
+            <p class="text-gray-400 text-sm mt-1">Gerencie a agenda de serviços e atendimentos</p>
+        </div>
+        
+        <button onclick="openScheduleModal('add')" 
+            class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition shadow-lg shadow-blue-500/20 flex items-center gap-2">
+            <i class="fas fa-plus"></i> Novo Agendamento
+        </button>
+    </div>
+
+    <div class="bg-[#171d21] rounded-xl border border-gray-800 p-6 shadow-xl animate-fade-in-down" style="animation-delay: 0.1s;">
+        <div id="calendar"></div>
+    </div>
+</div>
+
+<!-- Day Details Modal -->
+<div id="dayDetailsModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-[#171d21] w-full max-w-md rounded-xl border border-gray-700 shadow-2xl relative animate-fade-in-down">
+        <div class="flex justify-between items-center p-6 border-b border-gray-800">
+            <h3 class="text-xl font-bold text-white flex items-center gap-2" id="dayDetailTitle">
+                <i class="fas fa-list text-blue-500"></i> Agendamentos do Dia
+            </h3>
+            <button onclick="closeDayModal()" class="text-gray-400 hover:text-white transition"><i class="fas fa-times text-xl"></i></button>
+        </div>
+
+        <div class="p-6">
+            <div id="dayEventsList" class="space-y-3 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                <!-- Events will be injected here -->
+            </div>
+            
+            <div class="mt-6 pt-4 border-t border-gray-800 flex justify-end">
+                <button type="button" id="btnAddInDay" onclick=""
+                    class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-500 transition shadow-lg shadow-blue-500/30 flex items-center gap-2">
+                    <i class="fas fa-plus"></i> Novo neste dia
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div id="scheduleModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-[#171d21] w-full max-w-md rounded-xl border border-gray-700 shadow-2xl relative animate-fade-in-down">
+        <div class="flex justify-between items-center p-6 border-b border-gray-800">
+            <h3 class="text-xl font-bold text-white flex items-center gap-2" id="modalTitle">
+                <i class="fas fa-calendar-plus text-blue-500"></i> Novo Agendamento
+            </h3>
+            <button onclick="closeScheduleModal()" class="text-gray-400 hover:text-white transition"><i class="fas fa-times text-xl"></i></button>
+        </div>
+
+        <form id="scheduleForm" method="POST" class="p-6">
+            <div class="space-y-4">
+                <!-- Client Select (Searchable) -->
+                <div>
+                    <label class="block mb-2 text-sm font-medium text-gray-400">Cliente (Opcional)</label>
+                    <div class="relative">
+                         <input type="hidden" name="client_id" id="clientSelectId">
+                         <input type="text" id="clientSearchDisplay" placeholder="Digite para buscar..." autocomplete="off"
+                            class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                         
+                         <!-- Dropdown List -->
+                         <div id="clientDropdown" class="hidden absolute z-10 w-full bg-[#171d21] border border-gray-700 rounded-lg max-h-48 overflow-y-auto shadow-lg mt-1">
+                             <div class="p-2 cursor-pointer hover:bg-gray-800 text-gray-400 text-sm italic" onclick="selectClient('', '')">-- Nenhum / Limpar --</div>
+                             {% for client in clients %}
+                             <div class="client-option p-2 cursor-pointer hover:bg-blue-900/30 text-white text-sm" 
+                                  onclick="selectClient('{{ client.id }}', '{{ client.name }}')"
+                                  data-name="{{ client.name|lower }}">
+                                 {{ client.name }}
+                             </div>
+                             {% endfor %}
+                         </div>
+                    </div>
+                </div>
+
+                <!-- Row: Title & Date -->
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="col-span-2">
+                        <label class="block mb-2 text-sm font-medium text-gray-400">Título / Serviço</label>
+                        <input type="text" name="title" id="schedTitle" required
+                            class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                            placeholder="Ex: Instalação, Orçamento">
+                    </div>
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-400">Data</label>
+                        <input type="date" name="start_date" id="schedDate" required
+                            class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                    </div>
+                </div>
+
+                <!-- Row: Start Time & End Time -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-400">Hora Início</label>
+                        <input type="time" name="start_time" id="schedTime" required
+                            class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                    </div>
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-400">Hora Término (Estimada)</label>
+                        <input type="time" name="end_time" id="schedEndTime"
+                            class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                    </div>
+                </div>
+
+                <!-- Occupied Slots Display -->
+                <div id="occupiedSlotsPanel" class="hidden bg-red-900/20 border border-red-900/50 rounded-lg p-3">
+                    <h4 class="text-xs font-bold text-red-400 mb-2 uppercase tracking-wide">Horários Ocupados Neste Dia:</h4>
+                    <div id="occupiedSlotsList" class="flex flex-wrap gap-2">
+                        <!-- badges injected here -->
+                    </div>
+                </div>
+
+                <!-- Status (Only for Edit) -->
+                <div id="statusField" class="hidden">
+                    <label class="block mb-2 text-sm font-medium text-gray-400">Status</label>
+                    <select name="status" id="schedStatus"
+                        class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                        <option value="scheduled">Agendado</option>
+                        <option value="completed">Concluído</option>
+                        <option value="cancelled">Cancelado</option>
+                        <option value="no_show">Não Compareceu</option>
+                    </select>
+                </div>
+
+                <!-- Description -->
+                <div>
+                    <label class="block mb-2 text-sm font-medium text-gray-400">Observações</label>
+                    <textarea name="description" id="schedDesc" rows="3"
+                        class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                        placeholder="Detalhes do agendamento..."></textarea>
+                </div>
+            </div>
+
+            <!-- Footer Buttons -->
+            <div class="flex justify-between mt-8">
+                <button type="button" id="btnDelete" onclick="deleteEvent()" class="hidden text-red-500 hover:text-red-400 font-medium text-sm flex items-center gap-1">
+                    <i class="fas fa-trash"></i> Excluir
+                </button>
+                <div class="flex gap-3 ml-auto">
+                    <button type="button" onclick="closeScheduleModal()"
+                        class="px-5 py-2.5 text-sm font-medium text-gray-300 bg-gray-800 rounded-lg border border-gray-600 hover:bg-gray-700 hover:text-white transition">Cancelar</button>
+                    <button type="submit"
+                        class="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-500 focus:ring-4 focus:outline-none focus:ring-blue-800 transition shadow-lg shadow-blue-500/30">Salvar</button>
+                </div>
+            </div>
+        </form>
+        
+        <!-- Hidden Delete Form -->
+        <form id="deleteForm" method="POST" class="hidden"></form>
+    </div>
+</div>
+
+<script>
+    let calendar;
+    // We already have 'events' variable inside DOMContentLoaded, 
+    // but we need it accessible globally for our filters
+    let globalEvents = [];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const calendarEl = document.getElementById('calendar');
+        // Initial Events from Server
+        globalEvents = JSON.parse('{{ events_json | safe }}');
+        const events = globalEvents;
+        
+        calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            locale: 'pt-br',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+            },
+            events: events,
+            editable: true,
+            dayMaxEvents: 1, // Limit events to 1 (+ more link)
+            selectable: true,
+            // Custom handler for "+ X more" to open our day details modal
+            moreLinkClick: function(info) {
+               // Filter events for this day just like dateClick
+               const clickedDate = info.date.toISOString().split('T')[0];
+               
+               // info.allSegs contains the events hidden, but we want ALL events for that day usually
+               // Let's us the global events array for consistency
+               const dayEvents = events.filter(e => {
+                   const eventStart = e.start.split('T')[0];
+                   return eventStart === clickedDate;
+               });
+               
+               openDayDetails(clickedDate, dayEvents);
+               return "avoid"; // prevent Default popup
+            },
+            // Click on date to add or view
+            dateClick: function(info) {
+                const dateStr = info.dateStr;
+                const hasTime = dateStr.includes('T');
+                const dateOnly = hasTime ? dateStr.split('T')[0] : dateStr;
+
+                // In Month view, check if day has events
+                // In Week/Day view (hasTime=true), we usually want to ADD at that specific time slot
+                
+                if (!hasTime) {
+                     const dayEvents = events.filter(e => {
+                        const eventStart = e.start.split('T')[0];
+                        return eventStart === dateOnly;
+                    });
+
+                    if (dayEvents.length > 0) {
+                        openDayDetails(dateOnly, dayEvents);
+                        return;
+                    }
+                }
+                
+                // If it's a specific time slot OR an empty day, go to Add Modal
+                openScheduleModal('add', null, dateStr);
+            },
+            // Click on event to edit
+            eventClick: function(info) {
+                openScheduleModal('edit', info.event);
+            },
+            // Drag & Drop (Optional: Update via AJAX)
+            eventDrop: function(info) {
+               // Implement AJAX update if needed, currently manual edit refetches page
+               alert('A alteração de data via arraste não está salva automaticamente. Edite o evento para confirmar.');
+               info.revert();
+            }
+        });
+        
+        calendar.render();
+
+        // SETUP CLIENT SEARCH
+        const searchInput = document.getElementById('clientSearchDisplay');
+        const dropdown = document.getElementById('clientDropdown');
+        const options = dropdown.querySelectorAll('.client-option');
+
+        searchInput.addEventListener('focus', () => dropdown.classList.remove('hidden'));
+        
+        // Hide dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        searchInput.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            dropdown.classList.remove('hidden');
+            options.forEach(opt => {
+                const name = opt.getAttribute('data-name');
+                if (name.includes(term)) {
+                    opt.classList.remove('hidden');
+                } else {
+                    opt.classList.add('hidden');
+                }
+            });
+        });
+
+        // SETUP OCCUPIED SLOTS CHECK
+        document.getElementById('schedDate').addEventListener('change', updateOccupiedSlots);
+    });
+
+    function selectClient(id, name) {
+        document.getElementById('clientSelectId').value = id;
+        document.getElementById('clientSearchDisplay').value = name;
+        document.getElementById('clientDropdown').classList.add('hidden');
+    }
+
+    function updateOccupiedSlots() {
+        const dateInput = document.getElementById('schedDate');
+        const list = document.getElementById('occupiedSlotsList');
+        const panel = document.getElementById('occupiedSlotsPanel');
+        const dateVal = dateInput.value;
+
+        if (!dateVal) {
+            panel.classList.add('hidden');
+            return;
+        }
+
+        // Filter events for this day
+        // Event format: start: "2023-10-10T14:30:00"
+        const relevant = globalEvents.filter(e => e.start.startsWith(dateVal));
+        
+        if (relevant.length === 0) {
+            panel.classList.add('hidden');
+            return;
+        }
+
+        panel.classList.remove('hidden');
+        list.innerHTML = '';
+        
+        // Sort by time
+        relevant.sort((a, b) => new Date(a.start) - new Date(b.start));
+
+        relevant.forEach(evt => {
+            const startT = new Date(evt.start).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+            // Try to approximate end time if exists, else +1h
+            let endT = "??:??";
+            if (evt.end) {
+                endT = new Date(evt.end).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+            } else {
+                // assume 1h
+                // const d = new Date(evt.start); d.setHours(d.getHours()+1); ... simple is better
+            }
+            
+            const badge = document.createElement('span');
+            badge.className = "px-2 py-1 round-md bg-red-500/20 text-red-200 text-xs border border-red-500/30 rounded";
+            badge.innerText = `${startT} - ${endT}`;
+            badge.title = evt.extendedProps?.raw_title || evt.title; // Show title on hover
+            list.appendChild(badge);
+        });
+    }
+
+    function openScheduleModal(mode, event = null, dateStr = null) {
+        const modal = document.getElementById('scheduleModal');
+        const form = document.getElementById('scheduleForm');
+        const deleteBtn = document.getElementById('btnDelete');
+        const title = document.getElementById('modalTitle');
+        const statusField = document.getElementById('statusField');
+        
+        // Reset Search Fields
+        document.getElementById('clientSelectId').value = "";
+        document.getElementById('clientSearchDisplay').value = "";
+        
+        modal.classList.remove('hidden');
+        
+        if (mode === 'add') {
+            form.action = "{{ url_for('schedule.add_appointment') }}";
+            form.reset();
+            // Clear search display again explicitly after reset
+            document.getElementById('clientSearchDisplay').value = "";
+            
+            title.innerHTML = '<i class="fas fa-calendar-plus text-blue-500"></i> Novo Agendamento';
+            deleteBtn.classList.add('hidden');
+            statusField.classList.add('hidden');
+            
+            if (dateStr) {
+                // Check if string contains time (e.g., 2023-10-27T10:30:00)
+                if (dateStr.includes('T')) {
+                    const [d, t] = dateStr.split('T');
+                    document.getElementById('schedDate').value = d;
+                    // Extract HH:MM from t (which might have timezone/seconds)
+                    document.getElementById('schedTime').value = t.substring(0, 5);
+                } else {
+                    document.getElementById('schedDate').value = dateStr;
+                    // Default time logic if only date provided
+                    const now = new Date();
+                    now.setMinutes(0);
+                    now.setHours(now.getHours() + 1);
+                    document.getElementById('schedTime').value = now.toTimeString().substring(0,5);
+                }
+            } else {
+                // Set today as default
+                document.getElementById('schedDate').valueAsDate = new Date();
+                const now = new Date();
+                now.setMinutes(0);
+                now.setHours(now.getHours() + 1);
+                document.getElementById('schedTime').value = now.toTimeString().substring(0,5);
+            }
+            
+            // Check occupied slots immediately for the default/selected date
+            updateOccupiedSlots();
+            
+        } else if (mode === 'edit' && event) {
+            form.action = "/schedule/edit/" + event.id;
+            title.innerHTML = '<i class="fas fa-edit text-blue-500"></i> Editar Agendamento';
+            deleteBtn.classList.remove('hidden');
+            statusField.classList.remove('hidden');
+            
+            // Populate form
+            // Old select: document.getElementById('clientSelect').value = event.extendedProps.client_id;
+            // New Search inputs:
+            const cId = event.extendedProps.client_id;
+            if (cId) {
+                document.getElementById('clientSelectId').value = cId;
+                // Find name in clients list? We passed clients to template, but not easily accessible by ID in JS map.
+                // Workaround: We can infer from the event title if needed, OR we should have passed a Map.
+                // Simpler: Iterate the hidden list options to find the name.
+                const options = document.querySelectorAll('.client-option');
+                options.forEach(opt => {
+                    // We extract ID from onclick="selectClient('ID', 'NAME')" - bit hacky string parsing or add data-id attr
+                    // Let's rely on the fact that we can add data-id to the HTML above
+                    // Actually, let's update HTML above to include data-id attribute for easier lookup
+                     if (opt.getAttribute('onclick').includes(`'${cId}'`)) {
+                         document.getElementById('clientSearchDisplay').value = opt.innerText.trim();
+                     }
+                });
+            }
+            
+            document.getElementById('schedTitle').value = event.extendedProps.raw_title;
+            document.getElementById('schedDesc').value = event.extendedProps.description;
+            document.getElementById('schedStatus').value = event.extendedProps.status;
+            
+            const start = event.start;
+            const end = event.end;
+            
+            if (start) {
+                document.getElementById('schedDate').value = start.toISOString().split('T')[0];
+                document.getElementById('schedTime').value = start.toTimeString().substring(0,5);
+            }
+            if (end) {
+                document.getElementById('schedEndTime').value = end.toTimeString().substring(0,5);
+            }
+            
+            // Check occupied slots
+            updateOccupiedSlots();
+            
+            // Setup Delete Action
+            document.getElementById('deleteForm').action = "/schedule/delete/" + event.id;
+        }
+    }
+
+    function closeScheduleModal() {
+        document.getElementById('scheduleModal').classList.add('hidden');
+    }
+    
+    function deleteEvent() {
+        if(confirm('Tem certeza que deseja excluir este agendamento?')) {
+            document.getElementById('deleteForm').submit();
+        }
+    }
+
+    // Day Details Logic
+    function openDayDetails(dateStr, dayEvents) {
+        const modal = document.getElementById('dayDetailsModal');
+        const list = document.getElementById('dayEventsList');
+        const title = document.getElementById('dayDetailTitle');
+        const btnAdd = document.getElementById('btnAddInDay');
+
+        // Format Date for Title (DD/MM/YYYY)
+        const [year, month, day] = dateStr.split('-');
+        title.innerHTML = `<i class="fas fa-list text-blue-500"></i> Agendamentos: ${day}/${month}/${year}`;
+        
+        // Define add button action
+        btnAdd.onclick = () => {
+            closeDayModal();
+            openScheduleModal('add', null, dateStr);
+        };
+
+        // Build List
+        list.innerHTML = '';
+        
+        // Sort events by time
+        dayEvents.sort((a, b) => new Date(a.start) - new Date(b.start));
+
+        dayEvents.forEach(evt => {
+            const timeStr = new Date(evt.start).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+            const statusColors = {
+                'completed': 'border-green-500 text-green-400',
+                'cancelled': 'border-red-500 text-red-400',
+                'no_show': 'border-yellow-500 text-yellow-400',
+                'scheduled': 'border-blue-500 text-blue-400'
+            };
+            const borderColor = statusColors[evt.extendedProps.status] || 'border-blue-500';
+            const textColor = evt.extendedProps.status === 'completed' ? 'text-gray-500 line-through' : 'text-white';
+            
+            const el = document.createElement('div');
+            el.className = `p-3 bg-[#0f1316] border-l-4 ${borderColor} rounded-lg cursor-pointer hover:bg-gray-800 transition`;
+            el.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="text-sm font-bold text-gray-400 block mb-1">${timeStr}</span>
+                        <h4 class="font-medium ${textColor} text-sm">${evt.title}</h4>
+                        <p class="text-xs text-gray-500 mt-1 truncate">${evt.extendedProps.description || ''}</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-600 text-sm mt-2"></i>
+                </div>
+            `;
+            
+            // On click, open the edit modal for this event
+            // Note: 'evt' here is the raw JSON object, not the FullCalendar Event Object.
+            // But openModal('edit', fullCalendarEvent) expects a FullCalendar object for properties like .start, .end, .extendedProps
+            // OR we can adapt openModal to handle plain object or rely on calendar.getEventById
+            
+            el.onclick = () => {
+                closeDayModal();
+                // We need to get the real event object from calendar to ensure all methods/props work if openModal depends on them
+                const calendarEvent = calendar.getEventById(evt.id);
+                if (calendarEvent) {
+                    openScheduleModal('edit', calendarEvent);
+                }
+            };
+            
+            list.appendChild(el);
+        });
+
+        modal.classList.remove('hidden');
+    }
+
+    function closeDayModal() {
+        document.getElementById('dayDetailsModal').classList.add('hidden');
+    }
+</script>
+{% endblock %}

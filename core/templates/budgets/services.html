@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+
+{% block title %}Serviços | Gestão{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto animate-fade-in-down">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+        <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+            <i class="fas fa-tools text-blue-500"></i> Catálogo de Serviços
+        </h2>
+
+        <div class="flex items-center gap-3 w-full md:w-auto">
+            <!-- Search -->
+            <form action="{{ url_for('services.list') }}" method="GET" class="relative group w-full md:w-auto">
+                <input type="text" name="search" placeholder="Buscar Serviço..."
+                    value="{{ request.args.get('search', '') }}"
+                    class="bg-[#171d21] border border-gray-700 text-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block pl-10 p-2.5 w-full md:w-64 transition-all group-hover:border-gray-600">
+                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <i class="fas fa-search text-gray-500"></i>
+                </div>
+            </form>
+
+            <button onclick="openServiceModal()"
+                class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition shadow-lg shadow-blue-500/20 shrink-0">
+                <i class="fas fa-plus"></i> Novo Serviço
+            </button>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="overflow-x-auto bg-[#171d21] rounded-xl border border-gray-800 shadow-xl">
+        <table class="w-full text-sm text-left text-gray-400">
+            <thead class="text-xs text-gray-500 uppercase bg-gray-900/50 border-b border-gray-800">
+                <tr>
+                    <th scope="col" class="px-6 py-4">Nome / Descrição</th>
+                    <th scope="col" class="px-6 py-4">Responsável</th>
+                    <th scope="col" class="px-6 py-4 text-right">Valor Padrão</th>
+                    <th scope="col" class="px-6 py-4 text-center">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for service in services %}
+                <tr class="border-b border-gray-800 hover:bg-gray-800/50 transition duration-200">
+                    <td class="px-6 py-4">
+                        <div class="font-medium text-white">{{ service.name }}</div>
+                        <div class="text-xs text-gray-500">{{ service.description }}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        {% if service.mechanic %}
+                        <span
+                            class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-medium bg-gray-800 text-gray-300 border border-gray-700">
+                            <i class="fas fa-user-cog"></i> {{ service.mechanic }}
+                        </span>
+                        {% else %}
+                        <span class="text-xs text-gray-600">-</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-right font-medium text-green-500">
+                        R$ {{ "%.2f"|format(service.price)|replace('.', ',') }}
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        <button onclick='openEditModal({{ service|tojson }})'
+                            class="text-blue-500 hover:text-blue-400 transition mx-1" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <form action="{{ url_for('services.delete', id=service.id) }}" method="POST"
+                              onsubmit="return confirm('Excluir este serviço?')" class="inline">
+                            <button type="submit" class="text-red-500 hover:text-red-400 transition mx-1" title="Excluir">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                        Nenhum serviço cadastrado.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Service Modal -->
+<div id="serviceModal"
+    class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div
+        class="bg-[#171d21] w-full max-w-lg rounded-xl border border-gray-700 shadow-2xl relative animate-fade-in-down">
+        <div class="flex justify-between items-center p-6 border-b border-gray-800">
+            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                <i class="fas fa-tools text-blue-500"></i> <span id="modalTitle">Novo Serviço</span>
+            </h3>
+            <button onclick="closeServiceModal()" class="text-gray-400 hover:text-white transition">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+
+        <form id="serviceForm" action="{{ url_for('services.add') }}" method="POST" class="p-6">
+            <div class="space-y-4">
+                <div>
+                    <label class="block mb-2 text-sm font-medium text-gray-400">Nome do Serviço</label>
+                    <input type="text" name="name" required
+                        class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                        placeholder="Ex: Troca de Óleo">
+                </div>
+
+                <div>
+                    <label class="block mb-2 text-sm font-medium text-gray-400">Descrição</label>
+                    <textarea name="description" rows="2"
+                        class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 resize-none"
+                        placeholder="Detalhes do serviço..."></textarea>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-400">Valor (R$)</label>
+                        <input type="number" name="price" step="0.01" required
+                            class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                            placeholder="0.00">
+                    </div>
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-400">Mecânico</label>
+                        <input type="text" name="mechanic"
+                            class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                            placeholder="Nome">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 mt-8">
+                <button type="button" onclick="closeServiceModal()"
+                    class="px-5 py-2.5 text-sm font-medium text-gray-300 bg-gray-800 rounded-lg border border-gray-600 hover:bg-gray-700 hover:text-white transition">Cancelar</button>
+                <button type="submit" id="submitBtn"
+                    class="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-500 focus:ring-4 focus:outline-none focus:ring-blue-800 transition shadow-lg shadow-blue-500/30">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openServiceModal() {
+        resetModal();
+        document.getElementById('serviceModal').classList.remove('hidden');
+    }
+
+    function closeServiceModal() {
+        document.getElementById('serviceModal').classList.add('hidden');
+    }
+
+    function openEditModal(service) {
+        document.getElementById('modalTitle').innerText = 'Editar Serviço';
+        document.getElementById('submitBtn').innerText = 'Salvar Alterações';
+        document.getElementById('serviceForm').action = `/services/edit/${service.id}`;
+
+        const form = document.getElementById('serviceForm');
+        form.name.value = service.name;
+        form.description.value = service.description || '';
+        form.price.value = service.price;
+        form.mechanic.value = service.mechanic || '';
+
+        document.getElementById('serviceModal').classList.remove('hidden');
+    }
+
+    function resetModal() {
+        document.getElementById('modalTitle').innerText = 'Novo Serviço';
+        document.getElementById('submitBtn').innerText = 'Salvar';
+        document.getElementById('serviceForm').action = "{{ url_for('services.add') }}";
+        document.getElementById('serviceForm').reset();
+    }
+</script>
+{% endblock %}

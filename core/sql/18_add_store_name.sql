@@ -1,0 +1,2 @@
+ALTER TABLE users
+ADD COLUMN store_name VARCHAR(255) DEFAULT '';

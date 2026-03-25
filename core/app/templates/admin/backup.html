@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="card-title"><i class="fas fa-database"></i> Backup & Restauração</h5>
+                    <a href="{{ url_for('users.index') }}" class="btn btn-secondary btn-sm">Voltar para Usuários</a>
+                </div>
+
+                <!-- Abas -->
+                <ul class="nav nav-tabs nav-primary" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link active" data-bs-toggle="tab" href="#tabExport" role="tab" aria-selected="true">
+                            <i class="fas fa-file-export"></i> Exportar (Backup)
+                        </a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link" data-bs-toggle="tab" href="#tabImport" role="tab" aria-selected="false">
+                            <i class="fas fa-file-import"></i> Importar (Restore)
+                        </a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link" data-bs-toggle="tab" href="#tabSync" role="tab" aria-selected="false">
+                            <i class="fas fa-sync text-danger"></i> Sincronizar VPS
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="tab-content pt-3">
+                    <!-- ABA EXPORTAR -->
+                    <div class="tab-pane fade show active" id="tabExport" role="tabpanel">
+                        <div class="alert alert-info border-0 text-white bg-primary">
+                            <i class="fas fa-info-circle"></i> Gere backups regularmente para garantir a segurança dos dados.
+                        </div>
+                        <div class="d-flex gap-3 mt-4">
+                            <a href="{{ url_for('db_manager.download', type='full') }}" class="btn btn-light btn-lg border">
+                                <i class="fas fa-save text-primary"></i> Backup Completo (Estrutura + Dados)
+                            </a>
+                            <a href="{{ url_for('db_manager.download', type='data') }}" class="btn btn-outline-light btn-lg text-dark border">
+                                <i class="fas fa-table text-success"></i> Apenas Dados (Insert)
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- ABA IMPORTAR -->
+                    <div class="tab-pane fade" id="tabImport" role="tabpanel">
+                        {% if not preview %}
+                        <form method="POST" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label class="form-label">Arquivo SQL</label>
+                                <input type="file" name="file_upload" class="form-control" accept=".sql" required>
+                                <small class="text-danger">Atenção: A importação irá sobrescrever os dados atuais.</small>
+                            </div>
+                            <button type="submit" class="btn btn-warning"><i class="fas fa-search"></i> Analisar Arquivo</button>
+                        </form>
+                        {% else %}
+                        <div class="card border-warning mb-3">
+                            <div class="card-header bg-warning text-dark">
+                                <strong>Confirmação de Restauração</strong>
+                            </div>
+                            <div class="card-body">
+                                <p>Arquivo: <strong>{{ filename }}</strong></p>
+                                <pre style="background: #222; color: #0f0; padding: 10px; max-height: 200px; overflow: auto;">{{ preview }}...</pre>
+                                
+                                <form action="{{ url_for('db_manager.confirm_restore') }}" method="POST">
+                                    <input type="hidden" name="filename" value="{{ filename }}">
+                                    <button type="submit" class="btn btn-danger">Confirmar e Restaurar Banco</button>
+                                    <a href="{{ url_for('db_manager.index') }}" class="btn btn-secondary">Cancelar</a>
+                                </form>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- ABA SYNC VPS -->
+                    <div class="tab-pane fade" id="tabSync" role="tabpanel">
+                        <div class="alert alert-danger border-0 text-white bg-danger">
+                            <i class="fas fa-exclamation-triangle"></i> Cuidado! Isso irá apagar <b>todo</b> o banco de dados local e substituir pelos dados da VPS de Produção.
+                        </div>
+                        <div class="card border-danger mt-3">
+                            <div class="card-body text-center">
+                                <h5 class="card-title text-danger">Sincronização de Emergência (VPS -> Local)</h5>
+                                <p class="card-text">Use esta opção quando o restore manual falhar. O sistema irá conectar na VPS, baixar o banco e restaurar automaticamente.</p>
+                                
+                                <form action="{{ url_for('db_manager.sync_vps') }}" method="POST" onsubmit="return confirm('Tem certeza absoluta? Isso apagará seus dados locais!');">
+                                    <button type="submit" class="btn btn-danger btn-lg">
+                                        <i class="fas fa-sync fa-spin-hover"></i> Iniciar Sincronização Agora
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Script para ativar aba correta se houver preview -->
+{% if preview %}
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+    var triggerEl = document.querySelector('a[href="#tabImport"]')
+    if(triggerEl){ new bootstrap.Tab(triggerEl).show() }
+});
+</script>
+{% endif %}
+{% endblock %}

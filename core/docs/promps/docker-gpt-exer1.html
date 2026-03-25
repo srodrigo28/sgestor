@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Treinamento Docker: PHP, React e Python</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100">
+  <header class="border-b border-slate-800 bg-slate-950/60 backdrop-blur">
+    <div class="mx-auto max-w-6xl px-4 py-5">
+      <h1 class="text-2xl font-semibold">Treinamento: Docker + Compose (PHP, React, Python)</h1>
+      <p class="mt-1 text-slate-300">
+        Foco em explicação: portas, versões, hype, como rodar, o que resolve, tipos de imagens.
+      </p>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-6xl px-4 py-6">
+    <div class="grid gap-6 lg:grid-cols-[280px_1fr]">
+      <aside class="rounded-2xl border border-slate-800 bg-slate-900/40 p-3">
+        <div class="mb-3 text-sm font-semibold text-slate-200">Módulos</div>
+        <nav id="nav" class="flex flex-col gap-2"></nav>
+
+        <div class="mt-6 rounded-xl border border-slate-800 bg-slate-950/40 p-3">
+          <div class="text-sm font-semibold">Dica rápida</div>
+          <p class="mt-1 text-sm text-slate-300">
+            Quando “estoura limite” ou fica lento em agent: reduza escopo do que ele lê,
+            peça plano em fases e evite logs gigantes.
+          </p>
+        </div>
+      </aside>
+
+      <section class="rounded-2xl border border-slate-800 bg-slate-900/40">
+        <div class="border-b border-slate-800 p-5">
+          <h2 id="title" class="text-xl font-semibold"></h2>
+          <p id="subtitle" class="mt-2 text-slate-300"></p>
+        </div>
+
+        <div id="content" class="p-5 space-y-6"></div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="mx-auto max-w-6xl px-4 pb-10 pt-6 text-sm text-slate-400">
+    Feito com HTML + TailwindCSS + JavaScript. Copie os exemplos e rode no seu projeto.
+  </footer>
+
+  <script src="./app.js"></script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+-- Revert changes from sql/21_split_emergency_contact.sql (if it had run, but it failed so we are good)
+-- Actually, the user wants "Emergency Contact" to be "Emergency Phone" effectively, or just a phone field.
+-- They want "Reference Point" next to "Phone". Which phone?
+-- "Reference Point" is usually an address field. "Phone" is usually a contact field.
+-- If they mean the Mechanic's phone, that's on Tab 1.
+-- If they mean Emergency Contact phone, that's on Tab 2.
+
+-- Interpretation:
+-- User wants to rearrange Tab 2.
+-- "Reference Point" (currently full width) should be next to "Phone".
+-- "Phone" here probably refers to "Emergency Contact" which they realized should just be a phone number?
+-- Or "Reference Point" should be next to the Mechanic's phone (Tab 1)? Unlikely as Reference Point is an address detail.
+
+-- Most likely interpretation:
+-- In Tab 2:
+-- Move "Reference Point" to be on the same row as "Emergency Contact".
+-- Rename/Change "Emergency Contact" to just be a Phone field with a mask.
+-- The user said "é só telefone o campo de telefone" (the phone field is just phone).
+
+-- Let's check the schema. `mechanics` has `phone` (main) and `emergency_contact`.
+-- I will modify the previous SQL file to NOT split emergency contact into name/phone, but I might correct the column content if needed. However, since the migration failed previously, I can just ignore the split requirement.
+-- The user says "errei" (I made a mistake), implying I should abandon the split into Name/Phone.
+
+-- Action Plan:
+-- 1. Modify `templates/mechanics/create.html` and `edit.html`.
+-- 2. Locate "Ponto de Referência" and "Contato de Emergência".
+-- 3. Put them in the same grid row (col-span-1 each in a 2-col grid).
+-- 4. Apply a phone mask to the "Contato de Emergência" field (which the user implies is now just a phone number).
+-- 5. No DB changes needed if `emergency_contact` stays as a string (varchar).
+

@@ -1,0 +1,334 @@
+{% extends 'base.html' %}
+
+{% block title %}Finanças - Despesas{% endblock %}
+
+{% block content %}
+<!-- Stats Grid for Expenses -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="card p-5 flex items-center justify-between border border-gray-800 bg-[#171d21] rounded-xl hover:-translate-y-1 transition duration-300">
+        <div>
+            <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">Atrasadas</p>
+            <h4 class="text-2xl font-bold text-red-500 mt-1">R$ <span class="count-up" data-target="{{ stats.overdue }}">0</span></h4>
+            <p class="text-red-400 text-xs mt-1 flex items-center gap-1 font-medium">
+                <i class="fas fa-exclamation-circle"></i> Vencidas
+            </p>
+        </div>
+        <div class="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center text-red-500 shadow-lg shadow-red-500/20">
+            <i class="fas fa-arrow-down text-xl"></i>
+        </div>
+    </div>
+
+    <div class="card p-5 flex items-center justify-between border border-gray-800 bg-[#171d21] rounded-xl hover:-translate-y-1 transition duration-300">
+        <div>
+            <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">A Pagar (7 Dias)</p>
+            <h4 class="text-2xl font-bold text-white mt-1">R$ <span class="count-up" data-target="{{ stats.due_7d }}">0</span></h4>
+            <p class="text-orange-500 text-xs mt-1 flex items-center gap-1 font-medium">
+                <i class="fas fa-calendar-week"></i> Próxima semana
+            </p>
+        </div>
+        <div class="w-12 h-12 bg-orange-500/10 rounded-xl flex items-center justify-center text-orange-500 shadow-lg shadow-orange-500/20">
+            <i class="fas fa-clock text-xl"></i>
+        </div>
+    </div>
+
+    <div class="card p-5 flex items-center justify-between border border-gray-800 bg-[#171d21] rounded-xl hover:-translate-y-1 transition duration-300">
+        <div>
+            <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">A Pagar (30 Dias)</p>
+            <h4 class="text-2xl font-bold text-white mt-1">R$ <span class="count-up" data-target="{{ stats.due_30d }}">0</span></h4>
+            <p class="text-blue-500 text-xs mt-1 flex items-center gap-1 font-medium">
+                <i class="fas fa-calendar-alt"></i> Próximo mês
+            </p>
+        </div>
+        <div class="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-500 shadow-lg shadow-blue-500/20">
+            <i class="fas fa-receipt text-xl"></i>
+        </div>
+    </div>
+
+    <div class="card p-5 flex items-center justify-between border border-gray-800 bg-[#171d21] rounded-xl hover:-translate-y-1 transition duration-300">
+        <div>
+            <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">Total Pendente</p>
+            <h4 class="text-2xl font-bold text-white mt-1">R$ <span class="count-up" data-target="{{ stats.total_pending }}">0</span></h4>
+            <p class="text-gray-500 text-xs mt-1 flex items-center gap-1 font-medium">
+                Total acumulado
+            </p>
+        </div>
+        <div class="w-12 h-12 bg-gray-700 rounded-xl flex items-center justify-center text-gray-400">
+            <i class="fas fa-wallet text-xl"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Header -->
+<div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+    <div>
+        <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+            <i class="fas fa-file-invoice-dollar text-red-500"></i> Despesas
+        </h2>
+        <p class="text-gray-500 text-sm">Gerencie suas contas a pagar</p>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-3">
+        <!-- Switch to Income -->
+        <a href="{{ url_for('financial.income_list') }}" class="px-3 py-2 bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 text-sm transition font-medium flex items-center gap-2">
+            <i class="fas fa-arrow-up text-green-500"></i> Ver Receitas
+        </a>
+
+        <!-- Search -->
+        <div class="relative group">
+            <input type="text" placeholder="Buscar despesa..." value="{{ search }}" id="searchExpenseInput"
+                onkeydown="if(event.key === 'Enter') window.location.href = '?search=' + this.value"
+                onblur="window.location.href = '?search=' + this.value"
+                class="bg-[#171d21] border border-gray-700 text-gray-300 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block pl-10 p-2.5 w-64 transition-all hover:border-gray-600">
+            <button onclick="window.location.href = '?search=' + document.getElementById('searchExpenseInput').value" 
+                class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500 hover:text-white cursor-pointer transition">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+
+        <!-- Add Button -->
+        <button onclick="openExpenseModal()"
+            class="bg-red-600 hover:bg-red-500 text-white w-10 h-10 rounded-lg flex items-center justify-center transition shadow-lg shadow-red-500/20 transform hover:scale-105 active:scale-95">
+            <i class="fas fa-plus"></i>
+        </button>
+    </div>
+</div>
+
+<!-- List View -->
+<div class="card overflow-hidden border border-gray-800 bg-[#171d21] rounded-xl shadow-xl">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left text-gray-400">
+            <thead class="text-xs text-gray-400 uppercase bg-[#11161a] border-b border-gray-800">
+                <tr>
+                    <th class="px-6 py-4">Vencimento</th>
+                    <th class="px-6 py-4">Descrição</th>
+                    <th class="px-6 py-4">Categoria</th>
+                    <th class="px-6 py-4">Status</th>
+                    <th class="px-6 py-4">Valor</th>
+                    <th class="px-6 py-4 text-right">Ações</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-800">
+                {% for expense in expenses %}
+                <tr class="hover:bg-gray-800/50 transition">
+                    <td class="px-6 py-4 font-mono">
+                        {{ expense.due_date.strftime('%d/%m/%Y') }}
+                    </td>
+                    <td class="px-6 py-4 font-medium text-white">{{ expense.description }}</td>
+                    <td class="px-6 py-4">{{ expense.category }}</td>
+                    <td class="px-6 py-4">
+                        {% if expense.status == 'paid' %}
+                            <span class="px-2 py-1 bg-emerald-500/10 text-emerald-500 rounded text-xs font-bold border border-emerald-500/20">PAGO</span>
+                        {% elif expense.due_date < today and expense.status == 'pending' %}
+                            <span class="px-2 py-1 bg-red-500/10 text-red-500 rounded text-xs font-bold border border-red-500/20">ATRASADO</span>
+                        {% else %}
+                            <span class="px-2 py-1 bg-yellow-500/10 text-yellow-500 rounded text-xs font-bold border border-yellow-500/20">PENDENTE</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 font-mono font-bold text-red-400">R$ {{ "%.2f"|format(expense.amount) }}</td>
+                    <td class="px-6 py-4 text-right">
+                        <button 
+                            data-expense='{{ expense | tojson | forceescape }}'
+                            onclick="openEditExpenseModal(this)" 
+                            class="text-gray-400 hover:text-blue-500 mr-2">
+                            <i class="fas fa-pen"></i>
+                        </button>
+                        <form action="{{ url_for('financial.delete_expense', id=expense.id) }}" method="POST" class="inline" onsubmit="return confirm('Excluir?')">
+                            <button class="text-gray-400 hover:text-red-500"><i class="fas fa-trash-alt"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="px-6 py-12 text-center text-gray-500">Nenhuma despesa encontrada.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add Modal -->
+<div id="expenseModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-[#171d21] w-full max-w-md rounded-xl border border-gray-700 shadow-2xl animate-fade-in-down">
+        <div class="flex justify-between items-center p-6 border-b border-gray-800">
+            <h3 class="text-xl font-bold text-white"><i class="fas fa-plus-circle text-red-500"></i> Nova Despesa</h3>
+            <button onclick="closeExpenseModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+        </div>
+        <form action="{{ url_for('financial.add_expense') }}" method="POST" class="p-6 space-y-4">
+            <div>
+                <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Descrição</label>
+                <input type="text" name="description" required class="w-full bg-[#0f1214] border border-gray-700 text-white rounded-lg p-3 outline-none focus:border-red-500">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Valor (R$)</label>
+                    <input type="number" step="0.01" name="amount" required class="w-full bg-[#0f1214] border border-gray-700 text-white rounded-lg p-3 outline-none focus:border-red-500">
+                </div>
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Vencimento</label>
+                    <input type="date" name="due_date" required class="w-full bg-[#0f1214] border border-gray-700 text-white rounded-lg p-3 outline-none focus:border-red-500 [color-scheme:dark]">
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Categoria</label>
+                    <select name="category" class="w-full bg-[#0f1214] border border-gray-700 text-white rounded-lg p-3 outline-none focus:border-red-500 cursor-pointer">
+                        <option value="Operacional">Operacional</option>
+                        <option value="Fornecedores">Fornecedores</option>
+                        <option value="Pessoal">Pessoal</option>
+                        <option value="Outros">Outros</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Pagamento</label>
+                    <select name="payment_type" class="w-full bg-[#0f1214] border border-gray-700 text-white rounded-lg p-3 outline-none focus:border-red-500 cursor-pointer">
+                        <option value="boleto">Boleto</option>
+                        <option value="pix">PIX</option>
+                        <option value="cartao credito">Crédito</option>
+                        <option value="dinheiro">Dinheiro</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Status</label>
+                <div class="flex gap-4">
+                    <label class="flex items-center gap-2 text-white cursor-pointer">
+                        <input type="radio" name="status" value="pending" checked class="text-red-500 focus:ring-red-500 bg-gray-800 border-gray-600">
+                        Pendente (Futuro)
+                    </label>
+                    <label class="flex items-center gap-2 text-white cursor-pointer">
+                        <input type="radio" name="status" value="paid" class="text-emerald-500 focus:ring-emerald-500 bg-gray-800 border-gray-600">
+                        Pago (Realizado)
+                    </label>
+                </div>
+            </div>
+            <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-800">
+                <button type="button" onclick="closeExpenseModal()" class="px-4 py-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">Cancelar</button>
+                <button type="submit" class="px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-lg">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Modal (Simplified, uses JS to populate) -->
+<div id="editExpenseModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-[#171d21] w-full max-w-md rounded-xl border border-gray-700 shadow-2xl animate-fade-in-down">
+         <div class="flex justify-between items-center p-6 border-b border-gray-800">
+            <h3 class="text-xl font-bold text-white"><i class="fas fa-pen text-blue-500"></i> Editar Despesa</h3>
+            <button onclick="closeEditExpenseModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+        </div>
+        <form id="editExpenseForm" method="POST" class="p-6 space-y-4">
+             <div>
+                <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Descrição</label>
+                <input type="text" name="description" id="editDesc" required class="w-full bg-[#0f1214] border border-gray-700 text-white rounded-lg p-3 outline-none focus:border-blue-500">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                     <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Valor</label>
+                     <input type="number" step="0.01" name="amount" id="editAmount" required class="w-full bg-[#0f1214] border border-gray-700 text-white rounded-lg p-3 outline-none">
+                </div>
+                 <div>
+                     <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Vencimento</label>
+                     <input type="date" name="due_date" id="editDate" required class="w-full bg-[#0f1214] border border-gray-700 text-white rounded-lg p-3 outline-none [color-scheme:dark]">
+                </div>
+            </div>
+             <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Categoria</label>
+                    <select name="category" id="editCategory" class="w-full bg-[#0f1214] border border-gray-700 text-white rounded-lg p-3 outline-none cursor-pointer">
+                        <option value="Operacional">Operacional</option>
+                        <option value="Fornecedores">Fornecedores</option>
+                        <option value="Pessoal">Pessoal</option>
+                        <option value="Outros">Outros</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Pagamento</label>
+                    <select name="payment_type" id="editPayment" class="w-full bg-[#0f1214] border border-gray-700 text-white rounded-lg p-3 outline-none cursor-pointer">
+                        <option value="boleto">Boleto</option>
+                        <option value="pix">PIX</option>
+                        <option value="cartao credito">Crédito</option>
+                        <option value="dinheiro">Dinheiro</option>
+                    </select>
+                </div>
+            </div>
+             <div>
+                <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Status</label>
+                <div class="flex gap-4">
+                    <label class="flex items-center gap-2 text-white cursor-pointer">
+                        <input type="radio" name="status" value="pending" id="editStatusPending" class="text-red-500 bg-gray-800 border-gray-600">
+                        Pendente
+                    </label>
+                    <label class="flex items-center gap-2 text-white cursor-pointer">
+                        <input type="radio" name="status" value="paid" id="editStatusPaid" class="text-emerald-500 bg-gray-800 border-gray-600">
+                        Pago
+                    </label>
+                </div>
+            </div>
+             <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-800">
+                <button type="button" onclick="closeEditExpenseModal()" class="px-4 py-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg">Cancelar</button>
+                <button type="submit" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-lg">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openExpenseModal() { document.getElementById('expenseModal').classList.remove('hidden'); }
+    function closeExpenseModal() { document.getElementById('expenseModal').classList.add('hidden'); }
+    function closeEditExpenseModal() { document.getElementById('editExpenseModal').classList.add('hidden'); }
+    
+    function openEditExpenseModal(btn) {
+        let data;
+        try {
+            data = JSON.parse(btn.dataset.expense);
+        } catch (e) {
+            console.error("Error parsing expense data", e);
+            return;
+        }
+        document.getElementById('editExpenseModal').classList.remove('hidden');
+        const form = document.getElementById('editExpenseForm');
+        form.action = `/financial/expenses/update/${data.id}`;
+        document.getElementById('editDesc').value = data.description;
+        document.getElementById('editAmount').value = data.amount;
+        // Format date string YYYY-MM-DD
+        const d = new Date(data.due_date); 
+        document.getElementById('editDate').value = d.toISOString().split('T')[0];
+        document.getElementById('editCategory').value = data.category;
+        document.getElementById('editPayment').value = data.payment_type;
+        
+        if (data.status === 'paid') {
+            document.getElementById('editStatusPaid').checked = true;
+        } else {
+            document.getElementById('editStatusPending').checked = true;
+        }
+    }
+    
+    // Animation logic
+    function animateValue(obj, start, end, duration) {
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            const currentVal = progress * (end - start) + start;
+            obj.innerHTML = currentVal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            if (progress < 1) window.requestAnimationFrame(step);
+            else obj.innerHTML = end.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        };
+        window.requestAnimationFrame(step);
+    }
+    const statsObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting && entry.target.classList.contains('count-up') && !entry.target.dataset.animated) {
+                const target = parseFloat(entry.target.getAttribute('data-target'));
+                animateValue(entry.target, 0, target, 2000);
+                entry.target.dataset.animated = "true";
+                statsObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1 });
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.count-up').forEach(c => statsObserver.observe(c));
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,723 @@
+{% extends 'base.html' %}
+
+{% block title %}Novo Orçamento | Gestão{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto animate-fade-in-down">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+            <i class="fas fa-file-invoice-dollar text-blue-500"></i> Novo Orçamento
+        </h2>
+        <a href="{{ url_for('budgets.list') }}" class="text-gray-400 hover:text-white transition text-sm">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <form id="budgetForm" class="space-y-6">
+        <!-- 1. Cliente {% if session['role'] == 'oficina' %}e Veículo{% endif %} -->
+        <div class="card p-6 border border-gray-800 bg-[#171d21] rounded-xl">
+            <h3 class="text-lg font-bold text-white mb-4 border-b border-gray-800 pb-2">
+                <i class="fas fa-user{% if session['role'] == 'oficina' %}-car{% endif %} text-blue-500 mr-2"></i> 
+                Dados do Cliente {% if session['role'] == 'oficina' %}e Veículo{% endif %}
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Cliente -->
+                <div>
+                    <label class="block mb-2 text-sm font-medium text-gray-400">Cliente</label>
+                    <div class="relative">
+                        <input type="text" list="clientsList" name="client_name" id="clientInput" required
+                            class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                            placeholder="Buscar Cliente...">
+                        <datalist id="clientsList">
+                            {% for client in clients %}
+                            <option value="{{ client.name }} | CPF: {{ client.cpf }}" data-id="{{ client.id }}">
+                            {% endfor %}
+                        </datalist>
+                        <input type="hidden" name="client_id" id="clientId">
+                    </div>
+                </div>
+
+                {% if session['role'] == 'oficina' or session['role'] == 'admin' %}
+                <!-- Placa (Busca) -->
+                <div>
+                    <label class="block mb-2 text-sm font-medium text-gray-400">Placa do Veículo (ABC-1234)</label>
+                    <div class="flex gap-2">
+                        <input type="text" name="vehicle_plate" id="plateInput"
+                            class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 uppercase"
+                            placeholder="ABC-1234" maxlength="8">
+                        <button type="button" onclick="searchPlate()"
+                            class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition"
+                            title="Buscar Dados">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Detalhes do Veículo -->
+                <div class="md:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block mb-2 text-xs font-medium text-gray-500">Montadora</label>
+                        <input type="text" list="brandsList" id="brandInput" onchange="onBrandSelected(this)" placeholder="Digite para buscar..."
+                             class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                        <datalist id="brandsList"></datalist>
+                        <input type="hidden" name="vehicle_brand" id="brandNameHidden">
+                        <!-- Hidden ID to fetch models -->
+                        <input type="hidden" id="brandIdHidden">
+                    </div>
+                    <div>
+                        <label class="block mb-2 text-xs font-medium text-gray-500">Modelo</label>
+                        <input type="text" list="modelsList" name="vehicle_model" id="modelInput" disabled placeholder="Selecione a montadora..."
+                             class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <datalist id="modelsList"></datalist>
+                     </div>
+                    <div>
+                        <label class="block mb-2 text-xs font-medium text-gray-500">Ano</label>
+                        <input type="number" name="vehicle_year" id="yearInput"
+                            class="bg-[#0f1316]/50 border border-gray-800 text-gray-300 text-sm rounded-lg block w-full p-2">
+                    </div>
+                    <div>
+                        <label class="block mb-2 text-xs font-medium text-gray-500 text-yellow-500 font-bold">KM
+                            Atual</label>
+                        <input type="number" name="vehicle_km" id="kmInput"
+                            class="bg-[#0f1316] border border-yellow-500/30 text-yellow-500 text-sm rounded-lg focus:ring-yellow-500 focus:border-yellow-500 block w-full p-2 font-bold"
+                            placeholder="Ex: 50000">
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Mecânico Responsável -->
+        <div class="card p-6 border border-gray-800 bg-[#171d21] rounded-xl">
+             <h3 class="text-lg font-bold text-white mb-4 border-b border-gray-800 pb-2">
+                <i class="fas fa-user-cog text-blue-500 mr-2"></i> Responsável Técnico
+            </h3>
+            <div>
+                 <label class="block mb-2 text-sm font-medium text-gray-400">Selecione o Mecânico</label>
+                 <select name="mechanic_id" id="mechanicInput" class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                    <option value="">-- Sem vínculo --</option>
+                    {% for mechanic in mechanics %}
+                    <option value="{{ mechanic.id }}">{{ mechanic.name }}</option>
+                    {% endfor %}
+                 </select>
+            </div>
+        </div>
+
+        <!-- 2. Itens do Orçamento -->
+        <div class="card p-6 border border-gray-800 bg-[#171d21] rounded-xl">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-800 pb-2">
+                <h3 class="text-lg font-bold text-white">
+                    <i class="fas fa-tools text-blue-500 mr-2"></i> Itens e Serviços
+                </h3>
+                <button type="button" onclick="openQuickServiceModal()"
+                    class="text-xs bg-gray-800 hover:bg-gray-700 text-blue-400 border border-blue-500/30 px-3 py-1.5 rounded-lg transition flex items-center gap-1">
+                    <i class="fas fa-plus"></i> Novo Serviço
+                </button>
+            </div>
+
+            <!-- Adicionar Item -->
+            <div class="grid grid-cols-12 gap-3 mb-4 items-end bg-gray-900/30 p-3 rounded-lg border border-gray-800/50">
+                <div class="col-span-12 md:col-span-5">
+                    <label class="block mb-1 text-xs text-gray-500">Descrição / Produto</label>
+                    <input type="text" list="productsList" id="itemDescInput"
+                        class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg block w-full p-2"
+                        placeholder="Buscar produto ou digitar serviço...">
+                    <datalist id="productsList">
+                        {% for product in products %}
+                        <option value="{{ product.name }} {% if product.sku %}| SKU: {{ product.sku }}{% endif %}" 
+                                data-price="{{ product.sell_price }}"
+                                data-id="{{ product.id }}"
+                                data-stock="{{ product.stock_quantity }}">
+                        {% endfor %}
+                    </datalist>
+
+                    <datalist id="servicesList">
+                        {% for service in services_list %}
+                        <option value="{{ service.name }}" 
+                                data-price="{{ service.price }}"
+                                data-id="{{ service.id }}">
+                        {% endfor %}
+                    </datalist>
+                </div>
+                <!-- Preco (Auto-fill) -->
+                <div class="col-span-4 md:col-span-2">
+                    <label class="block mb-1 text-xs text-gray-500">Valor Unit.</label>
+                    <input type="number" step="0.01" id="itemPriceInput"
+                        class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg block w-full p-2">
+                </div>
+                <div class="col-span-4 md:col-span-2">
+                    <label class="block mb-1 text-xs text-gray-500">Qtd.</label>
+                    <input type="number" step="0.1" id="itemQtyInput" value="1"
+                        class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg block w-full p-2">
+                </div>
+                <div class="col-span-4 md:col-span-3">
+                    <button type="button" onclick="addItem()"
+                        class="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg text-sm px-4 py-2 transition">
+                        <i class="fas fa-plus"></i> Adicionar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabela de Itens -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left text-gray-400">
+                    <thead class="text-xs text-gray-500 uppercase bg-gray-900/50 border-b border-gray-800">
+                        <tr>
+                            <th class="px-4 py-3">Descrição</th>
+                            <th class="px-4 py-3 text-right">Valor Unit.</th>
+                            <th class="px-4 py-3 text-center">Qtd.</th>
+                            <th class="px-4 py-3 text-right">Total</th>
+                            <th class="px-4 py-3 text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="itemsTableBody">
+                        <!-- Items will be added here JS -->
+                    </tbody>
+                    <tfoot class="border-t border-gray-800 font-bold text-white bg-gray-900/20">
+                        <tr>
+                            <td colspan="3" class="px-4 py-3 text-right">Subtotal:</td>
+                            <td class="px-4 py-3 text-right" id="subtotalDisplay">R$ 0,00</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- 3. Totais e Ações -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="md:col-span-2">
+                <label class="block mb-2 text-sm font-medium text-gray-400">Observações</label>
+                <textarea name="notes" rows="4"
+                    class="bg-[#171d21] border border-gray-700 text-white text-sm rounded-xl block w-full p-3 resize-none"
+                    placeholder="Detalhes adicionais do orçamento..."></textarea>
+            </div>
+
+            <div class="card p-6 border border-gray-800 bg-[#171d21] rounded-xl space-y-4">
+                <div class="flex justify-between items-center text-gray-400">
+                    <span>Subtotal</span>
+                    <span id="summarySubtotal">R$ 0,00</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-400">Desconto</span>
+                    <div class="flex items-center gap-2 w-32">
+                        <span class="text-gray-500">R$</span>
+                        <input type="number" step="0.01" name="discount" id="discountInput" value="0"
+                            oninput="calculateTotal()"
+                            class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg block w-full p-1 text-right">
+                    </div>
+                </div>
+                <div
+                    class="border-t border-gray-800 pt-4 flex justify-between items-center text-xl font-bold text-white">
+                    <span>Total</span>
+                    <span id="finalTotal" class="text-green-500">R$ 0,00</span>
+                </div>
+
+                <!-- Status Actions -->
+                <div class="grid grid-cols-1 gap-2 mt-4">
+                    <button type="button" onclick="saveBudget('approved')"
+                        class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-green-500/20 flex items-center justify-center gap-2">
+                        <i class="fas fa-check-circle"></i> Aprovar
+                    </button>
+                    <button type="button" onclick="saveBudget('sent')"
+                        class="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-yellow-500/20 flex items-center justify-center gap-2">
+                        <i class="fas fa-clock"></i> Salvar (Aguardando)
+                    </button>
+                    <button type="button" onclick="saveBudget('rejected')"
+                        class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-red-500/20 flex items-center justify-center gap-2">
+                        <i class="fas fa-times-circle"></i> Reprovar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Quick Service Modal -->
+<div id="quickServiceModal"
+    class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div
+        class="bg-[#171d21] w-full max-w-md rounded-xl border border-gray-700 shadow-2xl relative animate-fade-in-down">
+        <div class="flex justify-between items-center p-6 border-b border-gray-800">
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                <i class="fas fa-bolt text-yellow-500"></i> Adicionar Serviço Rápido
+            </h3>
+            <button onclick="closeQuickServiceModal()" class="text-gray-400 hover:text-white transition">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <div class="p-6 space-y-4">
+            <div>
+                <label class="block mb-2 text-sm font-medium text-gray-400">Nome do Serviço</label>
+                <input type="text" id="quickServiceName" list="servicesList"
+                    oninput="checkServicePrice(this.value)"
+                    placeholder="Selecione ou digite um novo..."
+                    class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg block w-full p-2.5">
+            </div>
+            <div>
+                <label class="block mb-2 text-sm font-medium text-gray-400">Valor (R$)</label>
+                <input type="number" id="quickServicePrice" step="0.01"
+                    class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg block w-full p-2.5">
+            </div>
+            <button type="button" onclick="saveQuickService()"
+                class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded-lg transition">Salvar e
+                Usar</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let items = [];
+
+    // --- Item Management ---
+    function addItem() {
+        const descInput = document.getElementById('itemDescInput');
+        const priceInput = document.getElementById('itemPriceInput');
+        const qtyInput = document.getElementById('itemQtyInput');
+        const typeInput = document.getElementById('itemTypeInput');
+        const takeawayInput = document.getElementById('itemTakeawayInput');
+        
+        const desc = descInput.value.trim();
+        const price = parseFloat(priceInput.value) || 0;
+        const qty = parseFloat(qtyInput.value) || 1;
+        const isService = typeInput ? typeInput.checked : false;
+        const isTakeaway = takeawayInput ? takeawayInput.checked : false;
+
+        if (!desc || price <= 0) {
+            Toastify({ text: "Preencha descrição e valor!", backgroundColor: "#ef4444" }).showToast();
+            return;
+        }
+
+        // Try to find product_id/stock from datalist
+        let productId = null;
+        let stockQty = null;
+        const list = document.getElementById('productsList');
+        if (list && list.options) {
+             for(let i=0; i<list.options.length; i++) {
+                 if(list.options[i].value === desc) {
+                     productId = list.options[i].getAttribute('data-id');
+                     stockQty = list.options[i].getAttribute('data-stock');
+                     break;
+                 }
+             }
+        }
+
+        items.push({ 
+            desc, 
+            price, 
+            qty, 
+            total: price * qty, 
+            product_id: productId,
+            is_service: isService,
+            is_takeaway: isTakeaway,
+            stock_qty: stockQty
+        });
+        
+        renderItems();
+
+        // Reset inputs
+        descInput.value = '';
+        priceInput.value = '';
+        qtyInput.value = '1';
+        if(typeInput) typeInput.checked = false;
+        if(takeawayInput) takeawayInput.checked = false;
+        // Hide stock indicator
+        if(document.getElementById('stockIndicator')) document.getElementById('stockIndicator').classList.add('hidden');
+        descInput.focus();
+    }
+
+    function removeItem(index) {
+        items.splice(index, 1);
+        renderItems();
+    }
+
+    function renderItems() {
+        const tbody = document.getElementById('itemsTableBody');
+        tbody.innerHTML = '';
+        let subtotal = 0;
+
+        items.forEach((item, index) => {
+            subtotal += item.total;
+            const tr = document.createElement('tr');
+            tr.className = 'border-b border-gray-800/50 hover:bg-gray-800/30 transition';
+            
+            // Badge Type
+            let typeBadge = '';
+            if(item.is_service) {
+                typeBadge = '<span class="px-2 py-0.5 rounded text-[10px] bg-purple-500/20 text-purple-400 border border-purple-500/30 uppercase font-bold">Serviço</span>';
+            } else {
+                typeBadge = '<span class="px-2 py-0.5 rounded text-[10px] bg-blue-500/20 text-blue-400 border border-blue-500/30 uppercase font-bold">Peça</span>';
+            }
+
+            // Flags
+            let flags = '';
+            if(item.is_takeaway) {
+                flags += '<div class="mt-1"><span class="px-2 py-0.5 rounded text-[10px] bg-yellow-500/10 text-yellow-500 border border-yellow-500/20" title="Cliente levou a peça"><i class="fas fa-hand-holding"></i> Levou</span></div>';
+            }
+            if(item.product_id && item.stock_qty !== null && !item.is_service) {
+                 const inStock = parseFloat(item.stock_qty) >= item.qty;
+                 const color = inStock ? 'text-green-500' : 'text-red-500';
+                 const stockText = inStock ? 'Em estoque' : 'Sem estoque';
+                 flags += `<div class="mt-1 text-[10px] ${color}" title="Estoque atual: ${item.stock_qty}"><i class="fas fa-box"></i> ${stockText} (${item.stock_qty})</div>`;
+            }
+
+            tr.innerHTML = `
+                <td class="px-4 py-3 align-top">${typeBadge}</td>
+                <td class="px-4 py-3 align-top">
+                    ${item.desc}
+                    ${flags}
+                </td>
+                <td class="px-4 py-3 text-right align-top">R$ ${item.price.toFixed(2).replace('.', ',')}</td>
+                <td class="px-4 py-3 text-center align-top">${item.qty}</td>
+                <td class="px-4 py-3 text-right font-medium text-white align-top">R$ ${item.total.toFixed(2).replace('.', ',')}</td>
+                <td class="px-4 py-3 text-center align-top">
+                    <button onclick="removeItem(${index})" class="text-red-500 hover:text-red-400 transition">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </td>
+            `;
+
+            tbody.appendChild(tr);
+        });
+
+        // Update Totals
+        document.getElementById('subtotalDisplay').innerText = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
+        document.getElementById('summarySubtotal').innerText = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
+        calculateTotal(subtotal);
+    }
+
+    function calculateTotal(currentSubtotal) {
+        // If subtotal not passed, recalc from items
+        if (currentSubtotal === undefined) {
+            currentSubtotal = items.reduce((acc, item) => acc + item.total, 0);
+        }
+
+        const discount = parseFloat(document.getElementById('discountInput').value) || 0;
+        const total = Math.max(0, currentSubtotal - discount);
+
+        document.getElementById('finalTotal').innerText = `R$ ${total.toFixed(2).replace('.', ',')}`;
+    }
+
+    // --- Auto-fill Logic ---
+
+    // Product Price autofill
+    document.getElementById('itemDescInput').addEventListener('input', function (e) {
+        const val = e.target.value;
+        const options = document.getElementById('productsList').options;
+        const stockIndicator = document.getElementById('stockIndicator');
+        const typeInput = document.getElementById('itemTypeInput');
+
+        let found = false;
+        for (let i = 0; i < options.length; i++) {
+            if (options[i].value === val) {
+                document.getElementById('itemPriceInput').value = options[i].getAttribute('data-price');
+                
+                // Show stock
+                const stock = options[i].getAttribute('data-stock');
+                if(stock && stockIndicator) {
+                     stockIndicator.classList.remove('hidden');
+                     stockIndicator.classList.add('flex');
+                     document.getElementById('stockValue').innerText = stock;
+                     if(parseFloat(stock) <= 0) {
+                         stockIndicator.classList.add('text-red-500');
+                     } else {
+                         stockIndicator.classList.remove('text-red-500');
+                     }
+                }
+                
+                // If it's a product, likely not a service
+                if(typeInput) typeInput.checked = false;
+                found = true;
+                break;
+            }
+        }
+        
+        if(!found && stockIndicator) {
+             stockIndicator.classList.add('hidden');
+        }
+    });
+
+    // Client ID autofill (Basic implementation)
+    document.getElementById('clientInput').addEventListener('input', function (e) {
+        // Advanced logic would require matching the exact datalist string
+        // For MVP we just keep the text used
+    });
+
+    // Plate Search Mock
+    function searchPlate() {
+        const plate = document.getElementById('plateInput').value.toUpperCase();
+        if (plate.length < 7) {
+            Toastify({ text: "Placa inválida!", backgroundColor: "#ef4444" }).showToast();
+            return;
+        }
+
+        // Mock Result
+        Toastify({ text: "Simulando busca da placa...", backgroundColor: "#3b82f6" }).showToast();
+        setTimeout(() => {
+            document.getElementById('brandInput').value = 'MOCK BRAND';
+            document.getElementById('modelInput').value = 'MOCK MODEL';
+            document.getElementById('yearInput').value = '2023';
+            Toastify({ text: "Dados encontrados (Simulação)!", backgroundColor: "#10b981" }).showToast();
+        }, 1000);
+    }
+
+    // Quick Add Service Logic
+    function openQuickServiceModal() { 
+        document.getElementById('quickServiceModal').classList.remove('hidden'); 
+        document.getElementById('quickServiceName').focus();
+    }
+    
+    function closeQuickServiceModal() { document.getElementById('quickServiceModal').classList.add('hidden'); }
+
+    function checkServicePrice(val) {
+        const list = document.getElementById('servicesList');
+        if(!list) return;
+        const options = list.options;
+        for(let i=0; i<options.length; i++) {
+            if(options[i].value === val) {
+                document.getElementById('quickServicePrice').value = options[i].getAttribute('data-price');
+                break;
+            }
+        }
+    }
+
+    async function saveQuickService() {
+        const nameInput = document.getElementById('quickServiceName');
+        const priceInput = document.getElementById('quickServicePrice');
+        const name = nameInput.value.trim();
+        const price = parseFloat(priceInput.value);
+
+        if (!name || isNaN(price)) {
+            Toastify({ text: "Preencha nome e valor válidos!", backgroundColor: "#ef4444" }).showToast();
+            return;
+        }
+
+        // 1. Check if service exists in list to avoid duplicate creation
+        let exists = false;
+        const list = document.getElementById('servicesList');
+        if(list) {
+            for(let i=0; i<list.options.length; i++) {
+                if(list.options[i].value === name) {
+                    exists = true;
+                    break;
+                }
+            }
+        }
+
+        // 2. Logic: If exists, just use it. If not, create it.
+        if (exists) {
+            items.push({ 
+                desc: name, 
+                price: price, 
+                qty: 1, 
+                total: price,
+                is_service: true,
+                is_takeaway: false 
+            });
+            renderItems();
+            closeQuickServiceModal();
+            Toastify({ text: "Serviço adicionado!", backgroundColor: "#10b981" }).showToast();
+            nameInput.value = '';
+            priceInput.value = '';
+            return;
+        }
+
+        // Create new service via backend
+        const formData = new FormData();
+        formData.append('name', name);
+        formData.append('price', price);
+        formData.append('description', 'Cadastro Rápido via Orçamento');
+
+        try {
+            const response = await fetch("{{ url_for('services.add') }}", {
+                method: 'POST',
+                body: formData
+            });
+            
+            // Allow redirect or simple success (services.add returns redirect usually)
+            if (response.ok || response.redirected) {
+                items.push({ 
+                    desc: name, 
+                    price: price, 
+                    qty: 1, 
+                    total: price,
+                    is_service: true,
+                    is_takeaway: false
+                });
+                renderItems();
+                closeQuickServiceModal();
+                Toastify({ text: "Novo Serviço Criado e Adicionado!", backgroundColor: "#10b981" }).showToast();
+
+                // Clear inputs
+                nameInput.value = '';
+                priceInput.value = '';
+            } else {
+                Toastify({ text: "Erro ao criar serviço", backgroundColor: "#ef4444" }).showToast();
+            }
+        } catch (e) {
+            console.error(e);
+            Toastify({ text: "Erro de conexão", backgroundColor: "#ef4444" }).showToast();
+        }
+    }
+
+    // --- Save Budget Logic ---
+    async function saveBudget(status) {
+        if (items.length === 0) {
+            Toastify({ text: "Adicione pelo menos um item!", backgroundColor: "#ef4444" }).showToast();
+            return;
+        }
+
+        const form = document.getElementById('budgetForm');
+        const client_name = form.client_name ? form.client_name.value : '';
+        
+        // Handle optional vehicle plate (only required if field exists)
+        let vehicle_plate = '';
+        if (form.vehicle_plate) {
+            vehicle_plate = form.vehicle_plate.value;
+            if (!vehicle_plate) {
+                Toastify({ text: "Preencha a Placa do Veículo!", backgroundColor: "#ef4444" }).showToast();
+                return;
+            }
+        }
+
+        if (!client_name) {
+            Toastify({ text: "Preencha o Nome do Cliente!", backgroundColor: "#ef4444" }).showToast();
+            return;
+        }
+
+        const payload = {
+            client_name: client_name,
+            vehicle_plate: vehicle_plate,
+            vehicle_model: document.getElementById('modelInput').value, // Use the input value
+            vehicle_brand: document.getElementById('brandNameHidden').value || form.vehicle_brand.value, 
+            vehicle_year: form.vehicle_year ? form.vehicle_year.value : '',
+            vehicle_km: form.vehicle_km ? form.vehicle_km.value : '',
+            mechanic_id: document.getElementById('mechanicInput') ? document.getElementById('mechanicInput').value : '',
+            notes: form.notes ? form.notes.value : '',
+            discount: document.getElementById('discountInput').value,
+            approval_status: status,
+            stage_status: 'budget',
+            items: items
+        };
+
+        Toastify({ text: "Salvando...", backgroundColor: "#3b82f6" }).showToast();
+
+        try {
+            const response = await fetch("{{ url_for('budgets.save_budget') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                Toastify({ text: "Orçamento salvo com sucesso!", backgroundColor: "#10b981" }).showToast();
+                setTimeout(() => {
+                    window.location.href = "{{ url_for('budgets.list') }}";
+                }, 1000);
+            } else {
+                Toastify({ text: "Erro: " + (result.error || "Erro desconhecido"), backgroundColor: "#ef4444" }).showToast();
+            }
+        } catch (e) {
+            console.error(e);
+            Toastify({ text: "Erro de conexão ao salvar", backgroundColor: "#ef4444" }).showToast();
+        }
+    }
+
+    // --- FIPE API Integration ---
+    async function loadBrands() {
+        // ... (this part is fine, loading global array window.fipeBrands) ...
+        const brandsList = document.getElementById('brandsList');
+        if (!brandsList) return;
+
+        try {
+            const response = await fetch('https://parallelum.com.br/fipe/api/v1/carros/marcas');
+            const brands = await response.json();
+            brands.sort((a, b) => a.nome.localeCompare(b.nome));
+
+            brandsList.innerHTML = ''; 
+            brands.forEach(brand => {
+                const option = document.createElement('option');
+                option.value = brand.nome; // The user searches for "Fiat", so value is Fiat
+                brandsList.appendChild(option);
+            });
+            window.fipeBrands = brands;
+        } catch (error) { console.error(error); }
+    }
+
+    function onBrandSelected(input) {
+         const brandName = input.value;
+         const hiddenId = document.getElementById('brandIdHidden');
+         const hiddenName = document.getElementById('brandNameHidden');
+         const modelInput = document.getElementById('modelInput');
+         
+         // 1. Set Name immediately (allows custom values)
+         hiddenName.value = brandName;
+
+         // 2. Try to find ID in global list
+         if(!window.fipeBrands) return;
+         const brand = window.fipeBrands.find(b => b.nome.toLowerCase() === brandName.toLowerCase());
+         
+         if (brand) {
+             hiddenId.value = brand.codigo;
+             hiddenName.value = brand.nome; // Correction for case
+             loadButtonModels(brand.codigo);
+             modelInput.placeholder = "Carregando modelos...";
+             modelInput.value = "";
+             modelInput.disabled = true;
+         } else {
+             // Custom brand: allow editing model manually
+             hiddenId.value = "";
+             modelInput.disabled = false;
+             modelInput.placeholder = "Digite o modelo...";
+             document.getElementById('modelsList').innerHTML = "";
+         }
+    }
+
+    async function loadButtonModels(brandId) {
+        const modelInput = document.getElementById('modelInput');
+        const modelsList = document.getElementById('modelsList');
+
+        try {
+            const response = await fetch(`https://parallelum.com.br/fipe/api/v1/carros/marcas/${brandId}/modelos`);
+            const data = await response.json();
+            const models = data.modelos || []; 
+
+            modelsList.innerHTML = '';
+            
+            models.forEach(model => {
+                const option = document.createElement('option');
+                option.value = model.nome;
+                modelsList.appendChild(option);
+            });
+            
+            modelInput.disabled = false;
+            modelInput.placeholder = "Digite ou selecione o modelo...";
+            modelInput.focus();
+        } catch (error) {
+            console.error('Erro ao carregar modelos:', error);
+            modelInput.placeholder = "Erro ao carregar. Digite manualmente.";
+            modelInput.disabled = false;
+        }
+    }
+
+    // Initialize FIPE
+    document.addEventListener('DOMContentLoaded', () => {
+        loadBrands();
+        
+        // Setup input handler for Brand to clear model on change if needed
+        document.getElementById('brandInput').addEventListener('input', function(e) {
+             // Optional: debounce logic could go here if we wanted live search, 
+             // but datalist handles filtering for us locally once loaded.
+        });
+    });
+</script>
+{% endblock %}

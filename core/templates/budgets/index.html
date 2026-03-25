@@ -1,0 +1,648 @@
+{% extends 'base.html' %}
+
+{% block title %}Orçamentos | Gestão{% endblock %}
+
+{% block content %}
+<!-- Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 animate-fade-in-down">
+    <!-- Total Budgets -->
+    <div class="card p-5 border border-gray-800 bg-[#171d21] rounded-xl hover:-translate-y-1 transition duration-300">
+        <div class="flex justify-between items-start">
+            <div>
+                <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">Total Orçamentos</p>
+                <h4 class="text-2xl font-bold text-white mt-1">{{ stats.total_budgets }}</h4>
+            </div>
+            <div class="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center text-blue-500">
+                <i class="fas fa-file-invoice-dollar text-lg"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Approved Value -->
+    <div class="card p-5 border border-gray-800 bg-[#171d21] rounded-xl hover:-translate-y-1 transition duration-300">
+        <div class="flex justify-between items-start">
+            <div>
+                <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">Valor Aprovado</p>
+                <h4 class="text-2xl font-bold text-green-500 mt-1">R$ {{
+                    "%.2f"|format(stats.approved_value)|replace('.', ',') }}</h4>
+            </div>
+            <div class="w-10 h-10 bg-green-500/10 rounded-lg flex items-center justify-center text-green-500">
+                <i class="fas fa-check-circle text-lg"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Count -->
+    <div class="card p-5 border border-gray-800 bg-[#171d21] rounded-xl hover:-translate-y-1 transition duration-300">
+        <div class="flex justify-between items-start">
+            <div>
+                <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">Últimos 30 Dias</p>
+                <h4 class="text-2xl font-bold text-white mt-1">{{ stats.month_count }}</h4>
+                <p class="text-xs text-gray-500 mt-1">Novos orçamentos</p>
+            </div>
+            <div class="w-10 h-10 bg-yellow-500/10 rounded-lg flex items-center justify-center text-yellow-500">
+                <i class="fas fa-calendar-alt text-lg"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Daily Average -->
+    <div class="card p-5 border border-gray-800 bg-[#171d21] rounded-xl hover:-translate-y-1 transition duration-300">
+        <div class="flex justify-between items-start">
+            <div>
+                <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">Ticket Médio</p>
+                {% set avg = stats.approved_value / stats.total_budgets if stats.total_budgets > 0 else 0 %}
+                <h4 class="text-2xl font-bold text-purple-400 mt-1">R$ {{ "%.2f"|format(avg)|replace('.', ',') }}</h4>
+            </div>
+            <div class="w-10 h-10 bg-purple-500/10 rounded-lg flex items-center justify-center text-purple-500">
+                <i class="fas fa-chart-line text-lg"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Header with Filters & Actions -->
+<div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 animate-fade-in-down"
+    style="animation-delay: 0.1s;">
+    <div>
+        <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+            <i class="fas fa-clipboard-list text-blue-500"></i> Orçamentos
+        </h2>
+        <p class="text-gray-500 text-sm">Gerencie propostas e acompanhe status</p>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+        <!-- Search -->
+        <form action="{{ url_for('budgets.list') }}" method="GET" class="relative group w-full md:w-auto">
+            <input type="text" name="search" placeholder="Buscar Cliente ou Placa..."
+                value="{{ request.args.get('search', '') }}"
+                class="bg-[#171d21] border border-gray-700 text-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block pl-10 p-2.5 w-full md:w-64 transition-all group-hover:border-gray-600">
+            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <i class="fas fa-search text-gray-500"></i>
+            </div>
+        </form>
+
+        <!-- View Toggle -->
+        <div class="bg-[#171d21] p-1 rounded-lg border border-gray-700 flex items-center shadow-sm">
+            <button onclick="toggleView('list')" id="btnList"
+                class="px-3 py-1.5 rounded-md text-sm font-medium transition bg-gray-700 text-white shadow-sm">
+                <i class="fas fa-list"></i>
+            </button>
+            <button onclick="toggleView('chart')" id="btnChart"
+                class="px-3 py-1.5 rounded-md text-sm font-medium transition text-gray-400 hover:text-white">
+                <i class="fas fa-chart-pie"></i>
+            </button>
+        </div>
+
+        <!-- Add Button -->
+        <a href="{{ url_for('budgets.create') }}"
+            class="bg-blue-600 hover:bg-blue-500 text-white w-10 h-10 rounded-lg flex items-center justify-center transition shadow-lg shadow-blue-500/20 transform hover:scale-105 active:scale-95"
+            title="Novo Orçamento">
+            <i class="fas fa-plus"></i>
+        </a>
+    </div>
+</div>
+
+<!-- List View -->
+<div id="listView"
+    class="card overflow-hidden border border-gray-800 bg-[#171d21] rounded-xl shadow-xl transition-all duration-300 animate-fade-in-down"
+    style="animation-delay: 0.2s;">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left text-gray-400">
+            <thead class="text-xs text-gray-500 uppercase bg-[#11161a] border-b border-gray-800">
+                <tr>
+                    <th class="px-6 py-4">ID</th>
+                    <th class="px-6 py-4">Status</th>
+                    <th class="px-6 py-4">Cliente {% if session['role'] in ['oficina', 'admin'] %}/ Veículo{% endif %}</th>
+                    <th class="px-6 py-4">Data</th>
+                    <th class="px-6 py-4 text-right">Valor Total</th>
+                    <th
+                        class="px-6 py-4 text-center sticky right-0 bg-[#11161a] z-10 shadow-[-5px_0_10px_-5px_rgba(0,0,0,0.3)]">
+                        Ações</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-800">
+                {% for budget in budgets %}
+                <tr class="hover:bg-gray-800/50 transition duration-150 group">
+                    <td class="px-6 py-4 font-mono text-xs text-gray-500">#{{ budget.id }}</td>
+                    <td class="px-6 py-4">
+                        <div class="flex flex-wrap gap-1">
+                            {% if budget.stage_status == 'budget' %}
+                            <span
+                                class="px-2.5 py-1 rounded text-xs font-medium bg-gray-500/10 text-gray-300 border border-gray-500/20">Orçamento</span>
+                            {% elif budget.stage_status == 'ready_for_pickup' %}
+                            <span
+                                class="px-2.5 py-1 rounded text-xs font-medium bg-blue-500/10 text-blue-500 border border-blue-500/20">Retirar</span>
+                            {% elif budget.stage_status == 'delivered' %}
+                            <span
+                                class="px-2.5 py-1 rounded text-xs font-medium bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">Entregue</span>
+                            {% else %}
+                            <span
+                                class="px-2.5 py-1 rounded text-xs font-medium bg-gray-500/10 text-gray-400 border border-gray-500/20">Etapa?</span>
+                            {% endif %}
+
+                            {% if budget.approval_status == 'approved' %}
+                            <span
+                                class="px-2.5 py-1 rounded text-xs font-medium bg-green-500/10 text-green-500 border border-green-500/20">Aprovado</span>
+                            {% elif budget.approval_status == 'sent' %}
+                            <span
+                                class="px-2.5 py-1 rounded text-xs font-medium bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">Aguardando</span>
+                            {% elif budget.approval_status == 'rejected' %}
+                            <span
+                                class="px-2.5 py-1 rounded text-xs font-medium bg-red-500/10 text-red-500 border border-red-500/20">Reprovado</span>
+                            {% else %}
+                            <span
+                                class="px-2.5 py-1 rounded text-xs font-medium bg-gray-500/10 text-gray-400 border border-gray-500/20">Decisão?</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="font-medium text-white">{{ budget.client_name }}</div>
+                        {% if session['role'] in ['oficina', 'admin'] %}
+                            {% if budget.plate %}
+                            <div class="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                                <i class="fas fa-car text-gray-600"></i> {{ budget.plate }} • {{ budget.vehicle_model }}
+                            </div>
+                            {% endif %}
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-gray-400">
+                        {{ budget.created_at.strftime('%d/%m/%Y') }}
+                    </td>
+                    <td class="px-6 py-4 text-right font-bold text-white">
+                        R$ {{ "%.2f"|format(budget.total_value)|replace('.', ',') }}
+                    </td>
+                    <td
+                        class="px-6 py-4 text-center sticky right-0 bg-[#171d21] group-hover:bg-[#1a2026] z-10 shadow-[-5px_0_10px_-5px_rgba(0,0,0,0.3)] transition-colors">
+                        <div class="flex items-center justify-center gap-2">
+                            <a href="{{ url_for('budgets.view_budget', id=budget.id) }}"
+                                class="text-gray-400 hover:text-blue-500 transition" title="Ver Detalhes">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{{ url_for('budgets.print_budget', id=budget.id) }}" target="_blank"
+                                class="text-gray-400 hover:text-white transition" title="Imprimir/PDF">
+                                <i class="fas fa-print"></i>
+                            </a>
+
+                            <!-- Quick status (safe modal) -->
+                            <button type="button"
+                                onclick='openQuickStatusModal({{ budget.id }}, {{ budget.approval_status|tojson }}, {{ budget.stage_status|tojson }})'
+                                class="text-gray-400 hover:text-yellow-400 transition" title="Status Rápido">
+                                <i class="fas fa-bolt"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                        <div class="flex flex-col items-center gap-3">
+                            <div
+                                class="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center text-gray-600">
+                                <i class="fas fa-inbox text-4xl opacity-50"></i>
+                            </div>
+                            <p>Nenhum orçamento encontrado.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Quick Status Modal -->
+<div id="quickStatusModal"
+    class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-[#171d21] w-full max-w-md rounded-xl border border-gray-700 shadow-2xl relative animate-fade-in-down">
+        <div class="flex justify-between items-center p-6 border-b border-gray-800">
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                <i class="fas fa-bolt text-yellow-500"></i> Status Rápido
+            </h3>
+            <button type="button" onclick="closeQuickStatusModal()" class="text-gray-400 hover:text-white transition"
+                title="Fechar">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+
+        <div class="p-6 space-y-4">
+            <div class="text-sm text-gray-300">
+                Orçamento <span id="qsBudgetId" class="font-mono text-white"></span>
+            </div>
+            <div class="text-xs text-gray-500" id="qsCurrentStatus"></div>
+
+            <div class="p-3 rounded-lg border border-yellow-500/20 bg-yellow-500/5 text-yellow-200 text-xs">
+                Atenção: isso altera a etapa do veículo e afeta relatórios. Retirar pode ficar em Aguardando. Entregue
+                só após Retirar e exige decisão (Aprovado/Reprovado).
+            </div>
+
+            <div class="space-y-2">
+                <label class="flex items-start gap-3 p-3 rounded-lg border border-gray-700 hover:border-gray-600 cursor-pointer">
+                    <input type="radio" name="qsAction" value="awaiting" class="mt-1">
+                    <div>
+                        <div class="text-sm font-semibold text-white flex items-center gap-2">
+                            <i class="fas fa-clock text-yellow-500"></i> Aguardando
+                        </div>
+                        <div class="text-xs text-gray-500">Volta para Orçamento + Aguardando</div>
+                    </div>
+                </label>
+
+                <label class="flex items-start gap-3 p-3 rounded-lg border border-gray-700 hover:border-gray-600 cursor-pointer">
+                    <input type="radio" name="qsAction" value="ready_for_pickup" class="mt-1">
+                    <div>
+                        <div class="text-sm font-semibold text-white flex items-center gap-2">
+                            <i class="fas fa-truck text-blue-500"></i> Retirar
+                        </div>
+                        <div class="text-xs text-gray-500">Marca como pronto para retirada</div>
+                    </div>
+                </label>
+
+                <label class="flex items-start gap-3 p-3 rounded-lg border border-gray-700 hover:border-gray-600 cursor-pointer">
+                    <input type="radio" name="qsAction" value="delivered" class="mt-1">
+                    <div>
+                        <div class="text-sm font-semibold text-white flex items-center gap-2">
+                            <i class="fas fa-check text-emerald-500"></i> Entregue
+                        </div>
+                        <div class="text-xs text-gray-500">Só permitido se já estiver em Retirar</div>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <div class="flex justify-end gap-3 p-6 border-t border-gray-800">
+            <button type="button" onclick="closeQuickStatusModal()"
+                class="px-4 py-2 text-sm font-medium text-gray-400 hover:text-white transition">Cancelar</button>
+            <button type="button" onclick="confirmQuickStatusChange()"
+                class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-500 shadow-lg shadow-blue-500/20">
+                Confirmar Mudança
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Charts View (Hidden by Default) -->
+<div id="chartView" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 animate-fade-in-down">
+    <!-- Weekly Chart -->
+    <div class="lg:col-span-2 card p-6 border border-gray-800 bg-[#171d21] rounded-xl">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                <i class="fas fa-chart-bar text-blue-500"></i> <span id="budgetChartTitle">Propostas (6 Meses)</span>
+            </h3>
+            <div class="flex items-center gap-3">
+                <label for="budgetMonthSelect" class="text-xs text-gray-500 uppercase">Mês</label>
+                <div class="relative">
+                    <select id="budgetMonthSelect" onchange="updateBudgetCharts()"
+                        class="bg-[#0f1214] border border-gray-700 text-white rounded-lg p-2 pr-8 text-sm focus:border-blue-500 outline-none appearance-none cursor-pointer">
+                        <option value="all">Todos</option>
+                        {% for opt in month_options %}
+                        <option value="{{ opt.value }}">{{ opt.label }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-gray-500">
+                        <i class="fas fa-chevron-down text-xs"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="relative h-64 w-full">
+            <canvas id="weeklyChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Pie Chart (One at a time) -->
+    <div class="lg:col-span-1 card p-6 border border-gray-800 bg-[#171d21] rounded-xl">
+        <div class="flex items-center justify-between mb-4 gap-3">
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                <i id="pieChartIcon" class="fas fa-truck text-emerald-500"></i>
+                <span id="pieChartTitle">Etapa</span>
+            </h3>
+
+            <div class="bg-[#0f1214] p-1 rounded-lg border border-gray-700 flex items-center shadow-sm">
+                <button type="button" onclick="setPieMode('stage')" id="btnPieStage"
+                    class="px-3 py-1.5 rounded-md text-sm font-medium transition bg-gray-700 text-white shadow-sm">
+                    Etapa
+                </button>
+                <button type="button" onclick="setPieMode('approval')" id="btnPieApproval"
+                    class="px-3 py-1.5 rounded-md text-sm font-medium transition text-gray-400 hover:text-white">
+                    Decisão
+                </button>
+            </div>
+        </div>
+
+        <div class="relative h-56 w-full flex justify-center">
+            <canvas id="pieChart"></canvas>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // --- Toggle Logic (Matches Financial/Clients) ---
+    function toggleView(view) {
+        const listView = document.getElementById('listView');
+        const chartView = document.getElementById('chartView');
+        const btnList = document.getElementById('btnList');
+        const btnChart = document.getElementById('btnChart');
+
+        if (view === 'list') {
+            listView.classList.remove('hidden');
+            chartView.classList.add('hidden');
+
+            btnList.classList.add('bg-gray-700', 'text-white', 'shadow-sm');
+            btnList.classList.remove('text-gray-400');
+
+            btnChart.classList.remove('bg-gray-700', 'text-white', 'shadow-sm');
+            btnChart.classList.add('text-gray-400');
+        } else {
+            listView.classList.add('hidden');
+            chartView.classList.remove('hidden');
+
+            btnList.classList.remove('bg-gray-700', 'text-white', 'shadow-sm');
+            btnList.classList.add('text-gray-400');
+
+            btnChart.classList.add('bg-gray-700', 'text-white', 'shadow-sm');
+            btnChart.classList.remove('text-gray-400');
+
+            initCharts();
+        }
+    }
+
+    // --- Chart Logic ---
+    let chartsInitialized = false;
+    let weeklyChartInstance = null;
+    let pieChartInstance = null;
+    let pieMode = 'stage'; // 'stage' | 'approval'
+    let latestStageData = null;
+    let latestApprovalData = null;
+
+    function updatePieHeader() {
+        const title = document.getElementById('pieChartTitle');
+        const icon = document.getElementById('pieChartIcon');
+        const btnStage = document.getElementById('btnPieStage');
+        const btnApproval = document.getElementById('btnPieApproval');
+
+        const isApproval = pieMode === 'approval';
+        if (title) title.textContent = isApproval ? 'Decisão' : 'Etapa';
+        if (icon) icon.className = isApproval ? 'fas fa-check-circle text-green-500' : 'fas fa-truck text-emerald-500';
+
+        if (btnStage) {
+            const active = !isApproval;
+            btnStage.classList.toggle('bg-gray-700', active);
+            btnStage.classList.toggle('text-white', active);
+            btnStage.classList.toggle('shadow-sm', active);
+            btnStage.classList.toggle('text-gray-400', !active);
+        }
+        if (btnApproval) {
+            const active = isApproval;
+            btnApproval.classList.toggle('bg-gray-700', active);
+            btnApproval.classList.toggle('text-white', active);
+            btnApproval.classList.toggle('shadow-sm', active);
+            btnApproval.classList.toggle('text-gray-400', !active);
+        }
+    }
+
+    function setPieMode(mode) {
+        if (mode !== 'stage' && mode !== 'approval') return;
+        pieMode = mode;
+        updatePieHeader();
+        renderPieChart();
+    }
+
+    function renderPieChart() {
+        const canvas = document.getElementById('pieChart');
+        if (!canvas) return;
+
+        const data = pieMode === 'approval' ? latestApprovalData : latestStageData;
+        if (!data) return;
+
+        const labels = data.labels || [];
+        const values = data.data || [];
+        const colors = data.colors || [];
+
+        if (pieChartInstance) {
+            pieChartInstance.data.labels = labels;
+            pieChartInstance.data.datasets[0].data = values;
+            pieChartInstance.data.datasets[0].backgroundColor = colors;
+            pieChartInstance.update();
+            return;
+        }
+
+        pieChartInstance = new Chart(canvas, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: colors,
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: '#9ca3af', boxWidth: 12 } }
+                },
+                cutout: '70%'
+            }
+        });
+    }
+
+    function initCharts() {
+        if (chartsInitialized) return;
+
+        // Data passed from Flask
+        const weeklyData = JSON.parse('{{ chart_weekly|safe }}');
+        latestStageData = JSON.parse('{{ chart_stage|safe }}');
+        latestApprovalData = JSON.parse('{{ chart_approval|safe }}');
+
+        // Common Chart Options
+        const commonOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: '#9ca3af' } } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: '#374151' }, ticks: { color: '#9ca3af' } },
+                x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+            }
+        };
+
+        // Weekly Chart
+        weeklyChartInstance = new Chart(document.getElementById('weeklyChart'), {
+            type: 'bar',
+            data: {
+                labels: weeklyData.labels,
+                datasets: [{
+                    label: 'Valor Total (R$)',
+                    data: weeklyData.data,
+                    backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                    borderColor: '#3b82f6',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: commonOptions
+        });
+
+        updatePieHeader();
+        renderPieChart();
+
+        chartsInitialized = true;
+    }
+
+    function updateBudgetTitle(monthValue) {
+        const title = document.getElementById('budgetChartTitle');
+        if (!title) return;
+        if (!monthValue || monthValue === 'all') {
+            title.textContent = 'Propostas (6 Meses)';
+            return;
+        }
+        const parts = monthValue.split('-');
+        if (parts.length === 2) {
+            const year = parts[0];
+            const month = parts[1];
+            const map = { '01': 'Jan', '02': 'Fev', '03': 'Mar', '04': 'Abr', '05': 'Mai', '06': 'Jun', '07': 'Jul', '08': 'Ago', '09': 'Set', '10': 'Out', '11': 'Nov', '12': 'Dez' };
+            const label = map[month] ? `${map[month]}/${year.slice(2)}` : monthValue;
+            title.textContent = `Propostas - ${label}`;
+        } else {
+            title.textContent = 'Propostas';
+        }
+    }
+
+    async function updateBudgetCharts() {
+        try {
+            const month = document.getElementById('budgetMonthSelect').value;
+            updateBudgetTitle(month);
+            const response = await fetch(`/budgets/charts?month=${encodeURIComponent(month)}`);
+            const data = await response.json();
+
+            if (!chartsInitialized) {
+                initCharts();
+            }
+
+            if (weeklyChartInstance) {
+                weeklyChartInstance.data.labels = data.history.labels;
+                weeklyChartInstance.data.datasets[0].data = data.history.data;
+                weeklyChartInstance.update();
+            }
+
+            latestStageData = data.stage;
+            latestApprovalData = data.approval;
+            renderPieChart();
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    // --- Quick Status (Modal) ---
+    let qsBudgetId = null;
+    let qsApproval = 'sent';
+    let qsStage = 'budget';
+
+    function qsLabelApproval(v) {
+        if (v === 'approved') return 'Aprovado';
+        if (v === 'rejected') return 'Reprovado';
+        return 'Aguardando';
+    }
+
+    function qsLabelStage(v) {
+        if (v === 'ready_for_pickup') return 'Retirar';
+        if (v === 'delivered') return 'Entregue';
+        return 'Orçamento';
+    }
+
+    function openQuickStatusModal(id, approval, stage) {
+        qsBudgetId = id;
+        qsApproval = approval || 'sent';
+        qsStage = stage || 'budget';
+
+        const modal = document.getElementById('quickStatusModal');
+        const idEl = document.getElementById('qsBudgetId');
+        const currentEl = document.getElementById('qsCurrentStatus');
+
+        if (idEl) idEl.textContent = `#${id}`;
+        if (currentEl) currentEl.textContent = `Atual: ${qsLabelStage(qsStage)} / ${qsLabelApproval(qsApproval)}`;
+
+        // Default selection based on current status.
+        let defaultAction = 'awaiting';
+        if (qsStage === 'delivered') defaultAction = 'delivered';
+        else if (qsStage === 'ready_for_pickup') defaultAction = 'ready_for_pickup';
+        else if (qsApproval === 'sent') defaultAction = 'awaiting';
+        else defaultAction = 'ready_for_pickup';
+
+        document.querySelectorAll('input[name="qsAction"]').forEach(el => {
+            el.checked = (el.value === defaultAction);
+        });
+
+        if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeQuickStatusModal() {
+        const modal = document.getElementById('quickStatusModal');
+        if (modal) modal.classList.add('hidden');
+    }
+
+    async function confirmQuickStatusChange() {
+        const selected = document.querySelector('input[name="qsAction"]:checked');
+        if (!selected) {
+            const msg = 'Selecione uma opção.';
+            if (typeof Toastify !== 'undefined') {
+                Toastify({ text: msg, backgroundColor: "#ef4444" }).showToast();
+            } else {
+                alert(msg);
+            }
+            return;
+        }
+
+        const action = selected.value;
+        const id = qsBudgetId;
+        closeQuickStatusModal();
+        await quickSetBudgetStatus(id, action);
+    }
+
+    async function quickSetBudgetStatus(id, action) {
+        try {
+            const response = await fetch(`/budgets/quick_status/${id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                body: JSON.stringify({ action: action })
+            });
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                location.reload();
+                return;
+            }
+
+            const msg = result.error || 'Erro ao atualizar status.';
+            if (typeof Toastify !== 'undefined') {
+                Toastify({ text: msg, backgroundColor: "#ef4444" }).showToast();
+            } else {
+                alert(msg);
+            }
+        } catch (e) {
+            console.error(e);
+            const msg = 'Erro de conexão ao atualizar status.';
+            if (typeof Toastify !== 'undefined') {
+                Toastify({ text: msg, backgroundColor: "#ef4444" }).showToast();
+            } else {
+                alert(msg);
+            }
+        }
+    }
+
+    // Close modal on ESC/backdrop click
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeQuickStatusModal();
+    });
+    document.addEventListener('click', function (e) {
+        const modal = document.getElementById('quickStatusModal');
+        if (modal && !modal.classList.contains('hidden') && e.target === modal) {
+            closeQuickStatusModal();
+        }
+    });
+</script>
+{% endblock %}

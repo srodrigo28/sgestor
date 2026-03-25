@@ -1,0 +1,15 @@
+services:
+  app-flask:
+    build: .
+    container_name: app-flask
+    restart: always
+    env_file:
+      - .env
+    networks:
+      - rede_interna
+    # ports:
+    #   - "5050:5050"
+
+networks:
+  rede_interna:
+    external: true

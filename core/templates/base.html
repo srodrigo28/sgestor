@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Dashboard{% endblock %} - {{ session['name'] }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <style>
+        body {
+            background-color: #0f1214;
+            color: #a3aab1;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .card {
+            background-color: #171d21;
+            border-radius: 0.5rem;
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        .sidebar {
+            background-color: #11161a;
+        }
+
+        .mobile-drawer {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .mobile-drawer.open {
+            transform: translateX(0);
+        }
+
+        .mobile-overlay {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .mobile-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #11161a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #2d3748;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4a5568;
+        }
+
+        /* Fix AutoComplete Background for Dark Mode */
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover, 
+        input:-webkit-autofill:focus, 
+        input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px #0f1316 inset !important;
+            -webkit-text-fill-color: white !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+    </style>
+    {% block head %}{% endblock %}
+</head>
+
+<body class="flex h-screen overflow-hidden">
+
+    <div id="mobileOverlay" class="mobile-overlay fixed inset-0 bg-black/60 z-30 md:hidden" onclick="closeDrawer()"></div>
+
+    <aside id="mobileDrawer" class="sidebar mobile-drawer fixed inset-y-0 left-0 z-40 w-72 max-w-[85vw] border-r border-gray-800 flex flex-col md:hidden">
+        <div class="p-6 text-white text-2xl font-bold flex items-center justify-between gap-3 border-b border-gray-800">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-blue-600 rounded-lg shadow-lg shadow-blue-500/30 flex items-center justify-center">
+                    <i class="fas fa-bolt text-sm"></i>
+                </div>
+                Rocker
+            </div>
+            <button type="button" class="text-gray-400 hover:text-white transition p-2 rounded-lg hover:bg-gray-800" onclick="closeDrawer()" aria-label="Fechar menu">
+                <i class="fas fa-times text-lg"></i>
+            </button>
+        </div>
+
+        <nav class="flex-1 px-4 py-4 space-y-2 overflow-y-auto">
+            <div class="text-xs uppercase text-gray-500 font-bold tracking-wider mb-3 px-2">Principal</div>
+
+            {% if menu_permissions.get('dashboard') %}
+            <a href="/dashboard"
+                class="flex items-center gap-3 p-3 rounded-lg {% if request.path == '/dashboard' %}bg-blue-600/10 text-blue-500 border border-blue-600/20{% else %}text-gray-400 hover:bg-gray-800 hover:text-white transition{% endif %}">
+                <i class="fas fa-home w-5"></i> Dashboard
+            </a>
+            {% endif %}
+
+            <div class="text-xs uppercase text-gray-500 font-bold tracking-wider mb-3 mt-8 px-2">Aplicações</div>
+
+            {% if menu_permissions.get('schedule') %}
+            <a href="/schedule"
+                class="flex items-center gap-3 p-3 rounded-lg {% if request.path.startswith('/schedule') %}bg-blue-600/10 text-blue-500 border border-blue-600/20{% else %}text-gray-400 hover:bg-gray-800 hover:text-white transition{% endif %} group">
+                <i class="fas fa-calendar-alt w-5 group-hover:text-blue-500 transition"></i> Agendamentos
+            </a>
+            {% endif %}
+
+            {% if menu_permissions.get('tasks') %}
+            <a href="/tasks"
+                class="flex items-center gap-3 p-3 rounded-lg {% if request.path == '/tasks' %}bg-blue-600/10 text-blue-500 border border-blue-600/20{% else %}text-gray-400 hover:bg-gray-800 hover:text-white transition{% endif %} group">
+                <i class="fas fa-check-circle w-5 group-hover:text-blue-500 transition"></i> Tarefas
+            </a>
+            {% endif %}
+            {% if menu_permissions.get('financial') %}
+            <a href="/financial/income"
+                class="flex items-center gap-3 p-3 rounded-lg {% if request.path.startswith('/financial') %}bg-blue-600/10 text-blue-500 border border-blue-600/20{% else %}text-gray-400 hover:bg-gray-800 hover:text-white transition{% endif %} group">
+                <i class="fas fa-wallet w-5 group-hover:text-blue-500 transition"></i> Financeiro
+            </a>
+            {% endif %}
+            {% if menu_permissions.get('products') %}
+            <a href="{{ url_for('products.list_products') }}"
+                class="flex items-center gap-3 p-3 rounded-lg {% if request.path.startswith('/products') %}bg-blue-600/10 text-blue-500 border border-blue-600/20{% else %}text-gray-400 hover:bg-gray-800 hover:text-white transition{% endif %} group">
+                <i class="fas fa-box w-5 group-hover:text-blue-500 transition"></i> Produtos
+            </a>
+            {% endif %}
+            {% if menu_permissions.get('clients') %}
+            <a href="{{ url_for('clients.list') }}"
+                class="flex items-center gap-3 p-3 rounded-lg {% if request.path.startswith('/clients') %}bg-blue-600/10 text-blue-500 border border-blue-600/20{% else %}text-gray-400 hover:bg-gray-800 hover:text-white transition{% endif %} group">
+                <i class="fas fa-users w-5 group-hover:text-blue-500 transition"></i> Clientes
+            </a>
+            {% endif %}
+            {% if menu_permissions.get('budgets') %}
+            <a href="{{ url_for('budgets.list') }}"
+                class="flex items-center gap-3 p-3 rounded-lg {% if request.path.startswith('/budgets') %}bg-blue-600/10 text-blue-500 border border-blue-600/20{% else %}text-gray-400 hover:bg-gray-800 hover:text-white transition{% endif %} group">
+                <i class="fas fa-file-invoice-dollar w-5 group-hover:text-blue-500 transition"></i> Orçamentos
+            </a>
+            {% endif %}
+            {% if menu_permissions.get('services') %}
+            <a href="{{ url_for('services.list') }}"
+                class="flex items-center gap-3 p-3 rounded-lg {% if request.path.startswith('/services') %}bg-blue-600/10 text-blue-500 border border-blue-600/20{% else %}text-gray-400 hover:bg-gray-800 hover:text-white transition{% endif %} group">
+                <i class="fas fa-tools w-5 group-hover:text-blue-500 transition"></i> Serviços
+            </a>
+            {% endif %}
+            {% if menu_permissions.get('mechanics') %}
+            <a href="{{ url_for('mechanics.list_mechanics') }}"
+                class="flex items-center gap-3 p-3 rounded-lg {% if request.path.startswith('/mechanics') %}bg-blue-600/10 text-blue-500 border border-blue-600/20{% else %}text-gray-400 hover:bg-gray-800 hover:text-white transition{% endif %} group">
+                <i class="fas fa-user-cog w-5 group-hover:text-blue-500 transition"></i> Mecânicos
+            </a>
+            {% endif %}
+            {% if menu_permissions.get('admin_users') %}
+            <a href="{{ url_for('admin.users') }}"
+                class="flex items-center gap-3 p-3 rounded-lg {% if request.path.startswith('/admin') %}bg-blue-600/10 text-blue-500 border border-blue-600/20{% else %}text-gray-400 hover:bg-gray-800 hover:text-white transition{% endif %} group">
+                <i class="fas fa-users w-5 group-hover:text-blue-500 transition"></i> Usuários
+            </a>
+            {% endif %}
+
+            <div class="mt-auto border-t border-gray-800 pt-4">
+                <div class="flex items-center gap-3 px-2 mb-4 cursor-pointer" onclick="openProfileModal(); closeDrawer();">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-purple-600 p-[2px]">
+                        <img src="https://ui-avatars.com/api/?name={{ session['name'] }}&background=0f1214&color=fff"
+                            class="w-full h-full rounded-full border-2 border-[#0f1214]">
+                    </div>
+                    <div class="overflow-hidden">
+                        <p class="text-sm font-medium text-white truncate">{{ session['name'] }}</p>
+                        <p class="text-xs text-gray-500 truncate">{{ session['email'] }}</p>
+                    </div>
+                </div>
+
+                <a href="/logout"
+                    class="flex items-center gap-3 p-3 rounded-lg hover:bg-red-500/10 hover:text-red-500 transition text-gray-400">
+                    <i class="fas fa-sign-out-alt w-5"></i> Sair
+                </a>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Sidebar -->
+    <aside class="sidebar w-64 flex-shrink-0 border-r border-gray-800 hidden md:flex flex-col">
+        <div class="p-6 text-white text-2xl font-bold flex items-center gap-3">
+            <div class="w-8 h-8 bg-blue-600 rounded-lg shadow-lg shadow-blue-500/30 flex items-center justify-center">
+                <i class="fas fa-bolt text-sm"></i>
+            </div>
+            Rocker
+        </div>
+
+        <nav class="flex-1 px-4 space-y-2 overflow-y-auto mt-4">
+            <div class="text-xs uppercase text-gray-500 font-bold tracking-wider mb-3 px-2">Principal</div>
+
+            {% if menu_permissions.get('dashboard') %}
+            <a href="/dashboard"
+                class="flex items-center gap-3 p-3 rounded-lg {% if request.path == '/dashboard' %}bg-blue-600/10 text-blue-500 border border-blue-600/20{% else %}text-gray-400 hover:bg-gray-800 hover:text-white transition{% endif %}">
+                <i class="fas fa-home w-5"></i> Dashboard
+            </a>
+            {% endif %}
+
+            <div class="text-xs uppercase text-gray-500 font-bold tracking-wider mb-3 mt-8 px-2">Aplicações</div>
+
+            {% if menu_permissions.get('schedule') %}
+            <a href="/schedule"
+                class="flex items-center gap-3 p-3 rounded-lg {% if request.path.startswith('/schedule') %}bg-blue-600/10 text-blue-500 border border-blue-600/20{% else %}text-gray-400 hover:bg-gray-800 hover:text-white transition{% endif %} group">
+                <i class="fas fa-calendar-alt w-5 group-hover:text-blue-500 transition"></i> Agendamentos
+            </a>
+            {% endif %}
+
+            {% if menu_permissions.get('tasks') %}
+            <a href="/tasks"
+                class="flex items-center gap-3 p-3 rounded-lg {% if request.path == '/tasks' %}bg-blue-600/10 text-blue-500 border border-blue-600/20{% else %}text-gray-400 hover:bg-gray-800 hover:text-white transition{% endif %} group">
+                <i class="fas fa-check-circle w-5 group-hover:text-blue-500 transition"></i> Tarefas
+            </a>
+            {% endif %}
+            {% if menu_permissions.get('financial') %}
+            <a href="/financial/income"
+                class="flex items-center gap-3 p-3 rounded-lg {% if request.path.startswith('/financial') %}bg-blue-600/10 text-blue-500 border border-blue-600/20{% else %}text-gray-400 hover:bg-gray-800 hover:text-white transition{% endif %} group">
+                <i class="fas fa-wallet w-5 group-hover:text-blue-500 transition"></i> Financeiro
+            </a>
+            {% endif %}
+            {% if menu_permissions.get('products') %}
+            <a href="{{ url_for('products.list_products') }}"
+                class="flex items-center gap-3 p-3 rounded-lg {% if request.path.startswith('/products') %}bg-blue-600/10 text-blue-500 border border-blue-600/20{% else %}text-gray-400 hover:bg-gray-800 hover:text-white transition{% endif %} group">
+                <i class="fas fa-box w-5 group-hover:text-blue-500 transition"></i> Produtos
+            </a>
+            {% endif %}
+            {% if menu_permissions.get('clients') %}
+            <a href="{{ url_for('clients.list') }}"
+                class="flex items-center gap-3 p-3 rounded-lg {% if request.path.startswith('/clients') %}bg-blue-600/10 text-blue-500 border border-blue-600/20{% else %}text-gray-400 hover:bg-gray-800 hover:text-white transition{% endif %} group">
+                <i class="fas fa-users w-5 group-hover:text-blue-500 transition"></i> Clientes
+            </a>
+            {% endif %}
+            {% if menu_permissions.get('budgets') %}
+            <a href="{{ url_for('budgets.list') }}"
+                class="flex items-center gap-3 p-3 rounded-lg {% if request.path.startswith('/budgets') %}bg-blue-600/10 text-blue-500 border border-blue-600/20{% else %}text-gray-400 hover:bg-gray-800 hover:text-white transition{% endif %} group">
+                <i class="fas fa-file-invoice-dollar w-5 group-hover:text-blue-500 transition"></i> Orçamentos
+            </a>
+            {% endif %}
+            {% if menu_permissions.get('services') %}
+            <a href="{{ url_for('services.list') }}"
+                class="flex items-center gap-3 p-3 rounded-lg {% if request.path.startswith('/services') %}bg-blue-600/10 text-blue-500 border border-blue-600/20{% else %}text-gray-400 hover:bg-gray-800 hover:text-white transition{% endif %} group">
+                <i class="fas fa-tools w-5 group-hover:text-blue-500 transition"></i> Serviços
+            </a>
+            {% endif %}
+            {% if menu_permissions.get('mechanics') %}
+            <a href="{{ url_for('mechanics.list_mechanics') }}"
+                class="flex items-center gap-3 p-3 rounded-lg {% if request.path.startswith('/mechanics') %}bg-blue-600/10 text-blue-500 border border-blue-600/20{% else %}text-gray-400 hover:bg-gray-800 hover:text-white transition{% endif %} group">
+                <i class="fas fa-user-cog w-5 group-hover:text-blue-500 transition"></i> Mecânicos
+            </a>
+            {% endif %}
+            {% if menu_permissions.get('admin_users') %}
+            <a href="{{ url_for('admin.users') }}"
+                class="flex items-center gap-3 p-3 rounded-lg {% if request.path.startswith('/admin') %}bg-blue-600/10 text-blue-500 border border-blue-600/20{% else %}text-gray-400 hover:bg-gray-800 hover:text-white transition{% endif %} group">
+                <i class="fas fa-users w-5 group-hover:text-blue-500 transition"></i> Usuários
+            </a>
+            {% endif %}
+
+            <div class="mt-auto border-t border-gray-800 pt-4">
+                <div class="flex items-center gap-3 px-2 mb-4 cursor-pointer" onclick="openProfileModal()">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-purple-600 p-[2px]">
+                        <img src="https://ui-avatars.com/api/?name={{ session['name'] }}&background=0f1214&color=fff"
+                            class="w-full h-full rounded-full border-2 border-[#0f1214]">
+                    </div>
+                    <div class="overflow-hidden">
+                        <p class="text-sm font-medium text-white truncate">{{ session['name'] }}</p>
+                        <p class="text-xs text-gray-500 truncate">{{ session['email'] }}</p>
+                    </div>
+                </div>
+
+                <a href="/logout"
+                    class="flex items-center gap-3 p-3 rounded-lg hover:bg-red-500/10 hover:text-red-500 transition text-gray-400">
+                    <i class="fas fa-sign-out-alt w-5"></i> Sair
+                </a>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col overflow-hidden relative">
+
+        <!-- Minimal Header (Bell Only) -->
+        <div class="absolute top-4 left-4 z-20 md:hidden">
+            <button type="button" class="text-gray-300 hover:text-white transition p-3 rounded-xl bg-[#171d21]/90 border border-gray-800 shadow-lg shadow-black/20" onclick="openDrawer()" aria-label="Abrir menu">
+                <i class="fas fa-bars text-lg"></i>
+            </button>
+        </div>
+
+        <div class="absolute top-6 right-8 z-20">
+            <button class="relative text-gray-400 hover:text-white transition p-2 rounded-full hover:bg-gray-800">
+                <i class="fas fa-bell text-xl"></i>
+                <span
+                    class="absolute top-1 right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">3</span>
+            </button>
+        </div>
+
+        <!-- Dynamic Content -->
+        <div class="p-6 overflow-y-auto space-y-6 scroll-smooth h-full pt-8">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Task Modal (Global) -->
+    {% include 'components/task_add.html' %}
+    {% include 'components/profile_edit.html' %}
+
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script>
+        const mobileDrawer = document.getElementById('mobileDrawer');
+        const mobileOverlay = document.getElementById('mobileOverlay');
+
+        function openDrawer() {
+            mobileDrawer.classList.add('open');
+            mobileOverlay.classList.add('open');
+            document.body.classList.add('overflow-hidden');
+        }
+
+        function closeDrawer() {
+            mobileDrawer.classList.remove('open');
+            mobileOverlay.classList.remove('open');
+            document.body.classList.remove('overflow-hidden');
+        }
+
+        function openModal() {
+            document.getElementById('taskModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('taskModal').classList.add('hidden');
+        }
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === "Escape") {
+                closeDrawer();
+                closeModal();
+            }
+        });
+
+        window.addEventListener('resize', function () {
+            if (window.innerWidth >= 768) {
+                closeDrawer();
+            }
+        });
+
+        document.querySelectorAll('#mobileDrawer a').forEach(function (link) {
+            link.addEventListener('click', closeDrawer);
+        });
+
+        // Toast Notification Logic
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        {% for message in messages %}
+        Toastify({
+            text: "{{ message }}",
+            duration: 3000,
+            close: true,
+            gravity: "top",
+            position: "right",
+            stopOnFocus: true,
+            style: {
+                background: "linear-gradient(to right, #10b981, #059669)", // Green-500 to Green-600
+                borderRadius: "8px",
+                boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"
+            },
+            onClick: function () { } // Callback after click
+        }).showToast();
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

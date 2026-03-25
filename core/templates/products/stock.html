@@ -1,0 +1,1157 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+        animation: fadeIn 0.3s ease-out forwards;
+    }
+    /* Custom Scrollbar specifically for modal content if needed */
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: #0f1214;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #374151;
+        border-radius: 3px;
+    }
+</style>
+
+<!-- Title Row -->
+<div class="flex justify-between items-center mb-6 animate-fade-in-down">
+    <div>
+        <h2 class="text-2xl font-bold text-white">Meus Produtos</h2>
+        <p class="text-gray-500 text-sm">Gestão de estoque e fornecedores</p>
+    </div>
+    <div class="text-gray-500 text-sm hidden md:block">
+        <i class="far fa-box-open mr-2"></i> Gestão Simplificada
+    </div>
+</div>
+
+<!-- Stats Grid (Always Visible) -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 w-full animate-fade-in-down">
+    <!-- Total Items -->
+    <div class="card p-5 border border-gray-800 bg-[#171d21] rounded-xl hover:-translate-y-1 transition duration-300">
+        <div>
+            <p class="text-sm text-gray-500 font-medium">Itens em Estoque</p>
+            <h4 class="text-2xl font-bold text-white mt-1 count-up" data-target="{{ stats.total_items }}">0</h4>
+            <p class="text-blue-500 text-xs mt-1 flex items-center gap-1">
+                <i class="fas fa-box"></i>
+                <span class="text-gray-600 ml-1">Unidades totais</span>
+            </p>
+        </div>
+    </div>
+
+    <!-- Cost Value -->
+    <div class="card p-5 border border-gray-800 bg-[#171d21] rounded-xl 
+    hover:-translate-y-1 transition duration-300">
+        <div>
+            <p class="text-sm text-gray-500 font-medium">Valor em Custo</p>
+            <h4 class="text-2xl font-bold text-white mt-1">R$ <span class="count-up" data-format="currency"
+                    data-target="{{ stats.total_cost }}">{{ "{:,.2f}".format(stats.total_cost|float).replace(',',
+                    'X').replace('.', ',').replace('X', '.') }}</span>
+            </h4>
+            <p class="text-yellow-500 text-xs mt-1 flex items-center gap-1">
+                <i class="fas fa-coins"></i>
+                <span class="text-gray-600 ml-1">Patrimônio investido</span>
+            </p>
+        </div>
+    </div>
+
+    <!-- Potential Sales -->
+    <div class="card p-5 border border-gray-800 bg-[#171d21] rounded-xl hover:-translate-y-1 transition duration-300">
+        <div>
+            <p class="text-sm text-gray-500 font-medium">Valor de Venda</p>
+            <h4 class="text-2xl font-bold text-white mt-1">R$ <span class="count-up" data-format="currency"
+                    data-target="{{ stats.total_sell }}">{{ "{:,.2f}".format(stats.total_sell|float).replace(',',
+                    'X').replace('.', ',').replace('X', '.') }}</span>
+            </h4>
+            <p class="text-green-500 text-xs mt-1 flex items-center gap-1">
+                <i class="fas fa-chart-line"></i>
+                <span class="text-gray-600 ml-1">Faturamento potencial</span>
+            </p>
+        </div>
+    </div>
+
+    <!-- Low Stock Alert -->
+    <div class="card p-5 border border-gray-800 bg-[#171d21] rounded-xl hover:-translate-y-1 transition duration-300">
+        <div>
+            <p class="text-sm text-gray-500 font-medium">Estoque Baixo</p>
+            <h4 class="text-2xl font-bold text-white mt-1 text-red-500 count-up" data-target="{{ stats.low_stock }}">0
+            </h4>
+            <p class="text-red-500 text-xs mt-1 flex items-center gap-1">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span class="text-gray-600 ml-1">Itens precisam repor</span>
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Controls Row -->
+<div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 animate-fade-in-down"
+    style="animation-delay: 0.2s;">
+    <!-- Search -->
+    <div class="relative group w-full md:w-auto">
+        <input type="text" id="searchInput" placeholder="Buscar produto..." value="{{ active_search or '' }}"
+            onkeypress="if(event.key === 'Enter') updateFilters()"
+            class="bg-[#171d21] border border-gray-700 text-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block pl-10 p-2.5 w-full md:w-64 transition-all group-hover:border-gray-600">
+        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+            <i class="fas fa-search text-gray-500"></i>
+        </div>
+    </div>
+
+    <div class="flex items-center gap-3 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
+        <!-- Filter -->
+        <select id="categoryFilter" onchange="updateFilters()"
+            class="bg-[#171d21] border border-gray-700 text-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 cursor-pointer hover:border-gray-600 transition min-w-[140px]">
+            <option value="">Todas as Categorias</option>
+            {% for cat in categories %}
+            <option value="{{ cat.id }}" {% if active_category|string == cat.id|string %}selected{% endif %}>{{ cat.name }}</option>
+            {% endfor %}
+        </select>
+
+        <!-- View Toggle -->
+        <div class="bg-[#171d21] p-1 rounded-lg border border-gray-700 flex items-center shrink-0">
+            <button onclick="toggleView('list')" id="btnList"
+                class="px-3 py-1.5 rounded-md text-sm font-medium transition bg-gray-700 text-white shadow-sm">
+                <i class="fas fa-list"></i>
+            </button>
+            <button onclick="toggleView('chart')" id="btnChart"
+                class="px-3 py-1.5 rounded-md text-sm font-medium transition text-gray-400 hover:text-white">
+                <i class="fas fa-chart-pie"></i>
+            </button>
+        </div>
+
+        <!-- Add Product Button -->
+        <button onclick="openProductModal()"
+            class="bg-blue-600 hover:bg-blue-500 text-white w-10 h-10 rounded-lg flex items-center justify-center transition shadow-lg shadow-blue-500/20 transform hover:scale-105 active:scale-95 shrink-0"
+            title="Novo Produto">
+            <i class="fas fa-plus"></i>
+        </button>
+
+        <!-- View Categories Button (Small) -->
+        <a href="{{ url_for('products.list_categories') }}"
+            class="bg-gray-800 hover:bg-gray-700 text-gray-300 w-10 h-10 rounded-lg border border-gray-700 transition flex items-center justify-center shrink-0"
+            title="Gerenciar Categorias">
+            <i class="fas fa-tags"></i>
+        </a>
+
+        <!-- Add Supplier Button (Small) -->
+        <button onclick="openSupplierModal()"
+            class="bg-gray-800 hover:bg-gray-700 text-gray-300 w-10 h-10 rounded-lg border border-gray-700 transition flex items-center justify-center shrink-0"
+            title="Novo Fornecedor">
+            <i class="fas fa-truck"></i>
+        </button>
+    </div>
+</div>
+
+<!-- List View -->
+<div id="listView" class="overflow-x-auto bg-[#171d21] rounded-xl border border-gray-800 shadow-xl animate-fade-in-down"
+    style="animation-delay: 0.3s;">
+    <table class="w-full text-sm text-left text-gray-400">
+        <thead class="text-xs text-gray-500 uppercase bg-gray-900/50 border-b border-gray-800">
+            <tr>
+                <th scope="col" class="px-6 py-4">Produto</th>
+                <th scope="col" class="px-6 py-4">Categoria</th>
+                <th scope="col" class="px-6 py-4">Fornecedor</th>
+                <th scope="col" class="px-6 py-4 text-center">Qtd</th>
+                <th scope="col" class="px-6 py-4 text-right">Custo</th>
+                <th scope="col" class="px-6 py-4 text-right">Venda</th>
+                <th scope="col" class="px-6 py-4 text-center">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in products %}
+            <tr class="border-b border-gray-800 hover:bg-gray-800/50 transition duration-200">
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="font-medium text-white text-base">{{ product.name }}</div>
+                    {% if product.barcode %}
+                    <div class="text-xs text-gray-600 flex items-center gap-1 mt-0.5">
+                        <i class="fas fa-barcode"></i> {{ product.barcode }}
+                    </div>
+                    {% endif %}
+                </td>
+                <td class="px-6 py-4">
+                    <span class="px-2.5 py-0.5 rounded-md bg-gray-800 border border-gray-700 text-xs text-gray-300">
+                        {{ product.category_name or product.category or 'Geral' }}
+                    </span>
+                </td>
+                <td class="px-6 py-4">
+                    {% if product.supplier %}
+                    <span class="text-blue-400 hover:text-blue-300 cursor-pointer">{{ product.supplier }}</span>
+                    {% else %}
+                    <span class="text-gray-600 italic text-xs">Não cadastrado</span>
+                    {% endif %}
+                </td>
+                <td class="px-6 py-4 text-center">
+                    <span
+                        class="font-bold {% if product.quantity <= product.min_quantity %}text-red-500{% else %}text-white{% endif %}">
+                        {{ product.quantity }}
+                    </span>
+                    {% if product.quantity <= product.min_quantity %} <div
+                        class="text-[10px] text-red-500 uppercase font-bold tracking-wide mt-1">Baixo Estoque
+</div>
+{% endif %}
+</td>
+<td class="px-6 py-4 text-right font-medium">
+    R$ {{ "{:,.2f}".format(product.cost_price).replace(',', 'X').replace('.', ',').replace('X', '.') }}
+</td>
+<td class="px-6 py-4 text-right font-bold text-green-400">
+    R$ {{ "{:,.2f}".format(product.sell_price).replace(',', 'X').replace('.', ',').replace('X', '.') }}
+</td>
+<td class="px-6 py-4 text-center">
+    <div class="flex justify-center gap-3">
+        <button onclick='openEditProductModal({{ product | tojson | safe }})'
+            class="text-blue-500 hover:text-blue-400 transition" title="Editar">
+            <i class="fas fa-edit"></i>
+        </button>
+        <form action="{{ url_for('products.delete_product', id=product.id) }}" method="POST"
+            onsubmit="return confirm('Tem certeza que deseja excluir este produto?');" style="display:inline;">
+            <button type="submit" class="text-red-500 hover:text-red-400 transition" title="Excluir">
+                <i class="fas fa-trash"></i>
+            </button>
+        </form>
+    </div>
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+
+<!-- Charts View (Hidden by default) -->
+<div id="chartView" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in-down">
+    <!-- Chart 1: Entries History -->
+    <div class="card p-6 lg:col-span-2 border border-gray-800 bg-[#171d21] rounded-xl">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-bold text-white">Entradas Recentes</h3>
+            <div class="flex items-center gap-3">
+                <label for="stockMonthSelect" class="text-xs text-gray-500 uppercase">Mês</label>
+                <div class="relative">
+                    <select id="stockMonthSelect" onchange="updateStockCharts()"
+                        class="bg-[#0f1214] border border-gray-700 text-white rounded-lg p-2 pr-8 text-sm focus:border-blue-500 outline-none appearance-none cursor-pointer">
+                        <option value="all">Todos</option>
+                        {% for opt in month_options %}
+                        <option value="{{ opt.value }}">{{ opt.label }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-gray-500">
+                        <i class="fas fa-chevron-down text-xs"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="relative h-64">
+            <canvas id="entriesChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Chart 2: Category Distribution -->
+    <div class="card p-6 border border-gray-800 bg-[#171d21] rounded-xl">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-bold text-white">Por Categoria</h3>
+            <button class="text-gray-500 hover:text-white"><i class="fas fa-ellipsis-h"></i></button>
+        </div>
+        <div class="relative h-64">
+            <canvas id="categoriesChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Product Modal -->
+<div id="productModal"
+    class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div
+        class="bg-[#171d21] w-full max-w-2xl rounded-xl border border-gray-700 shadow-2xl relative animate-fade-in-down flex flex-col max-h-[90vh]">
+        <div class="flex justify-between items-center p-6 border-b border-gray-800 shrink-0">
+            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                <i class="fas fa-box text-blue-500"></i> Novo Produto
+            </h3>
+            <button onclick="closeProductModal()" class="text-gray-400 hover:text-white transition"><i
+                    class="fas fa-times text-xl"></i></button>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <div class="flex border-b border-gray-800 shrink-0">
+            <button onclick="switchProductTab('geral')" id="tab-btn-geral"
+                class="flex-1 py-3 text-sm font-medium text-blue-500 border-b-2 border-blue-500 hover:bg-gray-800/50 transition">
+                <i class="fas fa-info-circle mr-2"></i> Geral
+            </button>
+            <button onclick="switchProductTab('financeiro')" id="tab-btn-financeiro"
+                class="flex-1 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-gray-800/50 transition border-b-2 border-transparent">
+                <i class="fas fa-dollar-sign mr-2"></i> Financeiro
+            </button>
+            <button onclick="switchProductTab('estoque')" id="tab-btn-estoque"
+                class="flex-1 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-gray-800/50 transition border-b-2 border-transparent">
+                <i class="fas fa-warehouse mr-2"></i> Estoque
+            </button>
+        </div>
+
+        <form id="productForm" action="{{ url_for('products.add_product') }}" method="POST" enctype="multipart/form-data" class="flex flex-col flex-1 overflow-hidden">
+            <div class="p-6 overflow-y-auto custom-scrollbar flex-1">
+                
+                <!-- Tab: Geral -->
+                <div id="tab-content-geral" class="space-y-6 animate-fade-in">
+                    <!-- Name -->
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-400">Nome do Produto <span class="text-red-500">*</span></label>
+                        <input type="text" id="prodName" name="name" required
+                            class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                            placeholder="Ex: Coca-Cola 2L">
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- SKU -->
+                        <div>
+                            <label class="block mb-2 text-sm font-medium text-gray-400">SKU (Código)</label>
+                            <input type="text" id="prodSku" name="sku" 
+                                class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 uppercase"
+                                placeholder="Ex: PROD-123">
+                        </div>
+                        
+                        <!-- Category -->
+                        <div>
+                            <label class="block mb-2 text-sm font-medium text-gray-400">Categoria</label>
+                            <div class="flex gap-2">
+                                <select id="prodCategory" name="category_id"
+                                    class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 cursor-pointer">
+                                    <option value="">Selecione uma categoria...</option>
+                                    {% for cat in categories %}
+                                    <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="button" onclick="openCategoryModalFromProduct()"
+                                    class="bg-gray-800 hover:bg-gray-700 text-white px-3.5 rounded-lg border border-gray-700 transition" title="Nova Categoria">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Image Upload & URL -->
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-400">Imagens do Produto</label>
+                        
+                        <div id="images-container" class="space-y-4">
+                            <!-- Image Item Template (First one always visible) -->
+                            <div class="image-item flex flex-col sm:flex-row gap-4 items-start p-4 border border-gray-800 rounded-xl bg-gray-900/30 relative group">
+                                <!-- Preview -->
+                                <div class="w-24 h-24 rounded-lg border border-gray-700 bg-[#0f1316] flex items-center justify-center overflow-hidden shrink-0 relative">
+                                    <img src="" alt="Preview" class="w-full h-full object-cover hidden preview-img">
+                                    <div class="text-gray-500 flex flex-col items-center p-2 text-center placeholder-ui">
+                                        <i class="fas fa-image text-xl mb-1"></i>
+                                        <span class="text-[10px]">Sem imagem</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Inputs -->
+                                <div class="flex-1 w-full space-y-3">
+                                    <!-- File Input -->
+                                    <div class="relative">
+                                        <label class="block text-xs text-gray-500 mb-1">Upload de Arquivo</label>
+                                        <input type="file" name="image_files" accept="image/*"
+                                            onchange="updateImagePreview(this)"
+                                            class="block w-full text-xs text-gray-400 border border-gray-700 rounded-lg cursor-pointer bg-[#0f1316] focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-l-lg file:border-0 file:text-xs file:font-semibold file:bg-gray-800 file:text-white hover:file:bg-gray-700 transition">
+                                    </div>
+                                    
+                                    <!-- OR Separator -->
+                                    <div class="flex items-center gap-2">
+                                        <div class="h-px bg-gray-700 flex-1"></div>
+                                        <span class="text-[10px] text-gray-500 uppercase">Ou URL Externa</span>
+                                        <div class="h-px bg-gray-700 flex-1"></div>
+                                    </div>
+
+                                    <!-- URL Input -->
+                                    <div class="relative">
+                                        <input type="text" name="image_urls" 
+                                            oninput="updateUrlPreview(this)"
+                                            class="bg-[#0f1316] border border-gray-700 text-white text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 pl-8"
+                                            placeholder="https://exemplo.com/foto.jpg">
+                                        <div class="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none text-gray-500">
+                                            <i class="fas fa-link text-xs"></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Remove Button (Hidden for first item initially, shown if more exist) -->
+                                <button type="button" onclick="removeImageRow(this)" class="hidden absolute top-2 right-2 text-gray-500 hover:text-red-500 transition remove-btn">
+                                    <i class="fas fa-times-circle"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Add Button -->
+                        <div class="mt-3 text-right">
+                             <button type="button" onclick="addImageRow()" class="text-xs inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 transition cursor-pointer">
+                                <i class="fas fa-plus-circle text-sm"></i> Adicionar outra foto
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Financeiro -->
+                <div id="tab-content-financeiro" class="hidden space-y-6 animate-fade-in">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block mb-2 text-sm font-medium text-gray-400">Preço de Custo (R$)</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 pointer-events-none">R$</span>
+                                <input type="text" id="prodCost" name="cost_price" step="0.01"
+                                    class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 pl-10"
+                                    placeholder="0.00" oninput="formatCurrency(this)">
+                            </div>
+                            <p class="mt-1 text-xs text-gray-600">Valor pago ao fornecedor.</p>
+                        </div>
+                        <div>
+                            <label class="block mb-2 text-sm font-medium text-gray-400">Preço de Venda (R$)</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 pointer-events-none">R$</span>
+                                <input type="text" id="prodPrice" name="price" step="0.01" required
+                                    class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 pl-10"
+                                    placeholder="0.00" oninput="formatCurrency(this)">
+                            </div>
+                            <p class="mt-1 text-xs text-gray-600">Valor final para o cliente.</p>
+                        </div>
+                    </div>
+
+                    <!-- Profit Simulation (Visual Aid) -->
+                    <div class="p-4 bg-blue-900/10 border border-blue-500/20 rounded-xl">
+                        <h4 class="text-blue-400 text-sm font-bold mb-2"><i class="fas fa-calculator mr-1"></i> Simulação de Lucro</h4>
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-gray-400">Margem Estimada:</span>
+                            <span class="text-green-400 font-bold text-lg" id="profitMargin">0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Estoque -->
+                <div id="tab-content-estoque" class="hidden space-y-6 animate-fade-in">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block mb-2 text-sm font-medium text-gray-400">Quantidade Atual</label>
+                            <input type="number" id="prodQty" name="quantity"
+                                class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                                placeholder="0">
+                        </div>
+                        <div>
+                            <label class="block mb-2 text-sm font-medium text-gray-400">Estoque Mínimo</label>
+                            <input type="number" id="prodMin" name="min_quantity"
+                                class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                                placeholder="Alertar quando < X">
+                        </div>
+                    </div>
+
+                    <hr class="border-gray-800">
+
+                    <!-- Supplier -->
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-400">Fornecedor Principal</label>
+                        <div class="flex gap-2">
+                            <select id="prodSupplier" name="supplier_id"
+                                class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 cursor-pointer">
+                                <option value="">Selecione um fornecedor...</option>
+                                {% for supplier in suppliers %}
+                                <option value="{{ supplier.id }}">{{ supplier.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="button" onclick="closeProductModal(); openSupplierModal()"
+                                class="bg-gray-800 hover:bg-gray-700 text-white px-3.5 rounded-lg border border-gray-700 transition" title="Adicionar Novo Fornecedor">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <p class="mt-2 text-xs text-gray-500">Selecione quem fornece este produto para agilizar pedidos de compra.</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="flex justify-end gap-3 p-6 border-t border-gray-800 shrink-0 bg-[#171d21]">
+                <button type="button" onclick="closeProductModal()"
+                    class="px-5 py-2.5 text-sm font-medium text-gray-300 bg-gray-800 rounded-lg border border-gray-600 hover:bg-gray-700 hover:text-white transition">Cancelar</button>
+                <button type="submit"
+                    class="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-500 focus:ring-4 focus:outline-none focus:ring-blue-800 transition shadow-lg shadow-blue-500/30">Salvar
+                    Produto</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Supplier Modal -->
+<div id="supplierModal"
+    class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+    <div
+        class="bg-[#171d21] w-full max-w-md rounded-xl border border-gray-700 shadow-2xl relative animate-fade-in-down">
+        <div class="flex justify-between items-center p-6 border-b border-gray-800">
+            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                <i class="fas fa-truck text-green-500"></i> Novo Fornecedor
+            </h3>
+            <button onclick="closeSupplierModal()" class="text-gray-400 hover:text-white transition"><i
+                    class="fas fa-times text-xl"></i></button>
+        </div>
+
+        <form id="supplierForm" onsubmit="submitSupplier(event)" action="{{ url_for('products.add_supplier') }}" method="POST" class="p-6">
+            <div class="space-y-4">
+                <div>
+                    <label class="block mb-2 text-sm font-medium text-gray-400">Nome do Fornecedor</label>
+                    <input type="text" id="suppName" name="name" required
+                        class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5"
+                        placeholder="Ex: Distribuidora XPTO">
+                </div>
+                <div>
+                    <label class="block mb-2 text-sm font-medium text-gray-400">Telefone / WhatsApp</label>
+                    <input type="text" id="suppPhone" name="phone" oninput="maskPhone(this)" maxlength="15"
+                        class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5"
+                        placeholder="(XX) XXXXX-XXXX">
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 mt-8">
+                <button type="button" onclick="closeSupplierModal()"
+                    class="px-5 py-2.5 text-sm font-medium text-gray-300 bg-gray-800 rounded-lg border border-gray-600 hover:bg-gray-700 hover:text-white transition">Cancelar</button>
+                <button type="submit"
+                    class="px-5 py-2.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-500 focus:ring-4 focus:outline-none focus:ring-green-800 transition shadow-lg shadow-green-500/30">Salvar
+                    Fornecedor</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Category Modal (Quick Add) -->
+<div id="categoryModal"
+    class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+    <div
+        class="bg-[#171d21] w-full max-w-sm rounded-xl border border-gray-700 shadow-2xl relative animate-fade-in-down">
+        <div class="flex justify-between items-center p-6 border-b border-gray-800">
+            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                <i class="fas fa-tags text-blue-500"></i> Nova Categoria
+            </h3>
+            <button onclick="closeCategoryModal()" class="text-gray-400 hover:text-white transition"><i
+                    class="fas fa-times text-xl"></i></button>
+        </div>
+
+        <form id="categoryForm" onsubmit="submitCategory(event)" class="p-6">
+            <div class="space-y-4">
+                <div>
+                    <label class="block mb-2 text-sm font-medium text-gray-400">Nome da Categoria</label>
+                    <input type="text" id="newCategoryName" name="name" required
+                        class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                        placeholder="Ex: Bebidas">
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 mt-8">
+                <button type="button" onclick="closeCategoryModal()"
+                    class="px-5 py-2.5 text-sm font-medium text-gray-300 bg-gray-800 rounded-lg border border-gray-600 hover:bg-gray-700 hover:text-white transition">Cancelar</button>
+                <button type="submit"
+                    class="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-500 focus:ring-4 focus:outline-none focus:ring-blue-800 transition shadow-lg shadow-blue-500/30">
+                    Salvar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // --- CATEGORY QUICK ADD ---
+    function openCategoryModalFromProduct() {
+        document.getElementById('categoryModal').classList.remove('hidden');
+        document.getElementById('newCategoryName').value = '';
+        document.getElementById('newCategoryName').focus();
+    }
+    
+    function closeCategoryModal() {
+        document.getElementById('categoryModal').classList.add('hidden');
+    }
+
+    async function submitCategory(e) {
+        e.preventDefault();
+        const nameInput = document.getElementById('newCategoryName');
+        const name = nameInput.value;
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+
+        if (!name) return;
+
+        // Disable button
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+
+        try {
+            const formData = new FormData();
+            formData.append('name', name);
+            
+            const response = await fetch('/categories/add', {
+                method: 'POST',
+                headers: { 
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json' // Explicitly request JSON
+                },
+                body: formData
+            });
+            
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.indexOf("application/json") !== -1) {
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Add to Select inputs
+                    const option = new Option(data.name, data.id, true, true);
+                    const select = document.getElementById('prodCategory');
+                    select.add(option);
+                    select.value = data.id; // Select it
+                    
+                    // Also update filter if needed (optional)
+                    const filter = document.getElementById('categoryFilter');
+                    if (filter) {
+                        const filterOption = new Option(data.name, data.id);
+                        filter.add(filterOption);
+                    }
+
+                    closeCategoryModal();
+                } else {
+                    alert('Erro: ' + (data.error || 'Erro desconhecido ao salvar categoria.'));
+                }
+            } else {
+                throw new Error("Resposta inválida do servidor (não é JSON). Verifique os logs.");
+            }
+
+        } catch (err) {
+            console.error('Erro ao salvar categoria:', err);
+            alert('Erro de conexão ao salvar categoria: ' + err.message);
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
+    }
+
+    // --- TABS LOGIC ---
+    function switchProductTab(tabId) {
+        // 1. Hide all tab contents
+        document.querySelectorAll('[id^="tab-content-"]').forEach(el => {
+            el.classList.add('hidden');
+        });
+
+        // 2. Remove active state from all buttons
+        document.querySelectorAll('[id^="tab-btn-"]').forEach(el => {
+            el.classList.remove('text-blue-500', 'border-blue-500');
+            el.classList.add('text-gray-400', 'border-transparent');
+        });
+
+        // 3. Show selected tab content
+        document.getElementById(`tab-content-${tabId}`).classList.remove('hidden');
+
+        // 4. Set active state on selected button
+        const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+        activeBtn.classList.remove('text-gray-400', 'border-transparent');
+        activeBtn.classList.add('text-blue-500', 'border-blue-500');
+    }
+
+    // --- PROFIT MARGIN LOGIC ---
+    function updateProfitMargin() {
+        const costStr = document.getElementById('prodCost').value;
+        const sellStr = document.getElementById('prodPrice').value;
+
+        // Convert formatted strings (R$ 1.234,56) to float
+        const cost = parseFloat(costStr.replace(/\./g, '').replace(',', '.')) || 0;
+        const sell = parseFloat(sellStr.replace(/\./g, '').replace(',', '.')) || 0;
+
+        const marginSpan = document.getElementById('profitMargin');
+
+        if (cost > 0 && sell > 0) {
+            const profit = sell - cost;
+            const margin = (profit / sell) * 100;
+            
+            marginSpan.innerText = margin.toFixed(1) + '%';
+            
+            if (margin < 0) marginSpan.className = 'text-red-500 font-bold text-lg';
+            else if (margin < 20) marginSpan.className = 'text-yellow-500 font-bold text-lg';
+            else marginSpan.className = 'text-green-500 font-bold text-lg';
+        } else {
+            marginSpan.innerText = '0%';
+            marginSpan.className = 'text-gray-400 font-bold text-lg';
+        }
+    }
+
+    // Attach listeners calculate margin
+    document.getElementById('prodCost').addEventListener('input', updateProfitMargin);
+    document.getElementById('prodPrice').addEventListener('input', updateProfitMargin);
+
+    function formatCurrency(input) {
+        let value = input.value.replace(/\D/g, '');
+        value = (value / 100).toFixed(2) + '';
+        value = value.replace('.', ',');
+        value = value.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+        input.value = value;
+        updateProfitMargin(); // Recalculate on format
+    }
+
+    function updateFilters() {
+        const search = document.getElementById('searchInput').value;
+        const category = document.getElementById('categoryFilter').value;
+
+        let url = new URL(window.location.href);
+
+        if (search) url.searchParams.set('search', search);
+        else url.searchParams.delete('search');
+
+        if (category) url.searchParams.set('category', category);
+        else url.searchParams.delete('category');
+
+        window.location.href = url.toString();
+    }
+
+    function openProductModal() {
+        document.getElementById('productModal').classList.remove('hidden');
+        // Reset form for new product
+        document.getElementById('productForm').action = "{{ url_for('products.add_product') }}";
+        document.getElementById('productForm').reset();
+        document.getElementById('profitMargin').innerText = '0%'; // Reset margin
+        
+        // Reset Preview
+        document.getElementById('imagePreview').classList.add('hidden');
+        document.getElementById('imagePreview').src = '';
+        document.getElementById('imagePlaceholder').classList.remove('hidden');
+
+        // Reset to first tab
+        switchProductTab('geral');
+    }
+
+    function openEditProductModal(product) {
+        document.getElementById('productModal').classList.remove('hidden');
+        switchProductTab('geral'); // Start at first tab
+
+        // Populate form
+        document.getElementById('prodName').value = product.name;
+        document.getElementById('prodSku').value = product.barcode || ""; // Use barcode field for SKU based on list view? Or sku field?
+        // Wait, list view showed barcode but form has SKU. Let's check model. 
+        // Template line 408: `product.barcode` displayed as SKU in list? No, line 269: `prodSku` name=`sku`.
+        // List view line 177: `product.barcode`.
+        // I will assume `sku` is the field to map to `prodSku`.
+        // Wait, the edit function previously (before my edit) looked like:
+        /*
+        document.getElementById('prodName').value = product.name;
+        document.getElementById('prodCategory').value = product.category;
+        document.getElementById('prodSupplier').value = product.supplier_id || "";
+        document.getElementById('prodCost').value = product.cost_price;
+        document.getElementById('prodSell').value = product.sell_price;
+        document.getElementById('prodQty').value = product.quantity;
+        document.getElementById('prodMin').value = product.min_quantity;
+        */
+        // I should stick to that, but `sku` was missing in previous edit function? 
+        // Let's check `product` object being passed. `tojson` dumps it all.
+        // Assuming `product.barcode` is what we want for SKU if that's how it's stored, or `product.sku` if column exists.
+        // I'll try to map `sku` or `barcode` to the SKU input.
+        document.getElementById('prodSku').value = product.sku || product.barcode || ""; 
+
+        document.getElementById('prodCategory').value = product.category;
+        document.getElementById('prodSupplier').value = product.supplier_id || "";
+        
+        // Format prices for input
+        document.getElementById('prodCost').value = (product.cost_price || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2});
+        document.getElementById('prodPrice').value = (product.sell_price || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2});
+        
+        document.getElementById('prodQty').value = product.quantity;
+        document.getElementById('prodMin').value = product.min_quantity;
+
+        // Update Margin
+        updateProfitMargin();
+
+        // --- Handle Images (Multiple) ---
+        const container = document.getElementById('images-container');
+        // Clear existing extra rows, keep only the first one
+        while (container.children.length > 1) {
+            container.removeChild(container.lastChild);
+        }
+        
+        // Reset the first row
+        const firstRow = container.firstElementChild;
+        // Check if firstRow is null (safety)
+        if (firstRow) {
+            const img = firstRow.querySelector('img');
+            const placeholder = firstRow.querySelector('.placeholder-ui');
+            const fileInput = firstRow.querySelector('input[type="file"]');
+            const urlInput = firstRow.querySelector('input[name="image_urls"]');
+            
+            if (fileInput) fileInput.value = '';
+            if (urlInput) urlInput.value = '';
+            
+            if (img) {
+                img.classList.add('hidden');
+                img.src = '';
+            }
+            if (placeholder) placeholder.classList.remove('hidden');
+
+            // Parse images from JSON or fallback
+            let imagesList = [];
+            try {
+                if (product.images) {
+                    // Handle JSON string or pre-parsed object
+                   imagesList = (typeof product.images === 'string') ? JSON.parse(product.images) : product.images;
+                }
+            } catch(e) { console.error("Error parsing images JSON", e); }
+            
+            // Fallback to legacy image_url if images list is empty
+            if ((!imagesList || imagesList.length === 0) && product.image_url) {
+                imagesList = [product.image_url];
+            }
+
+            // Populate rows
+            if (imagesList && Array.isArray(imagesList) && imagesList.length > 0) {
+                imagesList.forEach((url, index) => {
+                    let row;
+                    if (index === 0) {
+                        row = firstRow;
+                    } else {
+                        addImageRow(); // Adds a clean row
+                        row = container.lastElementChild;
+                    }
+                    
+                    // Set URL
+                    const rowUrlInput = row.querySelector('input[name="image_urls"]');
+                    if (rowUrlInput) rowUrlInput.value = url;
+                    
+                    // Set Preview
+                    const rowImg = row.querySelector('img');
+                    const rowPlaceholder = row.querySelector('.placeholder-ui');
+                    if (rowImg) {
+                        rowImg.src = url;
+                        rowImg.classList.remove('hidden');
+                    }
+                    if (rowPlaceholder) rowPlaceholder.classList.add('hidden');
+                });
+            }
+        }
+
+        // Change action
+        document.getElementById('productForm').action = "/products/edit/" + product.id;
+    }
+
+    function closeProductModal() { document.getElementById('productModal').classList.add('hidden'); }
+
+    function openSupplierModal() { document.getElementById('supplierModal').classList.remove('hidden'); }
+    async function submitSupplier(e) {
+        const productModal = document.getElementById('productModal');
+        // Se o modal de produto estiver oculto, é um cadastro normal (reload da página)
+        if (productModal.classList.contains('hidden')) {
+            return; 
+        }
+
+        e.preventDefault();
+        const form = e.target; // O formulário que disparou o evento
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+
+        try {
+            const formData = new FormData(form);
+            const response = await fetch("{{ url_for('products.add_supplier') }}", {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest', 
+                    'Accept': 'application/json'
+                }
+            });
+
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.indexOf("application/json") !== -1) {
+                const data = await response.json();
+
+                if (data.success) {
+                    // Adiciona ao select de fornecedores
+                    const select = document.getElementById('prodSupplier');
+                    const option = new Option(data.name, data.id, true, true);
+                    select.add(option);
+                    select.value = data.id; // Seleciona o novo fornecedor
+
+                    closeSupplierModal();
+                    // Limpa o formulário para o próximo uso
+                    form.reset();
+                } else {
+                    alert('Erro: ' + (data.error || 'Erro desconhecido ao salvar.'));
+                }
+            } else {
+                throw new Error('Resposta inválida do servidor (não é JSON).');
+            }
+        } catch (error) {
+            console.error('Erro ao salvar fornecedor:', error);
+            alert('Falha na comunicação com o servidor.');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
+    }
+
+    function maskPhone(input) {
+        let v = input.value.replace(/\D/g,'');
+        v = v.replace(/^(\d\d)(\d)/g,"($1) $2");
+        v = v.replace(/(\d{5})(\d)/,"$1-$2");
+        input.value = v;
+    }
+
+    function closeSupplierModal() { document.getElementById('supplierModal').classList.add('hidden'); }
+
+    // Toggle View
+    function toggleView(view) {
+        const listView = document.getElementById('listView');
+        const chartView = document.getElementById('chartView');
+        const btnList = document.getElementById('btnList');
+        const btnChart = document.getElementById('btnChart');
+
+        if (view === 'list') {
+            listView.classList.remove('hidden');
+            chartView.classList.add('hidden');
+
+            btnList.classList.add('bg-gray-700', 'text-white', 'shadow-sm');
+            btnList.classList.remove('text-gray-400');
+
+            btnChart.classList.remove('bg-gray-700', 'text-white', 'shadow-sm');
+            btnChart.classList.add('text-gray-400');
+        } else {
+            listView.classList.add('hidden');
+            chartView.classList.remove('hidden');
+
+            btnList.classList.remove('bg-gray-700', 'text-white', 'shadow-sm');
+            btnList.classList.add('text-gray-400');
+
+            btnChart.classList.add('bg-gray-700', 'text-white', 'shadow-sm');
+            btnChart.classList.remove('text-gray-400');
+
+            // Render charts if switching to chart view
+            renderCharts();
+        }
+    }
+
+    // Intersection Observer for Animation
+    const observerOptions = { threshold: 0.1 };
+    const statsObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting && entry.target.classList.contains('count-up') && !entry.target.dataset.animated) {
+                const target = parseFloat(entry.target.getAttribute('data-target'));
+                animateValue(entry.target, 0, target, 2000);
+                entry.target.dataset.animated = "true";
+            }
+        });
+    }, observerOptions);
+
+    function animateValue(obj, start, end, duration) {
+        let startTimestamp = null;
+        // Check if explicit format is requested
+        const isCurrency = obj.dataset.format === 'currency';
+        // Fallback detection
+        const isFloat = end % 1 !== 0;
+
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            let currentVal = progress * (end - start) + start;
+
+            if (isCurrency || isFloat) {
+                // Formatting for currency: pt-BR
+                obj.innerHTML = currentVal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            } else {
+                obj.innerHTML = Math.floor(currentVal);
+            }
+
+            if (progress < 1) window.requestAnimationFrame(step);
+            else {
+                if (isCurrency || isFloat) obj.innerHTML = end.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                else obj.innerHTML = end;
+            }
+        };
+        window.requestAnimationFrame(step);
+    }
+
+    // --- IMAGE GALLERY LOGIC ---
+    function updateImagePreview(input) {
+        const parent = input.closest('.image-item');
+        const img = parent.querySelector('img');
+        const placeholder = parent.querySelector('.placeholder-ui');
+        
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                img.src = e.target.result;
+                img.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function updateUrlPreview(input) {
+        const parent = input.closest('.image-item');
+        const img = parent.querySelector('img');
+        const placeholder = parent.querySelector('.placeholder-ui');
+        const url = input.value;
+        
+        if (url) {
+            img.src = url;
+            img.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+        } else {
+            // Only hide if file input is also empty (checking manually or just reset)
+            // Simplified: if url cleared, hide unless file present (file handles its own). 
+            // For now, if URL cleared, we hide preview to be safe.
+            img.classList.add('hidden');
+            placeholder.classList.remove('hidden');
+        }
+    }
+
+    function addImageRow() {
+        const container = document.getElementById('images-container');
+        const firstRow = container.querySelector('.image-item');
+        const newRow = firstRow.cloneNode(true);
+        
+        // Reset inputs
+        newRow.querySelector('input[type="file"]').value = '';
+        newRow.querySelector('input[type="text"]').value = '';
+        
+        // Reset preview
+        newRow.querySelector('img').classList.add('hidden');
+        newRow.querySelector('img').src = '';
+        newRow.querySelector('.placeholder-ui').classList.remove('hidden');
+
+        // Show remove button
+        const removeBtn = newRow.querySelector('.remove-btn');
+        if (removeBtn) {
+            removeBtn.classList.remove('hidden');
+            removeBtn.onclick = function() { this.closest('.image-item').remove(); };
+        }
+        
+        container.appendChild(newRow);
+    }
+
+    function removeImageRow(btn) {
+        const item = btn.closest('.image-item');
+        // Check if it's the only one
+        if (document.querySelectorAll('.image-item').length > 1) {
+            item.remove();
+        } else {
+            // Just clear
+            item.querySelector('input[type="file"]').value = '';
+            item.querySelector('input[type="text"]').value = '';
+            item.querySelector('img').classList.add('hidden');
+            item.querySelector('.placeholder-ui').classList.remove('hidden');
+        }
+    }
+
+    let chartsRendered = false;
+    let entriesChartInstance = null;
+    let categoriesChartInstance = null;
+
+    function renderCharts() {
+        if (chartsRendered) return;
+
+        // Entries Chart (Line)
+        const ctxEntries = document.getElementById('entriesChart').getContext('2d');
+        const gradientEntries = ctxEntries.createLinearGradient(0, 0, 0, 300);
+        gradientEntries.addColorStop(0, 'rgba(34, 197, 94, 0.2)');
+        gradientEntries.addColorStop(1, 'rgba(34, 197, 94, 0)');
+
+        const entriesData = JSON.parse('{{ chart_entries_json | safe }}');
+
+        entriesChartInstance = new Chart(ctxEntries, {
+            type: 'line',
+            data: {
+                labels: entriesData.dates,
+                datasets: [{
+                    label: 'Novos Produtos',
+                    data: entriesData.counts,
+                    borderColor: '#22c55e',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true,
+                    backgroundColor: gradientEntries,
+                    pointBackgroundColor: '#15803d'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { grid: { color: '#1f2937' }, ticks: { color: '#9ca3af' } },
+                    x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+                }
+            }
+        });
+
+        // Categories Chart (Doughnut)
+        const ctxCategories = document.getElementById('categoriesChart').getContext('2d');
+        const categoriesData = JSON.parse('{{ chart_categories_json | safe }}');
+
+        categoriesChartInstance = new Chart(ctxCategories, {
+            type: 'doughnut',
+            data: {
+                labels: categoriesData.labels,
+                datasets: [{
+                    data: categoriesData.values,
+                    backgroundColor: categoriesData.colors,
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: '#9ca3af', usePointStyle: true, padding: 20 }
+                    }
+                },
+                layout: { padding: 20 }
+            }
+        });
+
+        chartsRendered = true;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.count-up').forEach(c => statsObserver.observe(c));
+    });
+
+    async function updateStockCharts() {
+        try {
+            const month = document.getElementById('stockMonthSelect').value;
+            const response = await fetch(`/products/charts?month=${encodeURIComponent(month)}`);
+            const data = await response.json();
+
+            if (!chartsRendered) {
+                renderCharts();
+            }
+
+            if (entriesChartInstance) {
+                entriesChartInstance.data.labels = data.entries.dates;
+                entriesChartInstance.data.datasets[0].data = data.entries.counts;
+                entriesChartInstance.update();
+            }
+
+            if (categoriesChartInstance) {
+                categoriesChartInstance.data.labels = data.categories.labels;
+                categoriesChartInstance.data.datasets[0].data = data.categories.values;
+                categoriesChartInstance.data.datasets[0].backgroundColor = data.categories.colors;
+                categoriesChartInstance.update();
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+</script>
+{% endblock %}

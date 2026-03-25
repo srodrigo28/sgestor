@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tutorial: Aplicação Flask do Zero</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            base: "var(--color-base)",
+            accent: "var(--color-accent)",
+            text: "var(--color-text)",
+            muted: "var(--color-muted)",
+            card: "var(--color-card)",
+            border: "var(--color-border)",
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    :root {
+      --color-base: #0f172a;
+      /* bg-slate-900 */
+      --color-accent: #7c3aed;
+      /* bg-violet-600 */
+      --color-text: #f8fafc;
+      --color-muted: #94a3b8;
+      --color-card: #1e293b;
+      --color-border: #334155;
+    }
+
+    .bg-pattern {
+      background-image:
+        radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.05) 1px, transparent 0),
+        radial-gradient(circle at 12px 12px, rgba(124, 58, 237, 0.1) 1px, transparent 0);
+      background-size: 24px 24px, 24px 24px;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--color-base);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--color-border);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--color-accent);
+    }
+
+    pre {
+      background-color: #0d1117;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      overflow-x: auto;
+      border: 1px solid var(--color-border);
+    }
+
+    code {
+      font-family: 'Fira Code', 'Courier New', monospace;
+      font-size: 0.875rem;
+      color: #e2e8f0;
+    }
+
+    .step-content {
+      display: none;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .step-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .nav-item.active {
+      background-color: var(--color-accent);
+      color: white;
+      border-color: var(--color-accent);
+    }
+  </style>
+</head>
+
+<body class="min-h-screen bg-base text-text bg-pattern flex flex-col md:flex-row overflow-hidden">
+
+  <!-- Sidebar Navigation -->
+  <aside class="w-full md:w-64 bg-card border-r border-border flex flex-col h-auto md:h-screen z-10">
+    <div class="p-6 border-b border-border">
+      <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-violet-400 to-fuchsia-400">
+        Curso Flask
+      </h1>
+      <p class="text-xs text-muted mt-1">Guia Passo a Passo</p>
+    </div>
+
+    <nav class="flex-1 overflow-y-auto p-4 space-y-2">
+      <button onclick="showStep('step-intro')"
+        class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3 active">
+        <span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">0</span>
+        <span>Introdução</span>
+      </button>
+
+      <div class="pt-4 pb-2 px-4 text-xs font-semibold text-muted uppercase tracking-wider">Configuração</div>
+
+      <button onclick="showStep('step-venv')"
+        class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3">
+        <span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">1</span>
+        <span>Ambiente Virtual</span>
+      </button>
+
+      <button onclick="showStep('step-hello')"
+        class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3">
+        <span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">2</span>
+        <span>Primeiro App</span>
+      </button>
+
+      <div class="pt-4 pb-2 px-4 text-xs font-semibold text-muted uppercase tracking-wider">Banco de Dados</div>
+
+      <button onclick="showStep('step-mysql')"
+        class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3">
+        <span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">3</span>
+        <span>Conexão MySQL</span>
+      </button>
+
+      <button onclick="showStep('step-sql')"
+        class="nav-item w-full text-left px-4 py-3 rounded-lg border border-transparent hover:bg-white/5 transition flex items-center gap-3">
+        <span class="grid place-items-center w-6 h-6 rounded bg-white/10 text-xs font-mono">4</span>
+        <span>Tabela e Auth</span>
+      </button>
+    </nav>
+
+    <div class="p-4 border-t border-border">
+      <div class="text-xs text-center text-muted">
+        v1.0 • Flask + MySQL
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <main class="flex-1 h-screen overflow-y-auto p-6 md:p-12 relative scroll-smooth">
+    <div class="max-w-3xl mx-auto pb-20">
+
+      <!-- Step: Intro -->
+      <div id="step-intro" class="step-content active space-y-6">
+        <div class="space-y-2">
+          <span class="text-accent text-sm font-bold tracking-wider uppercase">Módulo 1</span>
+          <h2 class="text-4xl font-bold">Bem-vindo ao Curso de Flask</h2>
+        </div>
+        <p class="text-lg text-muted leading-relaxed">
+          Neste guia, vamos construir uma aplicação completa utilizando <strong>Python Flask</strong> e
+          <strong>MySQL</strong>.
+          Você aprenderá desde a configuração inicial do ambiente até a criação de um sistema de autenticação e CRUD
+          (Create, Read, Update, Delete) de usuários.
+        </p>
+
+        <div class="grid md:grid-cols-2 gap-4 mt-8">
+          <div class="p-6 rounded-xl bg-card border border-border">
+            <h3 class="text-lg font-semibold mb-2 text-white">O que vamos usar?</h3>
+            <ul class="space-y-2 text-sm text-muted">
+              <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-accent"></span> Python 3.8+
+              </li>
+              <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-accent"></span> Flask
+                (Framework Web)</li>
+              <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-accent"></span> MySQL
+                (XAMPP/WAMP)</li>
+              <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-accent"></span> VS Code</li>
+            </ul>
+          </div>
+
+          <div class="mt-8">
+            <button onclick="showStep('step-venv')"
+              class="bg-accent hover:brightness-110 text-white px-6 py-3 rounded-lg font-medium transition flex items-center gap-2">
+              Começar Agora
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                stroke="currentColor" class="w-4 h-4">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 1: Venv -->
+        <div id="step-venv" class="step-content space-y-8">
+          <div class="border-b border-border pb-6">
+            <h2 class="text-3xl font-bold">Configuração do Ambiente</h2>
+            <p class="text-muted mt-2">Criando o ambiente virtual e instalando as dependências.</p>
+          </div>
+
+          <div class="space-y-4">
+            <h3 class="text-xl font-semibold text-white">1. Criar e Ativar a venv</h3>
+            <p class="text-muted text-sm">Abra o terminal na pasta do seu projeto e execute:</p>
+
+            <div class="bg-card rounded-lg border border-border overflow-hidden">
+              <div
+                class="px-4 py-2 border-b border-border bg-base/50 text-xs text-muted flex justify-between items-center">
+                <span>Terminal (Windows)</span>
+                <button onclick="copyToClipboard(this)" class="hover:text-white transition">Copiar</button>
+              </div>
+              <pre class="!border-0 !rounded-none !bg-transparent opacity-90"><code>python -m venv venv
+venv\Scripts\activate</code></pre>
+            </div>
+            <p class="text-xs text-muted italic">Nota: Se estiver no Linux/Mac use `source venv/bin/activate`</p>
+          </div>
+
+          <div class="space-y-4">
+            <h3 class="text-xl font-semibold text-white">2. Instalar Bibliotecas</h3>
+            <p class="text-muted text-sm">Instale o Flask e o conector do MySQL:</p>
+
+            <div class="bg-card rounded-lg border border-border overflow-hidden">
+              <div
+                class="px-4 py-2 border-b border-border bg-base/50 text-xs text-muted flex justify-between items-center">
+                <span>Terminal</span>
+                <button onclick="copyToClipboard(this)" class="hover:text-white transition">Copiar</button>
+              </div>
+              <pre
+                class="!border-0 !rounded-none !bg-transparent opacity-90"><code>pip install flask mysql-connector-python</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Hello World -->
+        <div id="step-hello" class="step-content space-y-8">
+          <div class="border-b border-border pb-6">
+            <h2 class="text-3xl font-bold">Primeiro App (Hello World)</h2>
+            <p class="text-muted mt-2">Criando a estrutura básica e a primeira rota.</p>
+          </div>
+
+          <div class="space-y-4">
+            <h3 class="text-xl font-semibold text-white">Estrutura de Pastas</h3>
+            <div class="bg-card p-4 rounded-lg border border-border font-mono text-sm text-muted">
+              meu-projeto/<br>
+              ├── venv/<br>
+              ├── sql/<br>
+              │&nbsp;&nbsp;&nbsp;└── 01_auth.sql<br>
+              ├── templates/<br>
+              │&nbsp;&nbsp;&nbsp;└── index.html<br>
+              ├── app.py<br>
+              └── setup.py
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <h3 class="text-xl font-semibold text-white">Arquivo: app.py</h3>
+            <div class="bg-card rounded-lg border border-border overflow-hidden">
+              <div
+                class="px-4 py-2 border-b border-border bg-base/50 text-xs text-muted flex justify-between items-center">
+                <span>app.py</span>
+                <button onclick="copyToClipboard(this)" class="hover:text-white transition">Copiar</button>
+              </div>
+              <pre class="!border-0 !rounded-none !bg-transparent opacity-90"><code class="language-python">from flask import Flask, render_template
+
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+if __name__ == '__main__':
+    app.run(debug=True)</code></pre>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <h3 class="text-xl font-semibold text-white">Arquivo: templates/index.html</h3>
+            <div class="bg-card rounded-lg border border-border overflow-hidden">
+              <div
+                class="px-4 py-2 border-b border-border bg-base/50 text-xs text-muted flex justify-between items-center">
+                <span>templates/index.html</span>
+                <button onclick="copyToClipboard(this)" class="hover:text-white transition">Copiar</button>
+              </div>
+              <pre class="!border-0 !rounded-none !bg-transparent opacity-90"><code class="language-html">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;Minha App Flask&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;Olá, Flask está rodando!&lt;/h1&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+            </div>
+          </div>
+
+          <div class="bg-accent/10 border border-accent/20 p-4 rounded-lg text-sm text-accent">
+            <strong>Teste:</strong> Rode <code>python app.py</code> no terminal e acesse
+            <code>http://127.0.0.1:5000</code>.
+          </div>
+        </div>
+
+        <!-- Step 3: MySQL Connection -->
+        <div id="step-mysql" class="step-content space-y-8">
+          <div class="border-b border-border pb-6">
+            <h2 class="text-3xl font-bold">Conexão com MySQL</h2>
+            <p class="text-muted mt-2">Configurando o banco de dados (XAMPP).</p>
+          </div>
+
+          <div class="space-y-4">
+            <h3 class="text-xl font-semibold text-white">Script de Teste de Conexão</h3>
+            <p class="text-muted text-sm">Crie um arquivo <code>test_db.py</code> para validar se o MySQL está
+              acessível.
+            </p>
+
+            <div class="bg-card rounded-lg border border-border overflow-hidden">
+              <div
+                class="px-4 py-2 border-b border-border bg-base/50 text-xs text-muted flex justify-between items-center">
+                <span>test_db.py</span>
+                <button onclick="copyToClipboard(this)" class="hover:text-white transition">Copiar</button>
+              </div>
+              <pre class="!border-0 !rounded-none !bg-transparent opacity-90"><code class="language-python">import mysql.connector
+
+try:
+    mydb = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="", # Senha vazia é padrão do XAMPP
+        # database="flask_crud" # Descomente depois de criar o banco
+    )
+    print("Conexão realizada com sucesso!")
+except Exception as e:
+    print(f"Erro ao conectar: {e}")</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 4: SQL & Auth -->
+        <div id="step-sql" class="step-content space-y-8">
+          <div class="border-b border-border pb-6">
+            <h2 class="text-3xl font-bold">Automação Completa</h2>
+            <p class="text-muted mt-2">Configuração de ambiente e banco em um único passo.</p>
+          </div>
+
+          <div class="space-y-4">
+            <h3 class="text-xl font-semibold text-white">1. Arquivos SQL (Migrations)</h3>
+            <p class="text-muted text-sm">Agora organizamos nosso SQL na pasta <code>sql/</code>. O arquivo
+              <code>01_auth.sql</code> contém a criação da tabela de usuários.
+            </p>
+
+            <div class="bg-card rounded-lg border border-border overflow-hidden">
+              <div
+                class="px-4 py-2 border-b border-border bg-base/50 text-xs text-muted flex justify-between items-center">
+                <span>sql/01_auth.sql</span>
+                <button onclick="copyToClipboard(this)" class="hover:text-white transition">Copiar</button>
+              </div>
+              <pre class="!border-0 !rounded-none !bg-transparent opacity-90"><code class="language-sql">-- Criação do Banco
+CREATE DATABASE IF NOT EXISTS flask_crud;
+USE flask_crud;
+
+-- Criação da Tabela de Usuários
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    phone VARCHAR(20),
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Admin Padrão
+INSERT IGNORE INTO users (name, email, password) 
+VALUES ('Admin', 'admin@sistema.com', '123456');</code></pre>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <h3 class="text-xl font-semibold text-white">2. Execução Automatizada (setup.py)</h3>
+            <p class="text-muted text-sm">O <code>setup.py</code> foi atualizado. Ele agora lê a pasta <code>sql/</code>
+              e
+              pergunta qual arquivo você deseja executar no banco.</p>
+
+            <div class="bg-card p-4 rounded-lg border border-border font-mono text-sm text-muted">
+              <span class="text-accent">?</span> Arquivos SQL disponíveis:<br>
+              &nbsp;&nbsp;[1] 01_auth.sql<br>
+              &nbsp;&nbsp;[A] Rodar Todos<br>
+              <br>
+              Escolha uma opção (ex: 1, A):
+            </div>
+          </div>
+
+          <div
+            class="bg-accent/10 border border-accent/20 p-4 rounded-lg text-sm text-accent flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div>
+              <strong>Executar:</strong> Rode <code>python setup.py</code> no terminal.
+            </div>
+            <a href="setup.html" target="_blank" class="text-xs underline hover:text-white">Entenda como esse script
+              funciona &rarr;</a>
+          </div>
+        </div>
+
+      </div>
+  </main>
+
+  <script>
+    function showStep(stepId) {
+      // Hide all steps
+      document.querySelectorAll('.step-content').forEach(el => {
+        el.classList.remove('active');
+      });
+
+      // Remove active class from Nav
+      document.querySelectorAll('.nav-item').forEach(el => {
+        el.classList.remove('active');
+      });
+
+      // Show selected step
+      document.getElementById(stepId).classList.add('active');
+
+      // Highlight nav button
+      const btn = document.querySelector(`button[onclick="showStep('${stepId}')"]`);
+      if (btn) btn.classList.add('active');
+    }
+
+    function copyToClipboard(button) {
+      const pre = button.parentElement.nextElementSibling;
+      const code = pre.innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        const originalText = button.innerText;
+        button.innerText = "Copiado!";
+        setTimeout(() => {
+          button.innerText = originalText;
+        }, 2000);
+      });
+    }
+  </script>
+</body>
+
+</html>

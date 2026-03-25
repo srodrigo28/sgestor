@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rocker Dashboard Clone</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #0f1214;
+            color: #a3aab1;
+        }
+
+        .card {
+            background-color: #171d21;
+            border-radius: 0.5rem;
+        }
+
+        .sidebar {
+            background-color: #11161a;
+        }
+    </style>
+</head>
+
+<body class="flex h-screen overflow-hidden">
+
+    <aside class="sidebar w-64 flex-shrink-0 border-r border-gray-800 hidden md:flex flex-col">
+        <div class="p-6 text-white text-2xl font-bold flex items-center gap-2">
+            <div class="w-8 h-8 bg-blue-500 rounded-full"></div> Rocker
+        </div>
+        <nav class="flex-1 px-4 space-y-2 overflow-y-auto">
+            <div class="text-xs uppercase text-gray-500 font-semibold mb-2 mt-4">Dashboard</div>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg bg-gray-800 text-white">
+                <i class="fas fa-home"></i> Alternate
+            </a>
+            <div class="text-xs uppercase text-gray-500 font-semibold mb-2 mt-6">UI Elements</div>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition">
+                <i class="fas fa-layer-group"></i> Widgets
+            </a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition">
+                <i class="fas fa-shopping-cart"></i> eCommerce
+            </a>
+        </nav>
+    </aside>
+
+    <main class="flex-1 flex flex-col overflow-hidden">
+
+        <header class="h-16 flex items-center justify-between px-8 border-b border-gray-800">
+            <div class="relative w-96">
+                <input type="text" placeholder="Search..."
+                    class="w-full bg-gray-800 border-none rounded-md py-2 pl-10 text-sm focus:ring-2 focus:ring-blue-500">
+                <i class="fas fa-search absolute left-3 top-3 text-gray-500"></i>
+            </div>
+            <div class="flex items-center gap-6">
+                <i class="fas fa-bell relative text-xl cursor-pointer">
+                    <span class="absolute -top-1 -right-1 bg-red-500 text-[10px] rounded-full px-1">7</span>
+                </i>
+                <div class="flex items-center gap-3 border-l border-gray-700 pl-6">
+                    <div class="text-right">
+                        <p class="text-sm font-medium text-white">Pauline Seitz</p>
+                        <p class="text-xs">Web Designer</p>
+                    </div>
+                    <img src="https://i.pravatar.cc/150?u=pauline"
+                        class="w-10 h-10 rounded-full border border-gray-600">
+                </div>
+            </div>
+        </header>
+
+        <div class="p-6 overflow-y-auto space-y-6">
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="card p-6 lg:col-span-2">
+                    <div class="flex justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-white">Sales Overview</h3>
+                        <i class="fas fa-ellipsis-h cursor-pointer"></i>
+                    </div>
+                    <canvas id="salesChart" height="120"></canvas>
+                </div>
+
+                <div class="card p-6">
+                    <h3 class="text-lg font-semibold text-white mb-4">Order Status</h3>
+                    <canvas id="orderChart" height="250"></canvas>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="card p-4 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm">Total Orders</p>
+                        <h4 class="text-xl font-bold text-white">8052</h4>
+                        <p class="text-green-500 text-xs">+25%</p>
+                    </div>
+                    <i class="fas fa-shopping-basket text-blue-500 text-2xl"></i>
+                </div>
+                <div class="card p-4 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm">Total Revenue</p>
+                        <h4 class="text-xl font-bold text-white">$6.2K</h4>
+                        <p class="text-green-500 text-xs">+15%</p>
+                    </div>
+                    <i class="fas fa-dollar-sign text-red-500 text-2xl"></i>
+                </div>
+                <div class="card p-4 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm">New Users</p>
+                        <h4 class="text-xl font-bold text-white">1.3K</h4>
+                        <p class="text-red-500 text-xs">-10%</p>
+                    </div>
+                    <i class="fas fa-users text-green-500 text-2xl"></i>
+                </div>
+                <div class="card p-4 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm">Sold Items</p>
+                        <h4 class="text-xl font-bold text-white">956</h4>
+                        <p class="text-red-500 text-xs">-14%</p>
+                    </div>
+                    <i class="fas fa-box text-yellow-500 text-2xl"></i>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // Configuração do Gráfico de Vendas (Linha Suave)
+        const ctxSales = document.getElementById('salesChart').getContext('2d');
+        new Chart(ctxSales, {
+            type: 'line',
+            data: {
+                labels: ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'],
+                datasets: [{
+                    label: 'Sales',
+                    data: [5, 30, 15, 23, 10, 13, 10],
+                    borderColor: '#00bfff',
+                    tension: 0.4,
+                    fill: true,
+                    backgroundColor: 'rgba(0, 191, 255, 0.1)'
+                }, {
+                    label: 'Visits',
+                    data: [5, 15, 20, 12, 17, 7, 5],
+                    borderColor: '#ff8c00',
+                    tension: 0.4,
+                    fill: true,
+                    backgroundColor: 'rgba(255, 140, 0, 0.1)'
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: { y: { grid: { color: '#2d3748' } }, x: { grid: { display: false } } }
+            }
+        });
+
+        // Configuração do Gráfico de Barras (Order Status)
+        const ctxOrder = document.getElementById('orderChart').getContext('2d');
+        new Chart(ctxOrder, {
+            type: 'bar',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    data: [9, 7, 14, 10, 12, 8],
+                    backgroundColor: ['#ff4d4d', '#ff944d', '#ff4d94', '#ff8c1a', '#e60073', '#ff6666'],
+                    borderRadius: 5
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, grid: { color: '#2d3748' } }, x: { grid: { display: false } } }
+            }
+        });
+    </script>
+</body>
+
+</html>

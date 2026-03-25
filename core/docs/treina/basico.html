@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flask Workflow - Guia Minimalista</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            850: '#1e293b', // Um tom levemente mais claro que o 900 para cartões
+                            900: '#0f172a', // Fundo principal
+                        },
+                        violet: {
+                            600: '#7c3aed', // Destaque primário
+                            500: '#8b5cf6', // Hover
+                        }
+                    },
+                    animation: {
+                        'fade-up': 'fadeUp 0.5s ease-out forwards',
+                    },
+                    keyframes: {
+                        fadeUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* Scrollbar personalizada para blocos de código */
+        pre::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        pre::-webkit-scrollbar-track {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+
+        pre::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+
+        .code-syntax {
+            font-family: 'Courier New', Courier, monospace;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-900 text-slate-200 font-sans antialiased min-h-screen flex flex-col">
+
+    <header class="sticky top-0 z-50 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 shadow-sm">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <i data-lucide="flask-conical" class="text-violet-500 w-8 h-8"></i>
+                <h1 class="text-xl font-bold tracking-tight text-white">Flask <span
+                        class="text-violet-500">Workflow</span></h1>
+            </div>
+            <a href="#"
+                class="text-xs font-medium bg-slate-800 hover:bg-slate-700 px-3 py-1 rounded-full transition-colors border border-slate-700">
+                v1.0 Minimalista
+            </a>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-4xl mx-auto px-4 py-8 w-full">
+
+        <div class="mb-10 text-center animate-fade-up">
+            <h2 class="text-3xl font-bold text-white mb-2">Criação de Aplicação Flask</h2>
+            <p class="text-slate-400">Guia passo a passo: Do ambiente virtual à execução.</p>
+        </div>
+
+        <div id="steps-container"
+            class="space-y-12 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-700 before:to-transparent">
+        </div>
+
+    </main>
+
+    <footer class="border-t border-slate-800 py-6 mt-10">
+        <div class="text-center text-slate-500 text-sm">
+            &copy; 2024 Flask Training. Estrutura Editável.
+        </div>
+    </footer>
+
+    <script>
+        // ============================================================
+        // BANCO DE DADOS DOS PASSOS (EDITE AQUI PARA REFINAR)
+        // ============================================================
+        const steps = [
+            {
+                id: 1,
+                title: "Preparar o Terreno",
+                description: "Criação da pasta do projeto e isolamento do ambiente.",
+                type: "terminal", // Define o estilo visual (terminal ou code)
+                content: `mkdir meu_projeto
+cd meu_projeto
+python3 -m venv venv`,
+                note: "O comando 'venv' cria uma pasta isolada para as bibliotecas do projeto."
+            },
+            {
+                id: 2,
+                title: "Ativar & Instalar",
+                description: "Ativação do ambiente virtual e instalação do Flask.",
+                type: "terminal",
+                content: `# Linux/Mac
+source venv/bin/activate
+
+# Windows
+venv\\Scripts\\activate
+
+# Instalar
+pip install flask`,
+                note: "Você verá (venv) no início da linha do terminal após ativar."
+            },
+            {
+                id: 3,
+                title: "O Cérebro (app.py)",
+                description: "Lógica de backend: rotas, captura de formulário e validação.",
+                type: "code",
+                lang: "python",
+                content: `from flask import Flask, render_template, request
+
+app = Flask(__name__)
+
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    mensagem = ''
+    if request.method == 'POST':
+        nome = request.form.get('nome_usuario')
+        
+        # Validação Simples
+        if not nome:
+            mensagem = "⚠️ Erro: Nome vazio!"
+        else:
+            mensagem = f"✅ Olá, {nome}!"
+
+    return render_template('index.html', msg=mensagem)
+
+if __name__ == '__main__':
+    app.run(debug=True)`,
+                note: "Salve este arquivo na raiz da pasta 'meu_projeto'."
+            },
+            {
+                id: 4,
+                title: "O Rosto (templates/index.html)",
+                description: "Frontend HTML com Jinja2 para exibir mensagens dinâmicas.",
+                type: "code",
+                lang: "html",
+                content: `<!DOCTYPE html>
+<html>
+<body>
+    <h2>App Flask</h2>
+
+    {% if msg %}
+        <div style="background:#eee; padding:10px;">
+            {{ msg }}
+        </div>
+    {% endif %}
+
+    <form method="POST" action="/">
+        <input type="text" name="nome_usuario">
+        <button type="submit">Enviar</button>
+    </form>
+</body>
+</html>`,
+                note: "Importante: Crie uma pasta chamada 'templates' e salve este arquivo dentro dela."
+            },
+            {
+                id: 5,
+                title: "Executar o Projeto",
+                description: "Rodando o servidor local e testando.",
+                type: "terminal",
+                content: `python app.py
+
+# Saída esperada:
+# * Running on http://127.0.0.1:5000`,
+                note: "Abra o link no navegador para ver sua aplicação rodando."
+            }
+        ];
+
+        // ============================================================
+        // FUNÇÃO DE RENDERIZAÇÃO
+        // ============================================================
+        function renderSteps() {
+            const container = document.getElementById('steps-container');
+            let html = '';
+
+            steps.forEach((step, index) => {
+                // Delay da animação baseado na ordem
+                const delay = index * 100;
+
+                // Define ícone e cor baseado no tipo
+                const isTerminal = step.type === 'terminal';
+                const headerClass = isTerminal ? 'bg-slate-950 border-b border-slate-800' : 'bg-slate-800 border-b border-slate-700';
+                const headerTitle = isTerminal ? 'Terminal' : `Arquivo: ${step.lang || 'Código'}`;
+                const icon = isTerminal ? 'terminal' : 'file-code';
+
+                html += `
+                <div class="relative z-10 flex flex-col md:flex-row gap-6 animate-fade-up" style="animation-delay: ${delay}ms">
+                    
+                    <div class="flex md:flex-col items-center md:w-10 flex-shrink-0">
+                        <div class="flex items-center justify-center w-10 h-10 bg-violet-600 rounded-full shadow-lg shadow-violet-500/20 border-4 border-slate-900 z-20">
+                            <span class="font-bold text-white text-sm">${step.id}</span>
+                        </div>
+                        <div class="h-full w-0.5 bg-slate-700 md:hidden absolute left-5 top-10 -z-10"></div>
+                    </div>
+
+                    <div class="flex-grow bg-slate-850 rounded-xl border border-slate-700 shadow-xl overflow-hidden hover:border-violet-500/50 transition-colors duration-300">
+                        
+                        <div class="p-6 border-b border-slate-700/50">
+                            <h3 class="text-xl font-bold text-white mb-1 flex items-center gap-2">
+                                ${step.title}
+                            </h3>
+                            <p class="text-slate-400 text-sm leading-relaxed">${step.description}</p>
+                        </div>
+
+                        <div class="bg-slate-950 m-4 rounded-lg border border-slate-800 overflow-hidden group relative">
+                            <div class="flex items-center justify-between px-4 py-2 ${headerClass}">
+                                <div class="flex items-center gap-2">
+                                    <div class="flex gap-1.5">
+                                        <div class="w-2.5 h-2.5 rounded-full bg-red-500/80"></div>
+                                        <div class="w-2.5 h-2.5 rounded-full bg-amber-500/80"></div>
+                                        <div class="w-2.5 h-2.5 rounded-full bg-emerald-500/80"></div>
+                                    </div>
+                                    <span class="text-xs text-slate-500 font-mono ml-2 flex items-center gap-1">
+                                        <i data-lucide="${icon}" class="w-3 h-3"></i> ${headerTitle}
+                                    </span>
+                                </div>
+                                <button onclick="copyToClipboard(this)" class="text-xs text-slate-500 hover:text-violet-400 transition-colors opacity-0 group-hover:opacity-100 flex items-center gap-1">
+                                    <i data-lucide="copy" class="w-3 h-3"></i> Copiar
+                                </button>
+                            </div>
+
+                            <div class="p-4 overflow-x-auto bg-slate-950">
+                                <pre class="text-sm font-mono leading-relaxed code-content"><code class="${isTerminal ? 'text-emerald-400' : 'text-slate-200'}">${escapeHtml(step.content)}</code></pre>
+                            </div>
+                        </div>
+
+                        ${step.note ? `
+                        <div class="px-6 pb-6 pt-0">
+                            <div class="flex items-start gap-2 text-xs text-slate-400 bg-slate-800/50 p-3 rounded-lg border border-slate-700/50">
+                                <i data-lucide="info" class="w-4 h-4 text-violet-500 flex-shrink-0 mt-0.5"></i>
+                                <span>${step.note}</span>
+                            </div>
+                        </div>
+                        ` : ''}
+
+                    </div>
+                </div>
+                `;
+            });
+
+            container.innerHTML = html;
+            // Reinicializa os ícones
+            lucide.createIcons();
+        }
+
+        // ============================================================
+        // FUNÇÕES AUXILIARES
+        // ============================================================
+
+        // Escapar HTML para evitar execução de script dentro do code block
+        function escapeHtml(text) {
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Copiar para área de transferência
+        function copyToClipboard(btn) {
+            const card = btn.closest('.relative'); // Encontra o container pai
+            const codeBlock = card.querySelector('code');
+            const text = codeBlock.innerText;
+
+            navigator.clipboard.writeText(text).then(() => {
+                const originalContent = btn.innerHTML;
+                btn.innerHTML = `<i data-lucide="check" class="w-3 h-3"></i> Copiado!`;
+                btn.classList.add('text-emerald-500');
+                lucide.createIcons();
+
+                setTimeout(() => {
+                    btn.innerHTML = originalContent;
+                    btn.classList.remove('text-emerald-500');
+                    lucide.createIcons();
+                }, 2000);
+            });
+        }
+
+        // Iniciar
+        document.addEventListener('DOMContentLoaded', renderSteps);
+
+    </script>
+</body>
+
+</html>

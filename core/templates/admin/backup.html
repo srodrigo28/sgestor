@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Admin - Backup{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-8 animate-fade-in-down">
+    
+    <!-- Cabeçalho -->
+    <div class="flex items-center justify-between">
+        <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+            <i class="fas fa-database text-blue-500"></i> Backup & Restauração
+        </h2>
+        <a href="{{ url_for('admin.users') }}" 
+           class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition text-sm flex items-center gap-2">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <!-- Cards de Ação -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <!-- CARD EXPORTAR -->
+        <div class="card p-6 border border-gray-800 bg-[#171d21] rounded-xl flex flex-col">
+            <h3 class="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                <i class="fas fa-file-export text-green-500"></i> Exportar Dados
+            </h3>
+            <p class="text-gray-400 text-sm mb-6 flex-1">
+                Gere uma cópia de segurança completa do seu banco de dados atual. 
+                Recomendado fazer antes de qualquer atualização.
+            </p>
+            
+            <div class="flex flex-col gap-3">
+                <a href="{{ url_for('db_manager.download', type='full') }}" 
+                   class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-center font-medium transition flex items-center justify-center gap-2">
+                    <i class="fas fa-download"></i> Backup Completo
+                </a>
+                <a href="{{ url_for('db_manager.download', type='data') }}" 
+                   class="w-full py-3 px-4 border border-gray-700 hover:bg-gray-800 text-gray-300 rounded-lg text-center font-medium transition flex items-center justify-center gap-2">
+                    <i class="fas fa-table"></i> Apenas Dados
+                </a>
+            </div>
+        </div>
+
+        <!-- CARD IMPORTAR -->
+        <div class="card p-6 border border-gray-800 bg-[#171d21] rounded-xl flex flex-col">
+            <h3 class="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                <i class="fas fa-file-import text-yellow-500"></i> Restaurar Backup
+            </h3>
+            <p class="text-gray-400 text-sm mb-6 flex-1">
+                Restaure um arquivo <code>.sql</code>. 
+                <span class="text-red-400 font-bold block mt-1">⚠️ Substitui dados atuais!</span>
+            </p>
+
+            {% if not preview %}
+                <form method="POST" enctype="multipart/form-data" class="mt-auto">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Arquivo SQL</label>
+                        <input type="file" name="file_upload" accept=".sql" required
+                               class="block w-full text-sm text-gray-400
+                               file:mr-4 file:py-2 file:px-4
+                               file:rounded-lg file:border-0
+                               file:text-sm file:font-semibold
+                               file:bg-gray-800 file:text-blue-400
+                               hover:file:bg-gray-700 cursor-pointer border border-gray-700 rounded-lg p-2 bg-[#0f1214]">
+                    </div>
+                    <button type="submit" 
+                            class="w-full py-3 px-4 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-medium transition flex items-center justify-center gap-2">
+                        <i class="fas fa-eye"></i> Analisar Arquivo
+                    </button>
+                </form>
+            {% else %}
+                <!-- PREVIEW MODE -->
+                <div class="bg-gray-900 rounded-lg p-3 mb-4 border border-gray-700 overflow-hidden">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs text-yellow-500 font-mono">{{ filename }}</span>
+                        <span class="text-xs bg-yellow-500/10 text-yellow-500 px-2 py-1 rounded">Preview</span>
+                    </div>
+                    <pre class="text-xs text-green-400 font-mono overflow-x-auto whitespace-pre-wrap h-32 custom-scrollbar">{{ preview }}...</pre>
+                </div>
+                
+                <form action="{{ url_for('db_manager.confirm_restore') }}" method="POST" class="flex gap-3">
+                    <input type="hidden" name="filename" value="{{ filename }}">
+                    <button type="submit" class="flex-1 py-2 px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition">
+                        Confirmar
+                    </button>
+                    <a href="{{ url_for('db_manager.index') }}" class="py-2 px-4 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition">
+                        Cancelar
+                    </a>
+                </form>
+            {% endif %}
+        </div>
+
+        <!-- CARD SYNC VPS -->
+        <div class="card p-6 border border-red-900 bg-[#1f1212] rounded-xl flex flex-col">
+            <h3 class="text-lg font-bold text-red-500 mb-2 flex items-center gap-2">
+                <i class="fas fa-sync"></i> Sincronizar VPS
+            </h3>
+             <p class="text-gray-400 text-sm mb-6 flex-1">
+                Sincronização de emergência. Baixa os dados da produção (VPS) e substitui o banco local.
+                <span class="text-red-400 font-bold block mt-1">⚠️ Apaga tudo localmente!</span>
+            </p>
+             <form action="{{ url_for('db_manager.sync_vps') }}" method="POST" onsubmit="return confirm('Tem certeza absoluta? Isso apagará seus dados locais!');" class="mt-auto">
+                <button type="submit" 
+                        class="w-full py-3 px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition flex items-center justify-center gap-2">
+                    <i class="fas fa-cloud-download-alt"></i> Sincronizar Agora
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

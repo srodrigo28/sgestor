@@ -1,0 +1,264 @@
+<!-- Profile Edit Modal Component -->
+<div id="profileModal" class="fixed inset-0 z-50 hidden">
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="closeProfileModal()"></div>
+
+    <!-- Modal Content -->
+    <div
+        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-[#171d21] border border-gray-800 rounded-xl shadow-2xl transform transition-all scale-100 p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-white">Editar Perfil</h3>
+            <button onclick="closeProfileModal()" class="text-gray-400 hover:text-white transition">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex border-b border-gray-700 mb-6">
+            <button type="button" onclick="switchTab('pessoal')" id="tab-pessoal"
+                class="flex-1 pb-2 text-center text-sm font-medium text-blue-500 border-b-2 border-blue-500 transition">
+                Dados Pessoais
+            </button>
+            <button type="button" onclick="switchTab('loja')" id="tab-loja"
+                class="flex-1 pb-2 text-center text-sm font-medium text-gray-400 border-b-2 border-transparent hover:text-gray-300 transition">
+                Dados da Loja
+            </button>
+        </div>
+
+        <form action="{{ url_for('auth.update_profile') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+
+            <!-- Tab: Pessoais -->
+            <div id="content-pessoal" class="space-y-4 animate-fade-in">
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Nome Completo</label>
+                    <input type="text" name="name" value="{{ session['name'] }}" required
+                        class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-2 px-3 text-white focus:outline-none focus:border-blue-500 transition">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Email</label>
+                    <input type="email" name="email" value="{{ session['email'] }}" required
+                        class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-2 px-3 text-white focus:outline-none focus:border-blue-500 transition">
+                </div>
+
+                <div class="pt-4 border-t border-gray-800">
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Nova Senha (Opcional)</label>
+                    <input type="password" name="password" placeholder="Deixe em branco para manter"
+                        class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-2 px-3 text-white focus:outline-none focus:border-blue-500 transition">
+                </div>
+            </div>
+
+            <!-- Tab: Loja -->
+            <div id="content-loja" class="hidden space-y-4 animate-fade-in">
+                
+                <!-- Logo Upload -->
+                <div class="flex flex-col items-center mb-4">
+                    <div class="relative group cursor-pointer mb-2">
+                        <div class="w-24 h-24 rounded-full bg-gradient-to-tr from-blue-500 to-purple-600 p-[2px] overflow-hidden">
+                            {% if session.get('logo') %}
+                            <img src="{{ session['logo'] }}" id="profileLogoPreview"
+                                class="w-full h-full object-cover rounded-full border-4 border-[#171d21]">
+                            {% else %}
+                            <img src="https://ui-avatars.com/api/?name={{ session['name'] }}&background=0f1214&color=fff&size=128"
+                                id="profileLogoPreview"
+                                class="w-full h-full object-cover rounded-full border-4 border-[#171d21]">
+                            {% endif %}
+                        </div>
+                        <label for="logoUpload"
+                            class="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition cursor-pointer">
+                            <i class="fas fa-camera text-white"></i>
+                        </label>
+                        <input type="file" name="logo" id="logoUpload" accept="image/*" class="hidden"
+                            onchange="previewLogo(this)">
+                    </div>
+                    <span class="text-xs text-gray-500">Logo para Cabeçalho</span>
+                </div>
+
+                <!-- NEW: Store Name -->
+                <div>
+                     <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Nome da Loja (Fantasia)</label>
+                     <input type="text" name="store_name" value="{{ session.get('store_name', '') }}" placeholder="Ex: Auto Center Silva"
+                         class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-2 px-3 text-white focus:outline-none focus:border-blue-500 transition">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2">CNPJ</label>
+                        <input type="text" name="cnpj" id="profile_cnpj" value="{{ session.get('cnpj', '') }}"
+                            placeholder="00.000.000/0001-00" maxlength="18"
+                            class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-2 px-3 text-white focus:outline-none focus:border-blue-500 transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Telefone (Coml.)</label>
+                        <input type="tel" name="phone" id="profile_phone" value="{{ session.get('phone', '') }}"
+                            placeholder="(00) 00000-0000" maxlength="15"
+                            class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-2 px-3 text-white focus:outline-none focus:border-blue-500 transition">
+                    </div>
+                </div>
+
+                <!-- Professional Address Fields -->
+                <div class="space-y-3 p-3 bg-gray-900/30 rounded-lg border border-gray-800">
+                    <h4 class="text-xs font-bold text-blue-400 uppercase border-b border-gray-800 pb-1 mb-2">Endereço</h4>
+                    
+                    <div class="grid grid-cols-3 gap-3">
+                         <div class="col-span-1">
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">CEP</label>
+                            <div class="relative">
+                                <input type="text" name="addr_cep" id="addr_cep" value="{{ session.get('addr_cep', '') }}" placeholder="00000-000" maxlength="9"
+                                    onblur="fetchAddress(this.value)"
+                                    class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-2 px-3 text-white text-sm focus:outline-none focus:border-blue-500 transition">
+                                <div id="cep_loading" class="hidden absolute right-3 top-2.5">
+                                    <i class="fas fa-spinner fa-spin text-blue-500"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-span-2">
+                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Rua / Logradouro</label>
+                             <input type="text" name="addr_street" id="addr_street" value="{{ session.get('addr_street', '') }}"
+                                class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-2 px-3 text-white text-sm focus:outline-none focus:border-blue-500 transition">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-3">
+                        <div class="col-span-1">
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Número</label>
+                            <input type="text" name="addr_number" id="addr_number" value="{{ session.get('addr_number', '') }}"
+                                class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-2 px-3 text-white text-sm focus:outline-none focus:border-blue-500 transition">
+                        </div>
+                         <div class="col-span-2">
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Bairro</label>
+                            <input type="text" name="addr_district" id="addr_district" value="{{ session.get('addr_district', '') }}"
+                                class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-2 px-3 text-white text-sm focus:outline-none focus:border-blue-500 transition">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-3">
+                         <div class="col-span-2">
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Cidade</label>
+                            <input type="text" name="addr_city" id="addr_city" value="{{ session.get('addr_city', '') }}"
+                                class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-2 px-3 text-white text-sm focus:outline-none focus:border-blue-500 transition">
+                        </div>
+                        <div class="col-span-1">
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">UF</label>
+                            <input type="text" name="addr_state" id="addr_state" maxlength="2" value="{{ session.get('addr_state', '') }}"
+                                class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-2 px-3 text-white text-sm focus:outline-none focus:border-blue-500 transition uppercase">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-3 mt-6 pt-4 border-t border-gray-800">
+                <button type="button" onclick="closeProfileModal()"
+                    class="flex-1 py-2.5 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition">
+                    Cancelar
+                </button>
+                <button type="submit"
+                    class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition shadow-lg shadow-blue-500/20">
+                    Salvar Alterações
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openProfileModal() {
+        document.getElementById('profileModal').classList.remove('hidden');
+    }
+
+    function closeProfileModal() {
+        document.getElementById('profileModal').classList.add('hidden');
+    }
+
+    // Phone Mask
+    const profilePhone = document.getElementById('profile_phone');
+    if (profilePhone) {
+        profilePhone.addEventListener('input', function (e) {
+            var x = e.target.value.replace(/\D/g, '').match(/(\d{0,2})(\d{0,5})(\d{0,4})/);
+            e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
+        });
+    }
+
+    // Address Logic (ViaCEP)
+    async function fetchAddress(cepRaw) {
+        const cep = cepRaw.replace(/\D/g, '');
+        if (cep.length !== 8) return;
+
+        document.getElementById('cep_loading').classList.remove('hidden');
+
+        try {
+            const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+            const data = await response.json();
+            
+            document.getElementById('cep_loading').classList.add('hidden');
+            
+            if (data.erro) {
+                Toastify({ text: "CEP não encontrado.", backgroundColor: "#ef4444" }).showToast();
+                return;
+            }
+
+            document.getElementById('addr_street').value = data.logradouro;
+            document.getElementById('addr_district').value = data.bairro;
+            document.getElementById('addr_city').value = data.localidade;
+            document.getElementById('addr_state').value = data.uf;
+            document.getElementById('addr_number').focus();
+
+        } catch(e) {
+            document.getElementById('cep_loading').classList.add('hidden');
+            Toastify({ text: "Erro ao buscar CEP.", backgroundColor: "#ef4444" }).showToast();
+        }
+    }
+
+    // CNPJ Mask (Better Regex)
+    const profileCnpj = document.getElementById('profile_cnpj');
+    if (profileCnpj) {
+        profileCnpj.addEventListener('input', function (e) {
+             let v = e.target.value.replace(/\D/g, '');
+             if (v.length > 14) v = v.substring(0, 14);
+             
+             v = v.replace(/^(\d{2})(\d)/, "$1.$2");
+             v = v.replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3");
+             v = v.replace(/\.(\d{3})(\d)/, ".$1/$2");
+             v = v.replace(/(\d{4})(\d)/, "$1-$2");
+             
+             e.target.value = v;
+        });
+    }
+
+    function previewLogo(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+
+            reader.onload = function (e) {
+                document.getElementById('profileLogoPreview').src = e.target.result;
+            }
+
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function switchTab(tabName) {
+        const tabPessoal = document.getElementById('tab-pessoal');
+        const tabLoja = document.getElementById('tab-loja');
+        const contentPessoal = document.getElementById('content-pessoal');
+        const contentLoja = document.getElementById('content-loja');
+
+        if (tabName === 'pessoal') {
+            tabPessoal.classList.add('text-blue-500', 'border-blue-500');
+            tabPessoal.classList.remove('text-gray-400', 'border-transparent');
+            tabLoja.classList.add('text-gray-400', 'border-transparent');
+            tabLoja.classList.remove('text-blue-500', 'border-blue-500');
+            
+            contentPessoal.classList.remove('hidden');
+            contentLoja.classList.add('hidden');
+        } else {
+            tabLoja.classList.add('text-blue-500', 'border-blue-500');
+            tabLoja.classList.remove('text-gray-400', 'border-transparent');
+            tabPessoal.classList.add('text-gray-400', 'border-transparent');
+            tabPessoal.classList.remove('text-blue-500', 'border-blue-500');
+            
+            contentLoja.classList.remove('hidden');
+            contentPessoal.classList.add('hidden');
+        }
+    }
+</script>

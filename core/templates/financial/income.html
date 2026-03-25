@@ -1,0 +1,803 @@
+{% extends 'base.html' %}
+
+{% block title %}Finanças - Entradas{% endblock %}
+
+{% block content %}
+<!-- Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Stat Card 1: Total 7 Days / Future 7 Days -->
+    <div
+        class="card p-5 flex items-center justify-between border border-gray-800 bg-[#171d21] rounded-xl hover:-translate-y-1 transition duration-300">
+        <div>
+            <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">
+                {% if status_filter == 'pending' %}Próximos 7 Dias{% else %}Entradas (7 Dias){% endif %}
+            </p>
+            <h4 class="text-2xl font-bold text-white mt-1">R$ <span class="count-up"
+                    data-target="{{ stats.total_7d }}">0</span></h4>
+            <p class="text-blue-500 text-xs mt-1 flex items-center gap-1 font-medium">
+                <i class="fas fa-calendar-week"></i>
+                <span class="text-gray-500">
+                    {% if status_filter == 'pending' %}A receber em 1 sem.{% else %}Última semana{% endif %}
+                </span>
+            </p>
+        </div>
+        <div
+            class="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-500 shadow-lg shadow-blue-500/20">
+            <i class="fas fa-calendar-alt text-xl"></i>
+        </div>
+    </div>
+
+    <!-- Stat Card 2: Total 30 Days / Future 30 Days -->
+    <div
+        class="card p-5 flex items-center justify-between border border-gray-800 bg-[#171d21] rounded-xl hover:-translate-y-1 transition duration-300">
+        <div>
+            <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">
+                {% if status_filter == 'pending' %}Próximos 30 Dias{% else %}Entradas (30 Dias){% endif %}
+            </p>
+            <h4 class="text-2xl font-bold text-white mt-1">R$ <span class="count-up"
+                    data-target="{{ stats.total_30d }}">0</span></h4>
+            <p class="text-emerald-500 text-xs mt-1 flex items-center gap-1 font-medium">
+                <i class="fas fa-calendar-check"></i>
+                <span class="text-gray-500">
+                    {% if status_filter == 'pending' %}A receber em 1 mês{% else %}Último mês{% endif %}
+                </span>
+            </p>
+        </div>
+        <div
+            class="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500 shadow-lg shadow-emerald-500/20">
+            <i class="fas fa-money-bill-wave text-xl"></i>
+        </div>
+    </div>
+
+    <!-- Stat Card 3: Future Launches (Same) -->
+    <div
+        class="card p-5 flex items-center justify-between border border-gray-800 bg-[#171d21] rounded-xl hover:-translate-y-1 transition duration-300">
+        <div>
+            <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">Lançamentos Futuros</p>
+            <h4 class="text-2xl font-bold text-white mt-1">R$ <span class="count-up"
+                    data-target="{{ stats.total_future }}">0</span></h4>
+            <p class="text-indigo-500 text-xs mt-1 flex items-center gap-1 font-medium">
+                <i class="fas fa-hourglass-half"></i>
+                <span class="text-gray-500">A receber (total)</span>
+            </p>
+        </div>
+        <div
+            class="w-12 h-12 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-500 shadow-lg shadow-indigo-500/20">
+            <i class="fas fa-calendar-plus text-xl"></i>
+        </div>
+    </div>
+
+    <!-- Stat Card 4: Daily Average / Daily Proj (Future) -->
+    <div
+        class="card p-5 flex items-center justify-between border border-gray-800 bg-[#171d21] rounded-xl hover:-translate-y-1 transition duration-300">
+        <div>
+            <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">
+                {% if status_filter == 'pending' %}Média Diária (Proj.){% else %}Média Diária{% endif %}
+            </p>
+            <h4 class="text-2xl font-bold text-white mt-1">R$ <span class="count-up"
+                    data-target="{{ stats.avg_daily_30d }}">0</span></h4>
+            <p class="text-amber-500 text-xs mt-1 flex items-center gap-1 font-medium">
+                <i class="fas fa-calendar-day"></i>
+                <span class="text-gray-500">
+                    {% if status_filter == 'pending' %}Próximos 30 dias{% else %}Média (dia {{ today.day }}){% endif
+                    %}
+                </span>
+            </p>
+        </div>
+        <div
+            class="w-12 h-12 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-500 shadow-lg shadow-amber-500/20">
+            <i class="fas fa-chart-line text-xl"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Header with Filters -->
+<div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+    <div>
+        <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+            <i class="fas fa-wallet text-green-500"></i> Entradas
+        </h2>
+        <p class="text-gray-500 text-sm">Gerencie seus ganhos e recebimentos</p>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-3">
+        <!-- Switch to Expenses -->
+        <a href="{{ url_for('financial.expenses_list') }}" class="px-3 py-2 bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 text-sm transition font-medium flex items-center gap-2">
+            <i class="fas fa-arrow-down text-red-500"></i> Ver Despesas
+        </a>
+
+        <!-- Status Filter -->
+        <div class="relative">
+            <select id="statusFilter" onchange="applyFilters()"
+                class="bg-[#171d21] border border-gray-700 text-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 outline-none appearance-none cursor-pointer pr-8 hover:border-gray-600 transition">
+                <option value="">Todos Status</option>
+                <option value="received" {% if status_filter == 'received' %}selected{% endif %}>Recebidos</option>
+                <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Futuros (A Receber)</option>
+            </select>
+            <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-gray-500">
+                <i class="fas fa-chevron-down text-xs"></i>
+            </div>
+        </div>
+
+        <!-- Category Filter -->
+        <div class="relative">
+            <select id="categoryFilter" onchange="applyFilters()"
+                class="bg-[#171d21] border border-gray-700 text-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 outline-none appearance-none cursor-pointer pr-8 hover:border-gray-600 transition">
+                <option value="">Todas Categorias</option>
+                <option value="serviço" {% if category_filter == 'serviço' %}selected{% endif %}>Serviço</option>
+                <option value="contrato" {% if category_filter == 'contrato' %}selected{% endif %}>Contrato</option>
+                <option value="salario mensal" {% if category_filter == 'salario mensal' %}selected{% endif %}>Salário
+                    Mensal</option>
+                <option value="bico" {% if category_filter == 'bico' %}selected{% endif %}>Bico</option>
+            </select>
+            <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-gray-500">
+                <i class="fas fa-chevron-down text-xs"></i>
+            </div>
+        </div>
+
+        <!-- Search -->
+        <div class="relative group">
+            <input type="text" placeholder="Buscar entrada..." value="{{ search }}" id="searchInput"
+                onkeydown="if(event.key === 'Enter') applyFilters()" 
+                onblur="applyFilters()"
+                class="bg-[#171d21] border border-gray-700 text-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block pl-10 p-2.5 w-64 transition-all group-hover:border-gray-600">
+            <button onclick="applyFilters()" class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500 hover:text-white cursor-pointer transition">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+
+        <!-- View Toggle -->
+        <div class="bg-[#171d21] p-1 rounded-lg border border-gray-700 flex items-center">
+            <button onclick="toggleView('list')" id="btnList"
+                class="px-3 py-1.5 rounded-md text-sm font-medium transition bg-gray-700 text-white shadow-sm">
+                <i class="fas fa-list"></i>
+            </button>
+            <button onclick="toggleView('chart')" id="btnChart"
+                class="px-3 py-1.5 rounded-md text-sm font-medium transition text-gray-400 hover:text-white">
+                <i class="fas fa-chart-pie"></i>
+            </button>
+        </div>
+
+        <!-- Add Button -->
+        <button onclick="openIncomeModal()"
+            class="bg-blue-600 hover:bg-blue-500 text-white w-10 h-10 rounded-lg flex items-center justify-center transition shadow-lg shadow-blue-500/20 transform hover:scale-105 active:scale-95">
+            <i class="fas fa-plus"></i>
+        </button>
+    </div>
+</div>
+
+<!-- List View -->
+<div id="listView"
+    class="card overflow-hidden border border-gray-800 bg-[#171d21] rounded-xl shadow-xl transition-all duration-300">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left text-gray-400">
+            <thead class="text-xs text-gray-400 uppercase bg-[#11161a] border-b border-gray-800">
+                <tr>
+                    <th scope="col" class="px-6 py-4">Data</th>
+                    <th scope="col" class="px-6 py-4">Descrição</th>
+                    <th scope="col" class="px-6 py-4">Categoria</th>
+                    <th scope="col" class="px-6 py-4">Tipo</th>
+                    <th scope="col" class="px-6 py-4">Valor</th>
+                    <th scope="col" class="px-6 py-4 text-right">Ações</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-800">
+                {% for income in incomes %}
+                <tr class="hover:bg-gray-800/50 transition duration-150 group">
+                    <td class="px-6 py-4 text-gray-400 font-mono">
+                        {{ income.entry_date.strftime('%d/%m/%Y') }}
+                        {% if income.status == 'pending' %}
+                        <span
+                            class="ml-2 px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase tracking-wide">
+                            A Receber
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 font-medium text-white">{{ income.description }}</td>
+                    <td class="px-6 py-4">
+                        <span class="px-2.5 py-1 rounded text-xs font-medium border
+                            {% if income.category == 'salario mensal' %}bg-green-500/10 text-green-500 border-green-500/20
+                            {% elif income.category == 'contrato' %}bg-blue-500/10 text-blue-500 border-blue-500/20
+                            {% elif income.category == 'serviço' %}bg-purple-500/10 text-purple-500 border-purple-500/20
+                            {% else %}bg-yellow-500/10 text-yellow-500 border-yellow-500/20{% endif %}">
+                            {{ income.category | title }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-gray-400">
+                        {% if income.payment_type == 'pix' %}<i class="fas fa-qrcode text-teal-500 mr-1"></i>
+                        {% elif income.payment_type == 'dinheiro' %}<i
+                            class="fas fa-money-bill text-green-500 mr-1"></i>
+                        {% elif income.payment_type == 'cartao credito' %}<i
+                            class="fas fa-credit-card text-blue-500 mr-1"></i>
+                        {% elif income.payment_type == 'cartao debito' %}<i
+                            class="fas fa-credit-card text-emerald-500 mr-1"></i>
+                        {% elif income.payment_type == 'boleto' %}<i class="fas fa-barcode text-gray-400 mr-1"></i>
+                        {% else %}<i class="fas fa-exchange-alt text-blue-500 mr-1"></i>{% endif %}
+                        {{ income.payment_type | title }}
+                    </td>
+                    <td class="px-6 py-4 font-mono font-bold text-green-400">R$ {{ "%.2f"|format(income.amount) }}</td>
+                    <td class="px-6 py-4 text-right">
+                        <button type="button"
+                            class="text-gray-400 hover:text-blue-500 transition mr-3"
+                            title="Editar"
+                            onclick="openEditIncomeModal({
+                                id: {{ income.id }},
+                                description: {{ income.description | tojson }},
+                                amount: {{ income.amount | default(0) | float }},
+                                category: {{ income.category | tojson }},
+                                payment_type: {{ income.payment_type | tojson }},
+                                status: {{ income.status | default('received') | tojson }},
+                                entry_date: '{{ income.entry_date.strftime('%Y-%m-%d') }}'
+                            })">
+                            <i class="fas fa-pen"></i>
+                        </button>
+                        <form action="{{ url_for('financial.delete_income', id=income.id) }}" method="POST"
+                            class="inline" onsubmit="return confirm('Tem certeza que deseja excluir esta entrada?');">
+                            <button type="submit" class="text-gray-400 hover:text-red-500 transition" title="Excluir">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                        <div class="flex flex-col items-center gap-3">
+                            <div
+                                class="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center text-gray-600">
+                                <i class="fas fa-inbox text-4xl opacity-50"></i>
+                            </div>
+                            <p>Nenhuma entrada registrada.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if total_pages > 1 %}
+    <div class="bg-[#11161a] border-t border-gray-800 px-6 py-4 flex items-center justify-between">
+        <span class="text-sm text-gray-500">
+            Página <span class="font-medium text-white">{{ page }}</span> de <span class="font-medium text-white">{{ total_pages }}</span>
+        </span>
+        <div class="flex gap-2">
+            {% if page > 1 %}
+            <a href="{{ url_for('financial.income_list', page=page-1, search=search, category=category_filter, status=status_filter) }}"
+                class="px-3 py-1 bg-gray-800 text-gray-400 rounded hover:bg-gray-700 hover:text-white transition text-sm">Anterior</a>
+            {% endif %}
+
+            {% if page < total_pages %} 
+            <a href="{{ url_for('financial.income_list', page=page+1, search=search, category=category_filter, status=status_filter) }}"
+                class="px-3 py-1 bg-gray-800 text-gray-400 rounded hover:bg-gray-700 hover:text-white transition text-sm">Próxima</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+
+
+<!-- Charts View (Hidden by default) -->
+<div id="chartView" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in-down">
+    <!-- Chart 1: History -->
+    <div class="card p-6 lg:col-span-2 border border-gray-800 bg-[#171d21] rounded-xl">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-bold text-white">Histórico de Entradas (6 Meses)</h3>
+            <div class="flex items-center gap-3">
+                <label for="historyMonthSelect" class="text-xs text-gray-500 uppercase">Mês</label>
+                <div class="relative">
+                    <select id="historyMonthSelect" onchange="updateCharts()"
+                        class="bg-[#0f1214] border border-gray-700 text-white rounded-lg p-2 pr-8 text-sm focus:border-blue-500 outline-none appearance-none cursor-pointer">
+                        <option value="all">Todos</option>
+                        {% for opt in month_options %}
+                        <option value="{{ opt.value }}">{{ opt.label }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-gray-500">
+                        <i class="fas fa-chevron-down text-xs"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <canvas id="historyChart" height="100"></canvas>
+    </div>
+
+    <!-- Chart 2: Categories -->
+    <div class="card p-6 border border-gray-800 bg-[#171d21] rounded-xl">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-bold text-white">Por Categoria (12 Meses)</h3>
+            <button class="text-gray-500 hover:text-white"><i class="fas fa-ellipsis-h"></i></button>
+        </div>
+        <div class="relative h-64">
+            <canvas id="categoryChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Add Income Modal -->
+<div id="incomeModal"
+    class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div
+        class="bg-[#171d21] w-full max-w-md rounded-xl border border-gray-700 shadow-2xl relative animate-fade-in-down">
+
+        <!-- Header -->
+        <div class="flex justify-between items-center p-6 border-b border-gray-800">
+            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                <i class="fas fa-plus-circle text-blue-500"></i> Nova Entrada
+            </h3>
+            <button onclick="closeIncomeModal()" class="text-gray-400 hover:text-white transition">
+                <i class="fas fa-times text-lg"></i>
+            </button>
+        </div>
+
+        <!-- Form -->
+        <form action="{{ url_for('financial.add_income') }}" method="POST" class="p-6 space-y-4">
+
+            <!-- Description -->
+            <div>
+                <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Descrição</label>
+                <input type="text" name="description" required
+                    class="w-full bg-[#0f1214] border border-gray-700 text-white rounded-lg p-3 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition"
+                    placeholder="Ex: Pagamento do Projeto X">
+            </div>
+
+            <!-- Amount & Date row -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Valor (R$)</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-3 text-gray-500">R$</span>
+                        <input type="number" step="0.01" name="amount" required
+                            class="w-full bg-[#0f1214] border border-gray-700 text-white rounded-lg p-3 pl-10 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition"
+                            placeholder="0.00">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Data</label>
+                    <input type="date" name="entry_date" required
+                        class="w-full bg-[#0f1214] border border-gray-700 text-white rounded-lg p-3 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition [color-scheme:dark]">
+                </div>
+            </div>
+
+            <!-- Category & Type row -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Categoria</label>
+                    <select name="category"
+                        class="w-full bg-[#0f1214] border border-gray-700 text-white rounded-lg p-3 focus:border-blue-500 outline-none appearance-none cursor-pointer">
+                        <option value="serviço">Serviço</option>
+                        <option value="contrato">Contrato</option>
+                        <option value="salario mensal">Salário Mensal</option>
+                        <option value="bico">Bico</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Tipo Pagamento</label>
+                    <select name="payment_type"
+                        class="w-full bg-[#0f1214] border border-gray-700 text-white rounded-lg p-3 focus:border-blue-500 outline-none appearance-none cursor-pointer">
+                        <option value="pix">PIX</option>
+                        <option value="dinheiro">Dinheiro</option>
+                        <option value="cartao credito">Cartao de Credito</option>
+                        <option value="cartao debito">Cartao de Debito</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Status -->
+            <div>
+                <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Status</label>
+                <div class="flex gap-4">
+                    <label class="flex items-center gap-2 text-white cursor-pointer">
+                        <input type="radio" name="status" value="received" checked class="text-emerald-500 focus:ring-emerald-500 bg-gray-800 border-gray-600">
+                        Recebido (Confirmado)
+                    </label>
+                    <label class="flex items-center gap-2 text-white cursor-pointer">
+                        <input type="radio" name="status" value="pending" class="text-blue-500 focus:ring-blue-500 bg-gray-800 border-gray-600">
+                        A Receber (Futuro)
+                    </label>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-800">
+                <button type="button" onclick="closeIncomeModal()"
+                    class="px-4 py-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">
+                    Cancelar
+                </button>
+                <button type="submit"
+                    class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-lg shadow-blue-600/20 transition transform active:scale-95">
+                    Salvar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Income Modal -->
+<div id="editIncomeModal"
+    class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div
+        class="bg-[#171d21] w-full max-w-md rounded-xl border border-gray-700 shadow-2xl relative animate-fade-in-down">
+
+        <!-- Header -->
+        <div class="flex justify-between items-center p-6 border-b border-gray-800">
+            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                <i class="fas fa-pen-to-square text-emerald-500"></i> Editar Entrada
+            </h3>
+            <button onclick="closeEditIncomeModal()" class="text-gray-400 hover:text-white transition">
+                <i class="fas fa-times text-lg"></i>
+            </button>
+        </div>
+
+        <!-- Form -->
+        <form id="editIncomeForm" method="POST" class="p-6 space-y-4">
+            <!-- Description -->
+            <div>
+                <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Descrição</label>
+                <input type="text" name="description" id="editIncomeDescription" required
+                    class="w-full bg-[#0f1214] border border-gray-700 text-white rounded-lg p-3 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition">
+            </div>
+
+            <!-- Amount & Date row -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Valor (R$)</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-3 text-gray-500">R$</span>
+                        <input type="number" step="0.01" name="amount" id="editIncomeAmount" required
+                            class="w-full bg-[#0f1214] border border-gray-700 text-white rounded-lg p-3 pl-10 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition"
+                            placeholder="0.00">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Data</label>
+                    <input type="date" name="entry_date" id="editIncomeDate" required
+                        class="w-full bg-[#0f1214] border border-gray-700 text-white rounded-lg p-3 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition [color-scheme:dark]">
+                </div>
+            </div>
+
+            <!-- Category & Type row -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Categoria</label>
+                    <select name="category" id="editIncomeCategory"
+                        class="w-full bg-[#0f1214] border border-gray-700 text-white rounded-lg p-3 focus:border-blue-500 outline-none appearance-none cursor-pointer">
+                        <option value="serviço">Serviço</option>
+                        <option value="contrato">Contrato</option>
+                        <option value="salario mensal">Salário Mensal</option>
+                        <option value="bico">Bico</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Tipo Pagamento</label>
+                    <select name="payment_type" id="editIncomePayment"
+                        class="w-full bg-[#0f1214] border border-gray-700 text-white rounded-lg p-3 focus:border-blue-500 outline-none appearance-none cursor-pointer">
+                        <option value="pix">PIX</option>
+                        <option value="dinheiro">Dinheiro</option>
+                        <option value="cartao credito">Cartao de Credito</option>
+                        <option value="cartao debito">Cartao de Debito</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Status -->
+            <div>
+                <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Status</label>
+                <div class="flex gap-4">
+                    <label class="flex items-center gap-2 text-white cursor-pointer">
+                        <input type="radio" name="status" value="received" id="editStatusReceived" class="text-emerald-500 focus:ring-emerald-500 bg-gray-800 border-gray-600">
+                        Recebido (Confirmado)
+                    </label>
+                    <label class="flex items-center gap-2 text-white cursor-pointer">
+                        <input type="radio" name="status" value="pending" id="editStatusPending" class="text-blue-500 focus:ring-blue-500 bg-gray-800 border-gray-600">
+                        A Receber (Futuro)
+                    </label>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-800">
+                <button type="button" onclick="closeEditIncomeModal()"
+                    class="px-4 py-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">
+                    Cancelar
+                </button>
+                <button type="submit"
+                    class="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-lg shadow-emerald-600/20 transition transform active:scale-95">
+                    Salvar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openIncomeModal() {
+        const modal = document.getElementById('incomeModal');
+        modal.classList.remove('hidden');
+        // Set default date to today if empty
+        const dateInput = modal.querySelector('input[name="entry_date"]');
+        if (!dateInput.value) {
+            dateInput.valueAsDate = new Date();
+        }
+    }
+
+    function closeIncomeModal() {
+        document.getElementById('incomeModal').classList.add('hidden');
+    }
+
+    // Close on outside click
+    document.getElementById('incomeModal').addEventListener('click', function (e) {
+        if (e.target === this) {
+            closeIncomeModal();
+        }
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === "Escape") {
+            closeIncomeModal();
+        }
+    });
+
+    function openEditIncomeModal(data) {
+        const modal = document.getElementById('editIncomeModal');
+        const form = document.getElementById('editIncomeForm');
+        form.action = `/financial/income/update/${data.id}`;
+        document.getElementById('editIncomeDescription').value = data.description || '';
+        document.getElementById('editIncomeAmount').value = data.amount || '';
+        document.getElementById('editIncomeDate').value = data.entry_date || '';
+        document.getElementById('editIncomeCategory').value = data.category || 'serviço';
+        document.getElementById('editIncomePayment').value = data.payment_type || 'pix';
+        
+        // Status
+        if (data.status === 'received') {
+            document.getElementById('editStatusReceived').checked = true;
+        } else {
+            document.getElementById('editStatusPending').checked = true;
+        }
+
+        modal.classList.remove('hidden');
+    }
+
+    function closeEditIncomeModal() {
+        document.getElementById('editIncomeModal').classList.add('hidden');
+    }
+
+    document.getElementById('editIncomeModal').addEventListener('click', function (e) {
+        if (e.target === this) {
+            closeEditIncomeModal();
+        }
+    });
+</script>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Animation for Numbers (Count Up) with Currency Formatting support
+    function animateValue(obj, start, end, duration) {
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            const currentVal = progress * (end - start) + start;
+
+            // Format as Currency BRL
+            obj.innerHTML = currentVal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            } else {
+                obj.innerHTML = end.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+        };
+        window.requestAnimationFrame(step);
+    }
+
+    // Intersection Observer for Animation
+    const observerOptions = {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.1
+    };
+
+    const statsObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                if (entry.target.classList.contains('count-up')) {
+                    const target = parseFloat(entry.target.getAttribute('data-target'));
+                    // Check if already animated
+                    if (!entry.target.dataset.animated) {
+                        animateValue(entry.target, 0, target, 2000);
+                        entry.target.dataset.animated = "true";
+                        statsObserver.unobserve(entry.target);
+                    }
+                }
+            }
+        });
+    }, observerOptions);
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const counters = document.querySelectorAll('.count-up');
+        counters.forEach(counter => statsObserver.observe(counter));
+    });
+</script>
+
+<script>
+    // --- Chart Logic --- //
+
+    // Toggle View
+    function toggleView(view) {
+        const listView = document.getElementById('listView');
+        const chartView = document.getElementById('chartView');
+        const btnList = document.getElementById('btnList');
+        const btnChart = document.getElementById('btnChart');
+
+        if (view === 'list') {
+            listView.classList.remove('hidden');
+            chartView.classList.add('hidden');
+
+            btnList.classList.add('bg-gray-700', 'text-white', 'shadow-sm');
+            btnList.classList.remove('text-gray-400');
+
+            btnChart.classList.remove('bg-gray-700', 'text-white', 'shadow-sm');
+            btnChart.classList.add('text-gray-400');
+        } else {
+            listView.classList.add('hidden');
+            chartView.classList.remove('hidden');
+
+            btnList.classList.remove('bg-gray-700', 'text-white', 'shadow-sm');
+            btnList.classList.add('text-gray-400');
+
+            btnChart.classList.add('bg-gray-700', 'text-white', 'shadow-sm');
+            btnChart.classList.remove('text-gray-400');
+
+            // Init charts if not already done
+            initCharts();
+        }
+    }
+
+    let historyChartInstance = null;
+    let categoryChartInstance = null;
+
+    function initCharts() {
+        if (historyChartInstance) return; // Already init
+
+        // History Chart (Line)
+        const ctxHistory = document.getElementById('historyChart').getContext('2d');
+        const gradient = ctxHistory.createLinearGradient(0, 0, 0, 400);
+        gradient.addColorStop(0, 'rgba(34, 197, 94, 0.2)'); // Green-500
+        gradient.addColorStop(1, 'rgba(34, 197, 94, 0)');
+
+        const historyData = {{ chart_history_json | safe
+    }};
+
+    historyChartInstance = new Chart(ctxHistory, {
+        type: 'line',
+        data: {
+            labels: historyData.labels,
+            datasets: [{
+                label: 'Total Entradas',
+                data: historyData.values,
+                borderColor: '#22c55e',
+                borderWidth: 2,
+                tension: 0.4,
+                fill: true,
+                backgroundColor: gradient,
+                pointBackgroundColor: '#15803d',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: '#15803d'
+            }]
+        },
+        options: {
+            responsive: true,
+            interaction: { intersect: false, mode: 'index' },
+            plugins: { legend: { display: false } },
+            scales: {
+                y: {
+                    grid: { color: '#1f2937' },
+                    ticks: {
+                        color: '#9ca3af',
+                        callback: function (value) { return 'R$ ' + value; }
+                    }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#9ca3af' }
+                }
+            }
+        }
+    });
+
+    // Category Chart (Doughnut)
+    const ctxCategory = document.getElementById('categoryChart').getContext('2d');
+    const categoryData = {{ chart_category_json | safe }};
+
+    categoryChartInstance = new Chart(ctxCategory, {
+        type: 'doughnut',
+        data: {
+            labels: categoryData.labels,
+            datasets: [{
+                data: categoryData.values,
+                backgroundColor: [
+                    '#3b82f6', // Blue (Contrato)
+                    '#a855f7', // Purple (Serviço)
+                    '#22c55e', // Green (Salário)
+                    '#eab308', // Yellow (Bico)
+                    '#6366f1', // Indigo
+                    '#ec4899', // Pink
+                ],
+                borderWidth: 0,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: '#9ca3af', usePointStyle: true, padding: 20 }
+                }
+            },
+            layout: { padding: 20 }
+        }
+    });
+    }
+
+    function applyFilters() {
+        const status = document.getElementById('statusFilter').value;
+        const category = document.getElementById('categoryFilter').value;
+        const search = document.getElementById('searchInput').value;
+        
+        const params = new URLSearchParams();
+        if (status) params.append('status', status);
+        if (category) params.append('category', category);
+        if (search) params.append('search', search);
+        
+        window.location.href = '?' + params.toString();
+    }
+
+    function getSelectedStatus() {
+        const select = document.getElementById('statusFilter');
+        return select ? select.value : '';
+    }
+
+    function getSelectedCategory() {
+        const select = document.getElementById('categoryFilter');
+        return select ? select.value : 'Todas';
+    }
+
+    function getSelectedMonth() {
+        const select = document.getElementById('historyMonthSelect');
+        return select ? select.value : 'all';
+    }
+
+    async function updateCharts() {
+        const category = getSelectedCategory();
+        const month = getSelectedMonth();
+        const status = getSelectedStatus();
+        try {
+            const response = await fetch(`/financial/charts?category=${encodeURIComponent(category)}&month=${encodeURIComponent(month)}&status=${encodeURIComponent(status)}`);
+            const data = await response.json();
+            if (!historyChartInstance) {
+                initCharts();
+            }
+            if (historyChartInstance) {
+                historyChartInstance.data.labels = data.history.labels;
+                historyChartInstance.data.datasets[0].data = data.history.values;
+                historyChartInstance.update();
+            }
+            if (categoryChartInstance) {
+                categoryChartInstance.data.labels = data.category.labels;
+                categoryChartInstance.data.datasets[0].data = data.category.values;
+                categoryChartInstance.update();
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+</script>
+{% endblock %}

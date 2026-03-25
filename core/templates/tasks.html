@@ -1,0 +1,440 @@
+{% extends 'base.html' %}
+
+{% block title %}Tarefas{% endblock %}
+
+{% block content %}
+<!-- Title Row -->
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h2 class="text-2xl font-bold text-white">Minhas Tarefas</h2>
+        <p class="text-gray-500 text-sm">Gerencie suas atividades diárias</p>
+    </div>
+    <div class="text-gray-500 text-sm hidden md:block">
+        <!-- Optional Date Placeholder -->
+        <i class="far fa-calendar-alt mr-2"></i> Hoje
+    </div>
+</div>
+
+<!-- Stats Grid (Full) -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 w-full">
+    <!-- Stat Card 1 -->
+    <div
+        class="card p-5 flex items-center justify-between border border-gray-800 bg-[#171d21] rounded-xl hover:-translate-y-1 transition duration-300">
+        <div>
+            <p class="text-sm text-gray-500 font-medium">Total de Tarefas</p>
+            <h4 class="text-2xl font-bold text-white mt-1 count-up" data-target="{{ stats.total }}">0</h4>
+            <p class="text-blue-500 text-xs mt-1 flex items-center gap-1">
+                <i class="fas fa-clipboard-list"></i>
+                <span class="text-gray-600 ml-1">Tarefas cadastradas</span>
+            </p>
+        </div>
+        <div
+            class="w-12 h-12 bg-blue-500/10 rounded-lg flex items-center justify-center text-blue-500 shadow-lg shadow-blue-500/20">
+            <i class="fas fa-clipboard-list text-xl"></i>
+        </div>
+    </div>
+
+    <!-- Stat Card 2 -->
+    <div
+        class="card p-5 flex items-center justify-between border border-gray-800 bg-[#171d21] rounded-xl hover:-translate-y-1 transition duration-300">
+        <div>
+            <p class="text-sm text-gray-500 font-medium">Concluídas</p>
+            <h4 class="text-2xl font-bold text-white mt-1 count-up" data-target="{{ stats.done }}">0</h4>
+            <p class="text-emerald-500 text-xs mt-1 flex items-center gap-1">
+                <i class="fas fa-check-circle"></i>
+                <span class="text-gray-600 ml-1">Tarefas finalizadas</span>
+            </p>
+        </div>
+        <div
+            class="w-12 h-12 bg-emerald-500/10 rounded-lg flex items-center justify-center text-emerald-500 shadow-lg shadow-emerald-500/20">
+            <i class="fas fa-check-circle text-xl"></i>
+        </div>
+    </div>
+
+    <!-- Stat Card 3 -->
+    <div
+        class="card p-5 flex items-center justify-between border border-gray-800 bg-[#171d21] rounded-xl hover:-translate-y-1 transition duration-300">
+        <div>
+            <p class="text-sm text-gray-500 font-medium">Em Andamento</p>
+            <h4 class="text-2xl font-bold text-white mt-1 count-up" data-target="{{ stats.doing }}">0</h4>
+            <p class="text-purple-500 text-xs mt-1 flex items-center gap-1">
+                <i class="fas fa-spinner"></i>
+                <span class="text-gray-600 ml-1">Sendo executadas</span>
+            </p>
+        </div>
+        <div
+            class="w-12 h-12 bg-purple-500/10 rounded-lg flex items-center justify-center text-purple-500 shadow-lg shadow-purple-500/20">
+            <i class="fas fa-spinner text-xl"></i>
+        </div>
+    </div>
+
+    <!-- Stat Card 4 -->
+    <div
+        class="card p-5 flex items-center justify-between border border-gray-800 bg-[#171d21] rounded-xl hover:-translate-y-1 transition duration-300">
+        <div>
+            <p class="text-sm text-gray-500 font-medium">A Fazer</p>
+            <h4 class="text-2xl font-bold text-white mt-1 count-up" data-target="{{ stats.todo }}">0</h4>
+            <p class="text-amber-500 text-xs mt-1 flex items-center gap-1">
+                <i class="fas fa-hourglass-start"></i>
+                <span class="text-gray-600 ml-1">Aguardando início</span>
+            </p>
+        </div>
+        <div
+            class="w-12 h-12 bg-amber-500/10 rounded-lg flex items-center justify-center text-amber-500 shadow-lg shadow-amber-500/20">
+            <i class="fas fa-hourglass-half text-xl"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Controls Row -->
+<div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+    <!-- Search -->
+    <div class="relative group w-full md:w-auto">
+        <input type="text" placeholder="Buscar tarefa..." value="{{ search or '' }}"
+            onkeydown="if(event.key === 'Enter') window.location.href = '?search=' + this.value + '&category={{ active_category }}'"
+            class="bg-[#171d21] border border-gray-700 text-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block pl-10 p-2.5 w-full md:w-64 transition-all group-hover:border-gray-600">
+        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+            <i class="fas fa-search text-gray-500"></i>
+        </div>
+    </div>
+
+    <div class="flex items-center gap-3 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
+        <!-- Filter -->
+        <select onchange="window.location.href = '?category=' + this.value + '&search={{ search or '' }}'"
+            class="bg-[#171d21] border border-gray-700 text-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 cursor-pointer hover:border-gray-600 transition min-w-[140px]">
+            <option value="Todas as Categorias" {% if not active_category or active_category=='Todas as Categorias'
+                %}selected{% endif %}>Todas</option>
+            <option value="Trabalho" {% if active_category=='Trabalho' %}selected{% endif %}>Trabalho</option>
+            <option value="Estudo" {% if active_category=='Estudo' %}selected{% endif %}>Estudo</option>
+            <option value="Pessoal" {% if active_category=='Pessoal' %}selected{% endif %}>Pessoal</option>
+            <option value="Saúde" {% if active_category=='Saúde' %}selected{% endif %}>Saúde</option>
+        </select>
+
+        <!-- View Toggle -->
+        <div class="bg-[#171d21] p-1 rounded-lg border border-gray-700 flex items-center shrink-0">
+            <button onclick="toggleView('list')" id="btnList"
+                class="px-3 py-1.5 rounded-md text-sm font-medium transition bg-gray-700 text-white shadow-sm">
+                <i class="fas fa-list"></i>
+            </button>
+            <button onclick="toggleView('chart')" id="btnChart"
+                class="px-3 py-1.5 rounded-md text-sm font-medium transition text-gray-400 hover:text-white">
+                <i class="fas fa-chart-pie"></i>
+            </button>
+        </div>
+
+        <!-- Add Button -->
+        <button onclick="openModal()"
+            class="bg-blue-600 hover:bg-blue-500 text-white w-10 h-10 rounded-lg flex items-center justify-center transition shadow-lg shadow-blue-500/20 transform hover:scale-105 active:scale-95 shrink-0">
+            <i class="fas fa-plus"></i>
+        </button>
+    </div>
+</div>
+
+<!-- List View -->
+<div id="listView"
+    class="card overflow-hidden border border-gray-800 bg-[#171d21] rounded-xl shadow-xl transition-all duration-300">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left text-gray-400">
+            <thead class="text-xs text-gray-400 uppercase bg-[#11161a] border-b border-gray-800">
+                <tr>
+                    <th scope="col" class="px-6 py-4">Status</th>
+                    <th scope="col" class="px-6 py-4">Tarefa</th>
+                    <th scope="col" class="px-6 py-4">Categoria</th>
+                    <th scope="col" class="px-6 py-4">Criado em</th>
+                    <th scope="col" class="px-6 py-4 text-right">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for task in tasks %}
+                <tr class="border-b border-gray-800 hover:bg-gray-800/50 transition">
+                    <td class="px-6 py-4">
+                        {% if task.status == 'feito' %}
+                        <span
+                            class="bg-green-500/10 text-green-500 text-xs font-medium px-2.5 py-0.5 rounded border border-green-500/20">Feito</span>
+                        {% elif task.status == 'fazendo' %}
+                        <span
+                            class="bg-blue-500/10 text-blue-500 text-xs font-medium px-2.5 py-0.5 rounded border border-blue-500/20">Fazendo</span>
+                        {% else %}
+                        <span
+                            class="bg-gray-500/10 text-gray-400 text-xs font-medium px-2.5 py-0.5 rounded border border-gray-500/20">A
+                            Fazer</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="font-medium text-white">{{ task.title }}</div>
+                        {% if task.description %}
+                        <div class="text-xs text-gray-500 mt-1 truncate max-w-xs">{{ task.description }}</div>
+                        {% endif %}
+                        {% if task.due_date %}
+                        <div class="text-xs text-amber-400 mt-1"><i class="far fa-calendar"></i> Previsão: {{ task.due_date.strftime("%d/%m/%Y") }}</div>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="flex items-center gap-2">
+                            {% if task.category == 'Trabalho' %}
+                            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                            {% elif task.category == 'Estudo' %}
+                            <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+                            {% elif task.category == 'Saúde' %}
+                            <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                            {% else %}
+                            <span class="w-2 h-2 rounded-full bg-gray-500"></span>
+                            {% endif %}
+                            {{ task.category or 'Geral' }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        {{ task.created_at.strftime('%d/%m/%Y') }}
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <div class="flex items-center justify-end gap-3">
+                            <button
+                                onclick='openEditModal({ id: {{ task.id }}, title: {{ task.title | tojson }}, description: {{ (task.description or "") | tojson }}, category: {{ (task.category or "Pessoal") | tojson }}, status: {{ (task.status or "a_fazer") | tojson }}, due_date: {{ (task.due_date.strftime("%Y-%m-%d") if task.due_date else "") | tojson }} })'
+                                class="text-gray-400 hover:text-blue-500 transition" title="Editar">
+                                <i class="fas fa-pencil-alt"></i>
+                            </button>
+                            <form action="/tasks/toggle/{{ task.id }}" method="POST" class="inline">
+                                <button type="submit" class="text-gray-400 hover:text-green-500 transition"
+                                    title="Concluir/Reabrir">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            </form>
+                            <form action="/tasks/delete/{{ task.id }}" method="POST" class="inline"
+                                onsubmit="return confirm('Tem certeza que deseja excluir esta tarefa?');">
+                                <button type="submit" class="text-gray-400 hover:text-red-500 transition"
+                                    title="Excluir">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+                        <div class="flex flex-col items-center gap-3">
+                            <div
+                                class="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center text-gray-600">
+                                <i class="fas fa-clipboard-list text-xl"></i>
+                            </div>
+                            <p>Nenhuma tarefa encontrada.</p>
+                            <button onclick="openModal()" class="text-blue-500 hover:underline text-sm">Criar primeira
+                                tarefa</button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="bg-[#11161a] border-t border-gray-800 px-6 py-4 flex items-center justify-between">
+        <span class="text-sm text-gray-500">
+            Página <span class="font-medium text-white">{{ page }}</span> de <span class="font-medium text-white">{{
+                total_pages }}</span>
+        </span>
+        <div class="flex gap-2">
+            {% if page > 1 %}
+            <a href="{{ url_for('tasks.list', page=page-1, category=active_category) }}"
+                class="px-3 py-1 bg-gray-800 text-gray-400 rounded hover:bg-gray-700 hover:text-white transition text-sm">
+                Anterior
+            </a>
+            {% endif %}
+
+            {% if page < total_pages %} <a href="{{ url_for('tasks.list', page=page+1, category=active_category) }}"
+                class="px-3 py-1 bg-gray-800 text-gray-400 rounded hover:bg-gray-700 hover:text-white transition text-sm">
+                Próxima
+                </a>
+                {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Charts View (Hidden by default) -->
+<div id="chartView" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in-down">
+    <!-- Chart 1: Completed History -->
+    <div class="card p-6 lg:col-span-2 border border-gray-800 bg-[#171d21] rounded-xl">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-bold text-white">Tarefas Criadas (7 Dias)</h3>
+            <button class="text-gray-500 hover:text-white"><i class="fas fa-ellipsis-h"></i></button>
+        </div>
+        <canvas id="salesChart" height="100"></canvas>
+    </div>
+
+    <!-- Chart 2: Status Distribution -->
+    <div class="card p-6 border border-gray-800 bg-[#171d21] rounded-xl">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-bold text-white">Distribuição por Status</h3>
+            <button class="text-gray-500 hover:text-white"><i class="fas fa-ellipsis-h"></i></button>
+        </div>
+        <div class="relative h-64">
+            <canvas id="orderChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+{% include 'components/task_edit.html' %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Animation for Numbers (Count Up)
+    function animateValue(obj, start, end, duration) {
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            obj.innerHTML = Math.floor(progress * (end - start) + start);
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            } else {
+                obj.innerHTML = end;
+            }
+        };
+        window.requestAnimationFrame(step);
+    }
+
+    // Intersection Observer for Animation
+    const observerOptions = {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.1
+    };
+
+    const statsObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                if (entry.target.classList.contains('count-up')) {
+                    const target = parseInt(entry.target.getAttribute('data-target'));
+                    // Check if already animated
+                    if (!entry.target.dataset.animated) {
+                        animateValue(entry.target, 0, target, 2000);
+                        entry.target.dataset.animated = "true";
+                        statsObserver.unobserve(entry.target);
+                    }
+                }
+            }
+        });
+    }, observerOptions);
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const counters = document.querySelectorAll('.count-up');
+        counters.forEach(counter => statsObserver.observe(counter));
+    });
+
+    // --- Chart Logic --- //
+
+    // Toggle View
+    function toggleView(view) {
+        const listView = document.getElementById('listView');
+        const chartView = document.getElementById('chartView');
+        const btnList = document.getElementById('btnList');
+        const btnChart = document.getElementById('btnChart');
+
+        if (view === 'list') {
+            listView.classList.remove('hidden');
+            chartView.classList.add('hidden');
+
+            btnList.classList.add('bg-gray-700', 'text-white', 'shadow-sm');
+            btnList.classList.remove('text-gray-400');
+
+            btnChart.classList.remove('bg-gray-700', 'text-white', 'shadow-sm');
+            btnChart.classList.add('text-gray-400');
+        } else {
+            listView.classList.add('hidden');
+            chartView.classList.remove('hidden');
+
+            btnList.classList.remove('bg-gray-700', 'text-white', 'shadow-sm');
+            btnList.classList.add('text-gray-400');
+
+            btnChart.classList.add('bg-gray-700', 'text-white', 'shadow-sm');
+            btnChart.classList.remove('text-gray-400');
+
+            // Init charts if not already done
+            initCharts();
+        }
+    }
+
+    let salesChartInstance = null;
+    let orderChartInstance = null;
+
+    function initCharts() {
+        if (salesChartInstance) return; // Already init
+
+        // Sales (History) Chart
+        const ctxSales = document.getElementById('salesChart').getContext('2d');
+        const gradient = ctxSales.createLinearGradient(0, 0, 0, 400);
+        gradient.addColorStop(0, 'rgba(59, 130, 246, 0.2)');
+        gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
+
+        const chartData = {{ chart_data_json | safe
+    }};
+
+    salesChartInstance = new Chart(ctxSales, {
+        type: 'line',
+        data: {
+            labels: chartData.dates,
+            datasets: [{
+                label: 'Criadas',
+                data: chartData.counts,
+                borderColor: '#3b82f6',
+                borderWidth: 2,
+                tension: 0.4,
+                fill: true,
+                backgroundColor: gradient,
+                pointBackgroundColor: '#1d4ed8',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: '#1d4ed8'
+            }]
+        },
+        options: {
+            responsive: true,
+            interaction: { intersect: false, mode: 'index' },
+            plugins: { legend: { display: false } },
+            scales: {
+                y: {
+                    grid: { color: '#1f2937' },
+                    ticks: { color: '#9ca3af', stepSize: 1 },
+                    beginAtZero: true
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#9ca3af' }
+                }
+            }
+        }
+    });
+
+    // Order (Status) Chart
+    const ctxOrder = document.getElementById('orderChart').getContext('2d');
+    const statsData = {{ stats_json | safe }};
+
+    orderChartInstance = new Chart(ctxOrder, {
+        type: 'doughnut',
+        data: {
+            labels: ['Concluídos', 'Fazendo', 'A Fazer'],
+            datasets: [{
+                data: [statsData.done, statsData.doing, statsData.todo],
+                backgroundColor: ['#22c55e', '#3b82f6', '#9ca3af'],
+                borderWidth: 0,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: '#9ca3af', usePointStyle: true, padding: 20 }
+                }
+            },
+            layout: { padding: 20 }
+        }
+    });
+    }
+</script>
+{% endblock %}
