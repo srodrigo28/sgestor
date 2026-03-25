@@ -65,7 +65,7 @@
                 <!-- Logo -->
                 {% if session.get('logo') %}
                 <div class="w-20 h-20 relative">
-                    <img src="{{ session.get('logo') }}" alt="Logo" class="w-full h-full object-contain">
+                    <img src="{{ asset_url(session.get('logo')) }}" alt="Logo" class="w-full h-full object-contain">
                 </div>
                 {% endif %}
                 

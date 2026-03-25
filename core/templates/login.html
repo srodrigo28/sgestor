@@ -105,7 +105,7 @@
         </div>
 
         <!-- Login Form -->
-        <form id="form-login" action="/login" method="POST" class="space-y-3">
+        <form id="form-login" action="{{ url_for('auth.login') }}" method="POST" class="space-y-3">
             <div class="input-group">
                 <label class="block text-[10px] uppercase tracking-wide text-text font-bold mb-1 ml-1">Email</label>
                 <div class="relative">
@@ -159,15 +159,16 @@
             </div>
 
             <!-- Fake Google Button -->
-            <a href="/login/google"
-                class="w-full flex items-center justify-center gap-2 bg-[#11161a] border border-border text-white hover:bg-white hover:text-black font-medium py-2 rounded-lg transition duration-300">
+            <a href="#"
+                class="w-full flex items-center justify-center gap-2 bg-[#11161a] border border-border text-white/70 font-medium py-2 rounded-lg transition duration-300 cursor-not-allowed opacity-70"
+                aria-disabled="true">
                 <i class="fab fa-google text-xs"></i>
-                <span class="text-xs">Google</span>
+                <span class="text-xs">Google em breve</span>
             </a>
         </form>
 
         <!-- Register Form -->
-        <form id="form-register" action="/register" method="POST" class="hidden space-y-3">
+        <form id="form-register" action="{{ url_for('auth.register') }}" method="POST" class="hidden space-y-3">
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div class="input-group md:col-span-2">

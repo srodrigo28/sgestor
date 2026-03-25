@@ -1,4 +1,5 @@
-from flask import Flask, session
+from flask import Flask, request, session
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from common.database import get_db_connection
 from config.settings import get_settings
@@ -16,6 +17,7 @@ def create_app() -> Flask:
             print(f"ATENCAO: Falha ao rodar migrations automaticas: {e}")
 
     app = Flask(__name__, template_folder="../templates", static_folder="../static")
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
     app.secret_key = settings.secret_key
     app.config["APP_ENV"] = settings.app_env
     app.config["DEBUG"] = settings.debug
@@ -27,6 +29,20 @@ def create_app() -> Flask:
 
     @app.context_processor
     def inject_menu_permissions():
+        def asset_url(path: str | None) -> str:
+            if not path:
+                return ""
+            valor = str(path).strip()
+            if not valor:
+                return ""
+            if valor.startswith(("http://", "https://", "data:")):
+                return valor
+            if valor.startswith("/static/"):
+                return f"{request.script_root}{valor}"
+            if valor.startswith("static/"):
+                return f"{request.script_root}/{valor}"
+            return valor
+
         role = session.get("role", "pessoal")
         default_permissions = {
             "dashboard": True,
@@ -41,7 +57,11 @@ def create_app() -> Flask:
             "admin_users": role == "admin",
         }
         if "id" not in session:
-            return dict(menu_permissions=default_permissions, user_role=role)
+            return dict(
+                menu_permissions=default_permissions,
+                user_role=role,
+                asset_url=asset_url,
+            )
 
         try:
             conn = get_db_connection()
@@ -57,6 +77,10 @@ def create_app() -> Flask:
         except Exception:
             permissions = default_permissions
 
-        return dict(menu_permissions=permissions, user_role=role)
+        return dict(
+            menu_permissions=permissions,
+            user_role=role,
+            asset_url=asset_url,
+        )
 
     return app
