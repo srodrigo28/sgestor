@@ -102,7 +102,7 @@
             <div class="text-xs uppercase text-gray-500 font-bold tracking-wider mb-3 px-2">Principal</div>
 
             {% if menu_permissions.get('dashboard') %}
-            <a href="/dashboard"
+            <a href="{{ url_for('tasks.dashboard') }}"
                 class="flex items-center gap-3 p-3 rounded-lg {% if request.path == '/dashboard' %}bg-blue-600/10 text-blue-500 border border-blue-600/20{% else %}text-gray-400 hover:bg-gray-800 hover:text-white transition{% endif %}">
                 <i class="fas fa-home w-5"></i> Dashboard
             </a>
@@ -111,20 +111,20 @@
             <div class="text-xs uppercase text-gray-500 font-bold tracking-wider mb-3 mt-8 px-2">Aplicações</div>
 
             {% if menu_permissions.get('schedule') %}
-            <a href="/schedule"
+            <a href="{{ url_for('schedule.index') }}"
                 class="flex items-center gap-3 p-3 rounded-lg {% if request.path.startswith('/schedule') %}bg-blue-600/10 text-blue-500 border border-blue-600/20{% else %}text-gray-400 hover:bg-gray-800 hover:text-white transition{% endif %} group">
                 <i class="fas fa-calendar-alt w-5 group-hover:text-blue-500 transition"></i> Agendamentos
             </a>
             {% endif %}
 
             {% if menu_permissions.get('tasks') %}
-            <a href="/tasks"
+            <a href="{{ url_for('tasks.list') }}"
                 class="flex items-center gap-3 p-3 rounded-lg {% if request.path == '/tasks' %}bg-blue-600/10 text-blue-500 border border-blue-600/20{% else %}text-gray-400 hover:bg-gray-800 hover:text-white transition{% endif %} group">
                 <i class="fas fa-check-circle w-5 group-hover:text-blue-500 transition"></i> Tarefas
             </a>
             {% endif %}
             {% if menu_permissions.get('financial') %}
-            <a href="/financial/income"
+            <a href="{{ url_for('financial.income_list') }}"
                 class="flex items-center gap-3 p-3 rounded-lg {% if request.path.startswith('/financial') %}bg-blue-600/10 text-blue-500 border border-blue-600/20{% else %}text-gray-400 hover:bg-gray-800 hover:text-white transition{% endif %} group">
                 <i class="fas fa-wallet w-5 group-hover:text-blue-500 transition"></i> Financeiro
             </a>
@@ -178,7 +178,7 @@
                     </div>
                 </div>
 
-                <a href="/logout"
+                <a href="{{ url_for('auth.logout') }}"
                     class="flex items-center gap-3 p-3 rounded-lg hover:bg-red-500/10 hover:text-red-500 transition text-gray-400">
                     <i class="fas fa-sign-out-alt w-5"></i> Sair
                 </a>
@@ -199,7 +199,7 @@
             <div class="text-xs uppercase text-gray-500 font-bold tracking-wider mb-3 px-2">Principal</div>
 
             {% if menu_permissions.get('dashboard') %}
-            <a href="/dashboard"
+            <a href="{{ url_for('tasks.dashboard') }}"
                 class="flex items-center gap-3 p-3 rounded-lg {% if request.path == '/dashboard' %}bg-blue-600/10 text-blue-500 border border-blue-600/20{% else %}text-gray-400 hover:bg-gray-800 hover:text-white transition{% endif %}">
                 <i class="fas fa-home w-5"></i> Dashboard
             </a>
@@ -208,20 +208,20 @@
             <div class="text-xs uppercase text-gray-500 font-bold tracking-wider mb-3 mt-8 px-2">Aplicações</div>
 
             {% if menu_permissions.get('schedule') %}
-            <a href="/schedule"
+            <a href="{{ url_for('schedule.index') }}"
                 class="flex items-center gap-3 p-3 rounded-lg {% if request.path.startswith('/schedule') %}bg-blue-600/10 text-blue-500 border border-blue-600/20{% else %}text-gray-400 hover:bg-gray-800 hover:text-white transition{% endif %} group">
                 <i class="fas fa-calendar-alt w-5 group-hover:text-blue-500 transition"></i> Agendamentos
             </a>
             {% endif %}
 
             {% if menu_permissions.get('tasks') %}
-            <a href="/tasks"
+            <a href="{{ url_for('tasks.list') }}"
                 class="flex items-center gap-3 p-3 rounded-lg {% if request.path == '/tasks' %}bg-blue-600/10 text-blue-500 border border-blue-600/20{% else %}text-gray-400 hover:bg-gray-800 hover:text-white transition{% endif %} group">
                 <i class="fas fa-check-circle w-5 group-hover:text-blue-500 transition"></i> Tarefas
             </a>
             {% endif %}
             {% if menu_permissions.get('financial') %}
-            <a href="/financial/income"
+            <a href="{{ url_for('financial.income_list') }}"
                 class="flex items-center gap-3 p-3 rounded-lg {% if request.path.startswith('/financial') %}bg-blue-600/10 text-blue-500 border border-blue-600/20{% else %}text-gray-400 hover:bg-gray-800 hover:text-white transition{% endif %} group">
                 <i class="fas fa-wallet w-5 group-hover:text-blue-500 transition"></i> Financeiro
             </a>
@@ -275,7 +275,7 @@
                     </div>
                 </div>
 
-                <a href="/logout"
+                <a href="{{ url_for('auth.logout') }}"
                     class="flex items-center gap-3 p-3 rounded-lg hover:bg-red-500/10 hover:text-red-500 transition text-gray-400">
                     <i class="fas fa-sign-out-alt w-5"></i> Sair
                 </a>
@@ -313,6 +313,16 @@
 
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     <script>
+        window.APP_SCRIPT_ROOT = {{ request.script_root | tojson }};
+        function appUrl(path) {
+            const root = window.APP_SCRIPT_ROOT || "";
+            const alvo = String(path || "");
+            if (!alvo) return root || "/";
+            if (/^https?:\/\//i.test(alvo)) return alvo;
+            if (alvo.startsWith("/")) return `${root}${alvo}`;
+            return `${root}/${alvo}`;
+        }
+
         const mobileDrawer = document.getElementById('mobileDrawer');
         const mobileOverlay = document.getElementById('mobileOverlay');
 

@@ -516,7 +516,7 @@
         try {
             const month = document.getElementById('budgetMonthSelect').value;
             updateBudgetTitle(month);
-            const response = await fetch(`/budgets/charts?month=${encodeURIComponent(month)}`);
+            const response = await fetch(appUrl(`/budgets/charts?month=${encodeURIComponent(month)}`));
             const data = await response.json();
 
             if (!chartsInitialized) {
@@ -605,7 +605,7 @@
 
     async function quickSetBudgetStatus(id, action) {
         try {
-            const response = await fetch(`/budgets/quick_status/${id}`, {
+            const response = await fetch(appUrl(`/budgets/quick_status/${id}`), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
                 body: JSON.stringify({ action: action })

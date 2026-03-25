@@ -72,7 +72,7 @@
 <script>
     function openEditModal(task) {
         // Popula o formulário
-        document.getElementById('editTaskForm').action = `/tasks/edit/${task.id}`;
+        document.getElementById('editTaskForm').action = appUrl(`/tasks/edit/${task.id}`);
         document.getElementById('edit_title').value = task.title;
         document.getElementById('edit_description').value = task.description || '';
         document.getElementById('edit_category').value = task.category || 'Pessoal';

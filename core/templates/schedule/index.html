@@ -422,7 +422,7 @@
             updateOccupiedSlots();
             
         } else if (mode === 'edit' && event) {
-            form.action = "/schedule/edit/" + event.id;
+            form.action = appUrl("/schedule/edit/" + event.id);
             title.innerHTML = '<i class="fas fa-edit text-blue-500"></i> Editar Agendamento';
             deleteBtn.classList.remove('hidden');
             statusField.classList.remove('hidden');
@@ -466,7 +466,7 @@
             updateOccupiedSlots();
             
             // Setup Delete Action
-            document.getElementById('deleteForm').action = "/schedule/delete/" + event.id;
+            document.getElementById('deleteForm').action = appUrl("/schedule/delete/" + event.id);
         }
     }
 

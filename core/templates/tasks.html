@@ -193,13 +193,13 @@
                                 class="text-gray-400 hover:text-blue-500 transition" title="Editar">
                                 <i class="fas fa-pencil-alt"></i>
                             </button>
-                            <form action="/tasks/toggle/{{ task.id }}" method="POST" class="inline">
+                            <form action="{{ url_for('tasks.toggle_task', task_id=task.id) }}" method="POST" class="inline">
                                 <button type="submit" class="text-gray-400 hover:text-green-500 transition"
                                     title="Concluir/Reabrir">
                                     <i class="fas fa-check"></i>
                                 </button>
                             </form>
-                            <form action="/tasks/delete/{{ task.id }}" method="POST" class="inline"
+                            <form action="{{ url_for('tasks.delete_task', task_id=task.id) }}" method="POST" class="inline"
                                 onsubmit="return confirm('Tem certeza que deseja excluir esta tarefa?');">
                                 <button type="submit" class="text-gray-400 hover:text-red-500 transition"
                                     title="Excluir">

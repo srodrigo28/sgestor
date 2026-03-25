@@ -288,7 +288,7 @@
         }
         document.getElementById('editExpenseModal').classList.remove('hidden');
         const form = document.getElementById('editExpenseForm');
-        form.action = `/financial/expenses/update/${data.id}`;
+        form.action = appUrl(`/financial/expenses/update/${data.id}`);
         document.getElementById('editDesc').value = data.description;
         document.getElementById('editAmount').value = data.amount;
         // Format date string YYYY-MM-DD

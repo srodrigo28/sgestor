@@ -543,7 +543,7 @@
     function openEditIncomeModal(data) {
         const modal = document.getElementById('editIncomeModal');
         const form = document.getElementById('editIncomeForm');
-        form.action = `/financial/income/update/${data.id}`;
+        form.action = appUrl(`/financial/income/update/${data.id}`);
         document.getElementById('editIncomeDescription').value = data.description || '';
         document.getElementById('editIncomeAmount').value = data.amount || '';
         document.getElementById('editIncomeDate').value = data.entry_date || '';
@@ -780,7 +780,7 @@
         const month = getSelectedMonth();
         const status = getSelectedStatus();
         try {
-            const response = await fetch(`/financial/charts?category=${encodeURIComponent(category)}&month=${encodeURIComponent(month)}&status=${encodeURIComponent(status)}`);
+            const response = await fetch(appUrl(`/financial/charts?category=${encodeURIComponent(category)}&month=${encodeURIComponent(month)}&status=${encodeURIComponent(status)}`));
             const data = await response.json();
             if (!historyChartInstance) {
                 initCharts();

@@ -588,7 +588,7 @@
             const formData = new FormData();
             formData.append('name', name);
             
-            const response = await fetch('/categories/add', {
+            const response = await fetch(appUrl('/categories/add'), {
                 method: 'POST',
                 headers: { 
                     'X-Requested-With': 'XMLHttpRequest',
@@ -831,7 +831,7 @@
         }
 
         // Change action
-        document.getElementById('productForm').action = "/products/edit/" + product.id;
+        document.getElementById('productForm').action = appUrl("/products/edit/" + product.id);
     }
 
     function closeProductModal() { document.getElementById('productModal').classList.add('hidden'); }
@@ -1130,7 +1130,7 @@
     async function updateStockCharts() {
         try {
             const month = document.getElementById('stockMonthSelect').value;
-            const response = await fetch(`/products/charts?month=${encodeURIComponent(month)}`);
+            const response = await fetch(appUrl(`/products/charts?month=${encodeURIComponent(month)}`));
             const data = await response.json();
 
             if (!chartsRendered) {
