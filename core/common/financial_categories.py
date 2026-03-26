@@ -1,5 +1,6 @@
 import json
 import re
+import unicodedata
 from pathlib import Path
 
 CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "financial_categories.json"
@@ -21,6 +22,12 @@ def _kind_key(kind: str | None) -> str:
     return key
 
 
+def _sort_key(value: str) -> str:
+    normalized = unicodedata.normalize('NFKD', value)
+    ascii_text = ''.join(ch for ch in normalized if not unicodedata.combining(ch))
+    return ascii_text.casefold()
+
+
 def _normalize_payload(data: dict | None) -> dict:
     payload = dict(DEFAULT_FINANCIAL_CATEGORIES)
     if isinstance(data, dict):
@@ -38,7 +45,7 @@ def _normalize_payload(data: dict | None) -> dict:
                         continue
                     seen.add(token)
                     normalized.append(name)
-            payload[kind] = normalized or list(DEFAULT_FINANCIAL_CATEGORIES[kind])
+            payload[kind] = sorted((normalized or list(DEFAULT_FINANCIAL_CATEGORIES[kind])), key=_sort_key)
     return payload
 
 
@@ -97,7 +104,7 @@ def add_financial_category(kind: str, name: str) -> tuple[bool, str]:
         return False, "Categoria já cadastrada."
 
     existing.append(normalized)
-    payload[key] = sorted(existing, key=lambda item: item.casefold())
+    payload[key] = sorted(existing, key=_sort_key)
     save_financial_categories(payload)
     return True, normalized
 
@@ -127,7 +134,7 @@ def rename_financial_category(kind: str, current_name: str, new_name: str) -> tu
         else:
             updated.append(item)
 
-    payload[key] = sorted(updated, key=lambda item: item.casefold())
+    payload[key] = sorted(updated, key=_sort_key)
     save_financial_categories(payload)
     return True, lower_map[current_key]
 

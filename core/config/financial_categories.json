@@ -1,14 +1,14 @@
 {
   "income": [
-    "serviço",
+    "bico",
     "contrato",
     "salario mensal",
-    "bico"
+    "serviço"
   ],
   "expense": [
-    "Operacional",
     "Fornecedores",
-    "Pessoal",
-    "Outros"
+    "Operacional",
+    "Outros",
+    "Pessoal"
   ]
 }
