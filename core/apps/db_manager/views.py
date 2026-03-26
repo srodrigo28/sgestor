@@ -4,9 +4,10 @@ import time
 import sys
 from pathlib import Path
 from datetime import datetime
-from flask import Blueprint, render_template, request, send_file, flash, redirect, url_for, current_app
+from flask import Blueprint, render_template, request, send_file, flash, redirect, url_for, current_app, session
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
+from apps.auth.views import login_required
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 load_dotenv(BASE_DIR / ".env")
@@ -40,11 +41,17 @@ def get_mysql_executable(cmd_name):
     # 3. Tenta o comando global (assumindo que esta no PATH)
     return cmd_name
 
+
+def admin_required():
+    return session.get('role') == 'admin'
+
 # Rota Principal da Página de Backup
 @db_bp.route('/admin/backup', methods=['GET', 'POST'])
+@login_required
 def index():
-    # Segurança básica (adicione sua verificação de admin aqui se tiver helper)
-    # if session.get('role') != 'admin': return redirect('/')
+    if not admin_required():
+        flash('Acesso restrito ao administrador.', 'error')
+        return redirect(url_for('tasks.dashboard'))
 
     preview_content = None
     filename_preview = None
@@ -73,7 +80,11 @@ def index():
 
 # Rota de Exportação (Download)
 @db_bp.route('/admin/backup/download/<type>')
+@login_required
 def download(type):
+    if not admin_required():
+        flash('Acesso restrito ao administrador.', 'error')
+        return redirect(url_for('tasks.dashboard'))
     try:
         timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M')
         filename = f"backup_{type}_{timestamp}.sql"
@@ -118,7 +129,11 @@ def download(type):
 
 # Rota que Executa a Importação Real
 @db_bp.route('/admin/backup/confirm', methods=['POST'])
+@login_required
 def confirm_restore():
+    if not admin_required():
+        flash('Acesso restrito ao administrador.', 'error')
+        return redirect(url_for('tasks.dashboard'))
     filename = request.form.get('filename')
     filepath = os.path.join(str(BASE_DIR), 'tmp', filename)
     
@@ -164,7 +179,11 @@ def confirm_restore():
 
 # Rota para Sincronizar com VPS (Usa script powershell)
 @db_bp.route('/admin/backup/sync_vps', methods=['POST'])
+@login_required
 def sync_vps():
+    if not admin_required():
+        flash('Acesso restrito ao administrador.', 'error')
+        return redirect(url_for('tasks.dashboard'))
     # Caminho do script PS1 - relativo a raiz do projeto
     script_path = os.path.join(str(BASE_DIR), 'scripts', 'sync_vps_to_xampp.ps1')
     env_path = os.path.join(str(BASE_DIR), '.env.prod')
