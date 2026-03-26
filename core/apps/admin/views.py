@@ -1,5 +1,11 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from common.database import get_db_connection
+from common.financial_categories import (
+    add_financial_category,
+    delete_financial_category,
+    list_financial_categories,
+    rename_financial_category,
+)
 from apps.auth.views import login_required
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin', template_folder='../../templates/admin')
@@ -21,6 +27,27 @@ MENU_OPTIONS = [
 
 def admin_required():
     return session.get('role') == 'admin'
+
+
+def _financial_table(kind: str) -> str:
+    return 'financial_income' if kind == 'income' else 'financial_expenses'
+
+
+def _financial_label(kind: str) -> str:
+    return 'entradas' if kind == 'income' else 'despesas'
+
+
+def _financial_usage_counts(kind: str) -> dict[str, int]:
+    table = _financial_table(kind)
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute(f"SELECT category, COUNT(*) as total FROM {table} GROUP BY category")
+        rows = cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
+    return {str(row['category']): int(row['total']) for row in rows if row.get('category')}
 
 
 @admin_bp.route('/users')
@@ -52,6 +79,95 @@ def users():
                            roles=ROLE_OPTIONS,
                            menus=MENU_OPTIONS,
                            permissions=permissions)
+
+
+@admin_bp.route('/financial-categories')
+@login_required
+def financial_categories():
+    if not admin_required():
+        flash('Acesso restrito ao administrador.')
+        return redirect(url_for('tasks.dashboard'))
+
+    income_categories = list_financial_categories('income')
+    expense_categories = list_financial_categories('expense')
+    income_usage = _financial_usage_counts('income')
+    expense_usage = _financial_usage_counts('expense')
+
+    return render_template(
+        'admin/financial_categories.html',
+        income_categories=income_categories,
+        expense_categories=expense_categories,
+        income_usage=income_usage,
+        expense_usage=expense_usage,
+    )
+
+
+@admin_bp.route('/financial-categories/<kind>/add', methods=['POST'])
+@login_required
+def add_category(kind):
+    if not admin_required():
+        flash('Acesso restrito ao administrador.')
+        return redirect(url_for('tasks.dashboard'))
+
+    ok, result = add_financial_category(kind, request.form.get('name'))
+    flash(
+        f"Categoria adicionada em {_financial_label(kind)}: {result}" if ok else result,
+        'success' if ok else 'error',
+    )
+    return redirect(url_for('admin.financial_categories'))
+
+
+@admin_bp.route('/financial-categories/<kind>/update', methods=['POST'])
+@login_required
+def update_category(kind):
+    if not admin_required():
+        flash('Acesso restrito ao administrador.')
+        return redirect(url_for('tasks.dashboard'))
+
+    current_name = request.form.get('current_name')
+    new_name = request.form.get('new_name')
+    ok, old_name = rename_financial_category(kind, current_name, new_name)
+    if not ok:
+        flash(old_name, 'error')
+        return redirect(url_for('admin.financial_categories'))
+
+    normalized_new = request.form.get('new_name', '').strip()
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            f"UPDATE {_financial_table(kind)} SET category = %s WHERE category = %s",
+            (normalized_new, old_name),
+        )
+        conn.commit()
+        flash(f"Categoria atualizada em {_financial_label(kind)}.", 'success')
+    except Exception as e:
+        conn.rollback()
+        rename_financial_category(kind, normalized_new, old_name)
+        flash(f'Erro ao atualizar categoria: {str(e)}', 'error')
+    finally:
+        cursor.close()
+        conn.close()
+
+    return redirect(url_for('admin.financial_categories'))
+
+
+@admin_bp.route('/financial-categories/<kind>/delete', methods=['POST'])
+@login_required
+def delete_category(kind):
+    if not admin_required():
+        flash('Acesso restrito ao administrador.')
+        return redirect(url_for('tasks.dashboard'))
+
+    category_name = (request.form.get('name') or '').strip()
+    usage = _financial_usage_counts(kind)
+    if usage.get(category_name, 0) > 0:
+        flash('Não é possível excluir uma categoria já usada em lançamentos.', 'error')
+        return redirect(url_for('admin.financial_categories'))
+
+    ok, message = delete_financial_category(kind, category_name)
+    flash(message if not ok else f'Categoria removida de {_financial_label(kind)}.', 'success' if ok else 'error')
+    return redirect(url_for('admin.financial_categories'))
 
 
 @admin_bp.route('/users/<int:user_id>/role', methods=['POST'])
@@ -107,4 +223,3 @@ def update_permissions():
 
     flash('Permissões atualizadas com sucesso!')
     return redirect(url_for('admin.users'))
-

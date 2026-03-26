@@ -92,7 +92,7 @@
 </div>
 
 <!-- Header with Filters -->
-<div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
     <div>
         <h2 class="text-2xl font-bold text-white flex items-center gap-2">
             <i class="fas fa-wallet text-green-500"></i> Entradas
@@ -100,10 +100,10 @@
         <p class="text-gray-500 text-sm">Gerencie seus ganhos e recebimentos</p>
     </div>
 
-    <div class="flex flex-wrap items-center gap-3">
+    <div class="flex flex-wrap items-center gap-3 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
         <!-- Switch to Expenses -->
-        <a href="{{ url_for('financial.expenses_list') }}" class="px-3 py-2 bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 text-sm transition font-medium flex items-center gap-2">
-            <i class="fas fa-arrow-down text-red-500"></i> Ver Despesas
+        <a href="{{ url_for('financial.expenses_list') }}" class="bg-gray-800 text-gray-300 w-10 h-10 sm:w-auto sm:px-3 sm:py-2 rounded-lg hover:bg-gray-700 text-sm transition font-medium flex items-center justify-center gap-2 shrink-0">
+            <i class="fas fa-arrow-down text-red-500"></i><span class="hidden sm:inline">Ver Despesas</span>
         </a>
 
         <!-- Status Filter -->
@@ -124,11 +124,9 @@
             <select id="categoryFilter" onchange="applyFilters()"
                 class="bg-[#171d21] border border-gray-700 text-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 outline-none appearance-none cursor-pointer pr-8 hover:border-gray-600 transition">
                 <option value="">Todas Categorias</option>
-                <option value="serviço" {% if category_filter == 'serviço' %}selected{% endif %}>Serviço</option>
-                <option value="contrato" {% if category_filter == 'contrato' %}selected{% endif %}>Contrato</option>
-                <option value="salario mensal" {% if category_filter == 'salario mensal' %}selected{% endif %}>Salário
-                    Mensal</option>
-                <option value="bico" {% if category_filter == 'bico' %}selected{% endif %}>Bico</option>
+                {% for category in income_categories %}
+                <option value="{{ category }}" {% if category_filter == category %}selected{% endif %}>{{ category | title }}</option>
+                {% endfor %}
             </select>
             <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-gray-500">
                 <i class="fas fa-chevron-down text-xs"></i>
@@ -136,11 +134,11 @@
         </div>
 
         <!-- Search -->
-        <div class="relative group">
+        <div class="relative group w-full md:w-auto">
             <input type="text" placeholder="Buscar entrada..." value="{{ search }}" id="searchInput"
                 onkeydown="if(event.key === 'Enter') applyFilters()" 
                 onblur="applyFilters()"
-                class="bg-[#171d21] border border-gray-700 text-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block pl-10 p-2.5 w-64 transition-all group-hover:border-gray-600">
+                class="bg-[#171d21] border border-gray-700 text-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block pl-10 p-2.5 w-full md:w-64 transition-all group-hover:border-gray-600">
             <button onclick="applyFilters()" class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500 hover:text-white cursor-pointer transition">
                 <i class="fas fa-search"></i>
             </button>
@@ -367,10 +365,9 @@
                     <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Categoria</label>
                     <select name="category"
                         class="w-full bg-[#0f1214] border border-gray-700 text-white rounded-lg p-3 focus:border-blue-500 outline-none appearance-none cursor-pointer">
-                        <option value="serviço">Serviço</option>
-                        <option value="contrato">Contrato</option>
-                        <option value="salario mensal">Salário Mensal</option>
-                        <option value="bico">Bico</option>
+                        {% for category in income_categories %}
+                        <option value="{{ category }}">{{ category | title }}</option>
+                        {% endfor %}
                     </select>
                 </div>
                 <div>
@@ -462,12 +459,11 @@
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Categoria</label>
-                    <select name="category" id="editIncomeCategory"
+                    <select name="category"
                         class="w-full bg-[#0f1214] border border-gray-700 text-white rounded-lg p-3 focus:border-blue-500 outline-none appearance-none cursor-pointer">
-                        <option value="serviço">Serviço</option>
-                        <option value="contrato">Contrato</option>
-                        <option value="salario mensal">Salário Mensal</option>
-                        <option value="bico">Bico</option>
+                        {% for category in income_categories %}
+                        <option value="{{ category }}">{{ category | title }}</option>
+                        {% endfor %}
                     </select>
                 </div>
                 <div>
@@ -801,3 +797,12 @@
     }
 </script>
 {% endblock %}
+
+
+
+
+
+
+
+
+

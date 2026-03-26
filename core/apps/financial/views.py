@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for, flash
 from common.database import get_db_connection
+from common.financial_categories import is_valid_financial_category, list_financial_categories
 from apps.auth.views import login_required
 from datetime import datetime, date
 
@@ -15,6 +16,9 @@ def income_list():
     search_query = request.args.get('search', '')
     category_filter = request.args.get('category', '')
     status_filter = request.args.get('status', '')
+    income_categories = list_financial_categories('income')
+    if category_filter and category_filter not in income_categories:
+        category_filter = ''
     
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -213,7 +217,8 @@ def income_list():
                          today=date.today(),
                          chart_history_json=chart_history_json,
                          chart_category_json=chart_category_json,
-                         month_options=month_options)
+                         month_options=month_options,
+                         income_categories=income_categories)
 
 @financial_bp.route('/charts')
 @login_required
@@ -364,6 +369,10 @@ def add_income():
         category = request.form['category']
         payment_type = request.form['payment_type']
         entry_date = request.form['entry_date']
+
+        if not is_valid_financial_category('income', category):
+            flash('Categoria de entrada inválida.', 'error')
+            return redirect(url_for('financial.income_list'))
         status = request.form.get('status', 'received')
         user_id = session['id']
 
@@ -429,6 +438,10 @@ def update_income(id):
     category = request.form['category']
     payment_type = request.form['payment_type']
     entry_date = request.form['entry_date']
+
+    if not is_valid_financial_category('income', category):
+        flash('Categoria de entrada inválida.', 'error')
+        return redirect(url_for('financial.income_list'))
     status = request.form.get('status', 'received')
     user_id = session['id']
 
@@ -473,6 +486,7 @@ def expenses_list():
     page = request.args.get('page', 1, type=int)
     per_page = 5
     search_query = request.args.get('search', '')
+    expense_categories = list_financial_categories('expense')
     
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -516,7 +530,7 @@ def expenses_list():
     cursor.close()
     conn.close()
     
-    return render_template('financial/expenses.html', expenses=expenses, page=page, total_pages=total_pages, search=search_query, stats=stats, today=date.today())
+    return render_template('financial/expenses.html', expenses=expenses, page=page, total_pages=total_pages, search=search_query, stats=stats, today=date.today(), expense_categories=expense_categories)
 
 @financial_bp.route('/expenses/add', methods=['POST'])
 @login_required
@@ -527,6 +541,10 @@ def add_expense():
         category = request.form['category']
         payment_type = request.form['payment_type']
         due_date = request.form['due_date']
+
+        if not is_valid_financial_category('expense', category):
+            flash('Categoria de despesa inválida.', 'error')
+            return redirect(url_for('financial.expenses_list'))
         status = request.form.get('status', 'pending')
         user_id = session['id']
 
@@ -558,6 +576,10 @@ def update_expense(id):
     category = request.form['category']
     payment_type = request.form['payment_type']
     due_date = request.form['due_date']
+
+    if not is_valid_financial_category('expense', category):
+        flash('Categoria de despesa inválida.', 'error')
+        return redirect(url_for('financial.expenses_list'))
     status = request.form.get('status', 'pending')
     user_id = session['id']
 
@@ -592,4 +614,5 @@ def delete_expense(id):
         cursor.close()
         conn.close()
     return redirect(url_for('financial.expenses_list'))
+
 

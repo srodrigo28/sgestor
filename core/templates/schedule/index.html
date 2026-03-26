@@ -57,7 +57,7 @@
 
 {% block content %}
 <div class="p-6">
-    <div class="flex justify-between items-center mb-6 animate-fade-in-down">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 animate-fade-in-down">
         <div>
             <h1 class="text-2xl font-bold text-white flex items-center gap-2">
                 <i class="fas fa-calendar-alt text-blue-500"></i> Agendamentos
@@ -66,7 +66,7 @@
         </div>
         
         <button onclick="openScheduleModal('add')" 
-            class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition shadow-lg shadow-blue-500/20 flex items-center gap-2">
+            class="bg-blue-600 hover:bg-blue-500 text-white w-10 h-10 sm:w-auto sm:px-4 sm:py-2 rounded-lg transition shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 shrink-0">
             <i class="fas fa-plus"></i>
         </button>
     </div>
@@ -552,4 +552,6 @@
     }
 </script>
 {% endblock %}
+
+
 
