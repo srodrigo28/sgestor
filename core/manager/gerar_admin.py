@@ -13,9 +13,9 @@ def criar_admin():
     print("--- Gerador de Admin Manual ---")
 
     # 1. Configurações da conta
-    NOME = "Administrador Sistema"
-    EMAIL = "admin1@sistema.com"
-    SENHA_PLAIN = "123123"
+    NOME = os.getenv("ADMIN_DEFAULT_NAME", "Administrador 99Dev")
+    EMAIL = os.getenv("ADMIN_DEFAULT_EMAIL", "admin@99dev.pro")
+    SENHA_PLAIN = os.getenv("ADMIN_DEFAULT_PASSWORD", "123123")
     ROLE = "admin" # Ajustado para a coluna 'role'
 
     # 2. Conexão com Banco de Dados
@@ -23,7 +23,7 @@ def criar_admin():
         cnx = mysql.connector.connect(
             host=os.getenv('DB_HOST', 'localhost'),
             user=os.getenv('DB_USER', 'root'),
-            password=os.getenv('DB_PASSWORD', ''),
+            password=os.getenv('DB_PASS', os.getenv('DB_PASSWORD', '')),
             database=os.getenv('DB_NAME', 'flask_crud')
         )
         cursor = cnx.cursor()
