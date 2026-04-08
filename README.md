@@ -1,4 +1,4 @@
-# 🚀🐍 Sistema de Gestão (Flask + MySQL) em VPS Ubuntu
+# 🚀🐍 Sistema de Gestão (Flask + MySQL)
 
 Um projeto **Python + Flask + MySQL** pensado para rodar bem tanto em **DEV** quanto em **PROD**, com um fluxo simples, organizado e seguro. ✨  
 Ideal para quem quer um sistema web enxuto, rápido e com deploy em **VPS Ubuntu**. 🧠🖥️
