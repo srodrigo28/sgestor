@@ -1,345 +1,387 @@
 {% extends 'base.html' %}
 
 {% block title %}Clientes | Gestão{% endblock %}
+{% block mobile_header_title %}Clientes{% endblock %}
 
 {% block content %}
-<!-- Stats Grid -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 animate-fade-in-down">
-    <!-- Total Clients -->
-    <div class="card p-5 border border-gray-800 bg-[#171d21] rounded-xl hover:-translate-y-1 transition duration-300">
-        <div>
-            <p class="text-sm text-gray-500 font-medium">Total de Clientes</p>
-            <h4 class="text-2xl font-bold text-white mt-1 count-up" data-target="{{ stats.total_clients }}">0</h4>
-            <p class="text-blue-500 text-xs mt-1 flex items-center gap-1">
-                <i class="fas fa-users"></i>
-                <span class="text-gray-600 ml-1">Base ativa</span>
-            </p>
+<div class="space-y-6 md:space-y-8">
+    <section class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div class="min-w-0">
+            <p class="text-[11px] uppercase tracking-[0.24em] text-blue-400 font-semibold">Relacionamento</p>
+            <h2 class="mt-1 text-2xl md:text-3xl font-bold text-white">Clientes</h2>
+            <p class="mt-2 text-sm text-gray-500">Consulte a base, filtre por setor e cadastre clientes em uma experiencia mais confortavel no mobile.</p>
         </div>
-    </div>
-
-    <!-- Weekly Growth -->
-    <div class="card p-5 border border-gray-800 bg-[#171d21] rounded-xl hover:-translate-y-1 transition duration-300">
-        <div>
-            <p class="text-sm text-gray-500 font-medium">Novos (Semana)</p>
-            <h4 class="text-2xl font-bold text-white mt-1 text-green-500 count-up" data-target="{{ stats.new_weekly }}">
-                0</h4>
-            <p class="text-green-500 text-xs mt-1 flex items-center gap-1">
-                <i class="fas fa-arrow-up"></i>
-                <span class="text-gray-600 ml-1">Últimos 7 dias</span>
-            </p>
-        </div>
-    </div>
-
-    <!-- Monthly Growth -->
-    <div class="card p-5 border border-gray-800 bg-[#171d21] rounded-xl hover:-translate-y-1 transition duration-300">
-        <div>
-            <p class="text-sm text-gray-500 font-medium">Novos (Mês)</p>
-            <h4 class="text-2xl font-bold text-white mt-1 text-purple-500 count-up"
-                data-target="{{ stats.new_monthly }}">0</h4>
-            <p class="text-purple-500 text-xs mt-1 flex items-center gap-1">
-                <i class="fas fa-calendar-alt"></i>
-                <span class="text-gray-600 ml-1">Últimos 30 dias</span>
-            </p>
-        </div>
-    </div>
-</div>
-
-<!-- Controls Row -->
-<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 animate-fade-in-down"
-    style="animation-delay: 0.2s;">
-    <!-- Search -->
-    <div class="relative group w-full md:w-auto">
-        <input type="text" id="searchInput" placeholder="Buscar por Nome ou CPF..." value="{{ active_search or '' }}"
-            onkeypress="if(event.key === 'Enter') updateFilters()"
-            class="bg-[#171d21] border border-gray-700 text-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block pl-10 p-2.5 w-full md:w-64 transition-all group-hover:border-gray-600">
-        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-            <i class="fas fa-search text-gray-500"></i>
-        </div>
-    </div>
-
-    <div class="flex items-center gap-3 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
-        <!-- Filter -->
-        <select id="sectorFilter" onchange="updateFilters()"
-            class="bg-[#171d21] border border-gray-700 text-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 cursor-pointer hover:border-gray-600 transition min-w-[140px]">
-            <option value="">Todos Setores</option>
-            {% for sector in sectors %}
-            <option value="{{ sector }}" {% if active_sector==sector %}selected{% endif %}>{{ sector }}</option>
-            {% endfor %}
-        </select>
-
-        <!-- View Toggle -->
-        <div class="bg-[#171d21] p-1 rounded-lg border border-gray-700 flex items-center shrink-0">
-            <button onclick="toggleView('list')" id="btnList"
-                class="px-3 py-1.5 rounded-md text-sm font-medium transition bg-gray-700 text-white shadow-sm">
-                <i class="fas fa-list"></i>
-            </button>
-            <button onclick="toggleView('chart')" id="btnChart"
-                class="px-3 py-1.5 rounded-md text-sm font-medium transition text-gray-400 hover:text-white">
-                <i class="fas fa-chart-pie"></i>
-            </button>
-        </div>
-
-        <!-- Add Client Button -->
         <button onclick="openClientModal()"
-            class="bg-blue-600 hover:bg-blue-500 text-white w-10 h-10 rounded-lg flex items-center justify-center transition shadow-lg shadow-blue-500/20 transform hover:scale-105 active:scale-95 shrink-0"
-            title="Novo Cliente">
+            class="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-medium text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-500 w-full sm:w-auto">
             <i class="fas fa-plus"></i>
+            Novo Cliente
         </button>
-    </div>
-</div>
+    </section>
 
-<!-- List View -->
-<div id="listView" class="overflow-x-auto bg-[#171d21] rounded-xl border border-gray-800 shadow-xl animate-fade-in-down"
-    style="animation-delay: 0.3s;">
-    <table class="w-full text-sm text-left text-gray-400">
-        <thead class="text-xs text-gray-500 uppercase bg-gray-900/50 border-b border-gray-800">
-            <tr>
-                <th scope="col" class="px-6 py-4">Nome / CPF</th>
-                <th scope="col" class="px-6 py-4">Contatos</th>
-                <th scope="col" class="px-6 py-4">Setor</th>
-                <th scope="col" class="px-6 py-4 text-center">Ações</th>
-            </tr>
-        </thead>
-        <tbody>
+    <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 md:gap-6">
+        <div class="card border border-gray-800 p-5 md:p-6">
+            <div>
+                <p class="text-sm text-gray-500 font-medium">Total de Clientes</p>
+                <h4 class="text-3xl font-bold text-white mt-2 count-up" data-target="{{ stats.total_clients }}">0</h4>
+                <p class="text-blue-500 text-xs mt-2 flex items-center gap-1.5">
+                    <i class="fas fa-users"></i>
+                    <span class="text-gray-600">Base ativa</span>
+                </p>
+            </div>
+        </div>
+
+        <div class="card border border-gray-800 p-5 md:p-6">
+            <div>
+                <p class="text-sm text-gray-500 font-medium">Novos na Semana</p>
+                <h4 class="text-3xl font-bold text-white mt-2 text-green-500 count-up" data-target="{{ stats.new_weekly }}">0</h4>
+                <p class="text-green-500 text-xs mt-2 flex items-center gap-1.5">
+                    <i class="fas fa-arrow-up"></i>
+                    <span class="text-gray-600">Ultimos 7 dias</span>
+                </p>
+            </div>
+        </div>
+
+        <div class="card border border-gray-800 p-5 md:p-6 sm:col-span-2 xl:col-span-1">
+            <div>
+                <p class="text-sm text-gray-500 font-medium">Novos no Mes</p>
+                <h4 class="text-3xl font-bold text-white mt-2 text-purple-500 count-up" data-target="{{ stats.new_monthly }}">0</h4>
+                <p class="text-purple-500 text-xs mt-2 flex items-center gap-1.5">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span class="text-gray-600">Ultimos 30 dias</span>
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <section class="rounded-2xl border border-gray-800 bg-[#171d21] p-4 md:p-5 shadow-xl">
+        <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+            <div class="relative group w-full xl:max-w-md">
+                <input type="text" id="searchInput" placeholder="Buscar por nome ou CPF..." value="{{ active_search or '' }}"
+                    onkeypress="if(event.key === 'Enter') updateFilters()"
+                    class="bg-[#0f1316] border border-gray-700 text-gray-300 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block pl-11 pr-4 py-3 w-full transition-all group-hover:border-gray-600">
+                <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+                    <i class="fas fa-search text-gray-500"></i>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center xl:justify-end xl:flex-nowrap w-full xl:w-auto">
+                <select id="sectorFilter" onchange="updateFilters()"
+                    class="bg-[#0f1316] border border-gray-700 text-gray-300 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block px-4 py-3 cursor-pointer hover:border-gray-600 transition min-w-[180px] w-full sm:w-auto">
+                    <option value="">Todos os Setores</option>
+                    {% for sector in sectors %}
+                    <option value="{{ sector }}" {% if active_sector==sector %}selected{% endif %}>{{ sector }}</option>
+                    {% endfor %}
+                </select>
+
+                <div class="bg-[#0f1316] p-1 rounded-xl border border-gray-700 flex items-center w-full sm:w-auto">
+                    <button type="button" onclick="toggleView('list')" id="btnList"
+                        class="flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-medium transition bg-gray-700 text-white shadow-sm inline-flex items-center justify-center gap-2">
+                        <i class="fas fa-list"></i>
+                        Lista
+                    </button>
+                    <button type="button" onclick="toggleView('chart')" id="btnChart"
+                        class="flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-medium transition text-gray-400 hover:text-white inline-flex items-center justify-center gap-2">
+                        <i class="fas fa-chart-pie"></i>
+                        Graficos
+                    </button>
+                </div>
+
+                <button type="button" onclick="updateFilters()"
+                    class="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-700 bg-[#0f1316] px-4 py-3 text-sm font-medium text-gray-200 transition hover:border-gray-600 hover:text-white w-full sm:w-auto">
+                    <i class="fas fa-filter"></i>
+                    Aplicar
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <section id="listView" class="space-y-4 animate-fade-in-down" style="animation-delay: 0.3s;">
+        <div class="space-y-4 md:hidden">
             {% for client in clients %}
-            <tr class="border-b border-gray-800 hover:bg-gray-800/50 transition duration-200">
-                <td class="px-6 py-4">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
-                            <i class="fas fa-user text-xs"></i>
+            <article class="rounded-2xl border border-gray-800 bg-[#171d21] p-4 shadow-xl">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0 flex items-start gap-3">
+                        <div class="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-500/10 text-blue-500">
+                            <i class="fas fa-user text-sm"></i>
                         </div>
-                        <div>
-                            <div class="font-medium text-white">{{ client.name }}</div>
-                            <div class="text-xs text-gray-500">{{ client.cpf }}</div>
+                        <div class="min-w-0">
+                            <h3 class="text-sm font-semibold text-white truncate">{{ client.name }}</h3>
+                            <p class="mt-1 text-xs text-gray-500 break-all">{{ client.cpf or 'CPF nao informado' }}</p>
                         </div>
                     </div>
-                </td>
-                <td class="px-6 py-4">
-                    <div class="flex flex-col gap-1">
-                        <span class="text-xs flex items-center gap-1.5">
-                            <i class="fab fa-whatsapp text-green-500"></i> {{ client.phone1 }}
-                        </span>
-                        {% if client.phone2 %}
-                        <span class="text-xs flex items-center gap-1.5 text-gray-500">
-                            <i class="fas fa-phone-alt"></i> {{ client.phone2 }}
-                        </span>
-                        {% endif %}
-                    </div>
-                </td>
-                <td class="px-6 py-4">
-                    <span
-                        class="px-2.5 py-0.5 rounded text-xs font-medium bg-gray-800 text-gray-300 border border-gray-700">
+                    <span class="shrink-0 rounded-full border border-gray-700 bg-[#0f1316] px-2.5 py-1 text-[11px] font-medium text-gray-300">
                         {{ client.sector }}
                     </span>
-                </td>
-                <td class="px-6 py-4 text-center">
-                    <button onclick="openEditModal(this)" data-id="{{ client.id }}" data-name="{{ client.name }}"
+                </div>
+
+                <div class="mt-4 space-y-2 text-sm text-gray-300">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <i class="fab fa-whatsapp text-green-500 w-4"></i>
+                        <span class="truncate">{{ client.phone1 or 'Sem telefone principal' }}</span>
+                    </div>
+                    {% if client.phone2 %}
+                    <div class="flex items-center gap-2 min-w-0 text-gray-500">
+                        <i class="fas fa-phone-alt w-4"></i>
+                        <span class="truncate">{{ client.phone2 }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="mt-4 grid grid-cols-2 gap-2">
+                    <button type="button" onclick="openEditModal(this)" data-id="{{ client.id }}" data-name="{{ client.name }}"
                         data-sector="{{ client.sector }}" data-cpf="{{ client.cpf }}" data-phone1="{{ client.phone1 }}"
-                        data-phone2="{{ client.phone2 or '' }}"
-                        data-cep="{{ client.cep or '' }}"
-                        data-address="{{ client.address or '' }}"
-                        data-address-number="{{ client.address_number or '' }}"
-                        data-complement="{{ client.complement or '' }}"
-                        data-neighborhood="{{ client.neighborhood or '' }}"
-                        data-city="{{ client.city or '' }}"
-                        data-state="{{ client.state or '' }}"
-                        class="text-blue-500 hover:text-blue-400 transition mx-1" title="Editar">
+                        data-phone2="{{ client.phone2 or '' }}" data-cep="{{ client.cep or '' }}"
+                        data-address="{{ client.address or '' }}" data-address-number="{{ client.address_number or '' }}"
+                        data-complement="{{ client.complement or '' }}" data-neighborhood="{{ client.neighborhood or '' }}"
+                        data-city="{{ client.city or '' }}" data-state="{{ client.state or '' }}"
+                        class="inline-flex items-center justify-center gap-2 rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-3 text-sm font-medium text-blue-400 transition hover:bg-blue-500/15">
                         <i class="fas fa-edit"></i>
+                        Editar
                     </button>
                     <form action="{{ url_for('clients.delete_client', id=client.id) }}" method="POST"
-                          onsubmit="return confirm('Tem certeza que deseja excluir este cliente?')" class="inline">
-                        <button type="submit" class="text-red-500 hover:text-red-400 transition mx-1" title="Excluir">
+                        onsubmit="return confirm('Tem certeza que deseja excluir este cliente?')">
+                        <button type="submit"
+                            class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm font-medium text-red-400 transition hover:bg-red-500/15">
                             <i class="fas fa-trash"></i>
+                            Excluir
                         </button>
                     </form>
-                </td>
-            </tr>
+                </div>
+            </article>
             {% endfor %}
-        </tbody>
-    </table>
+        </div>
+
+        <div class="hidden overflow-x-auto rounded-2xl border border-gray-800 bg-[#171d21] shadow-xl md:block">
+            <table class="w-full text-sm text-left text-gray-400">
+                <thead class="text-xs text-gray-500 uppercase bg-gray-900/50 border-b border-gray-800">
+                    <tr>
+                        <th scope="col" class="px-6 py-4">Nome / CPF</th>
+                        <th scope="col" class="px-6 py-4">Contatos</th>
+                        <th scope="col" class="px-6 py-4">Setor</th>
+                        <th scope="col" class="px-6 py-4 text-center">Acoes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for client in clients %}
+                    <tr class="border-b border-gray-800 hover:bg-gray-800/50 transition duration-200">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
+                                    <i class="fas fa-user text-xs"></i>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-white">{{ client.name }}</div>
+                                    <div class="text-xs text-gray-500">{{ client.cpf }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex flex-col gap-1">
+                                <span class="text-xs flex items-center gap-1.5">
+                                    <i class="fab fa-whatsapp text-green-500"></i> {{ client.phone1 }}
+                                </span>
+                                {% if client.phone2 %}
+                                <span class="text-xs flex items-center gap-1.5 text-gray-500">
+                                    <i class="fas fa-phone-alt"></i> {{ client.phone2 }}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="px-2.5 py-0.5 rounded text-xs font-medium bg-gray-800 text-gray-300 border border-gray-700">
+                                {{ client.sector }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <button type="button" onclick="openEditModal(this)" data-id="{{ client.id }}" data-name="{{ client.name }}"
+                                data-sector="{{ client.sector }}" data-cpf="{{ client.cpf }}" data-phone1="{{ client.phone1 }}"
+                                data-phone2="{{ client.phone2 or '' }}" data-cep="{{ client.cep or '' }}"
+                                data-address="{{ client.address or '' }}" data-address-number="{{ client.address_number or '' }}"
+                                data-complement="{{ client.complement or '' }}" data-neighborhood="{{ client.neighborhood or '' }}"
+                                data-city="{{ client.city or '' }}" data-state="{{ client.state or '' }}"
+                                class="text-blue-500 hover:text-blue-400 transition mx-1" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <form action="{{ url_for('clients.delete_client', id=client.id) }}" method="POST"
+                                onsubmit="return confirm('Tem certeza que deseja excluir este cliente?')" class="inline">
+                                <button type="submit" class="text-red-500 hover:text-red-400 transition mx-1" title="Excluir">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section id="chartView" class="hidden grid grid-cols-1 gap-4 xl:grid-cols-3 md:gap-6 animate-fade-in-down">
+        <div class="card p-5 md:p-6 lg:col-span-2 border border-gray-800 bg-[#171d21] rounded-2xl">
+            <div class="flex justify-between items-center mb-6 gap-4">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2 min-w-0">
+                    <i class="fas fa-chart-line text-blue-500"></i>
+                    <span class="truncate">Evolucao de Cadastros</span>
+                </h3>
+            </div>
+            <div class="relative h-[260px] sm:h-[320px]">
+                <canvas id="growthChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card p-5 md:p-6 border border-gray-800 bg-[#171d21] rounded-2xl">
+            <div class="flex justify-between items-center mb-6 gap-4">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2 min-w-0">
+                    <i class="fas fa-chart-pie text-purple-500"></i>
+                    <span class="truncate">Distribuicao por Setor</span>
+                </h3>
+            </div>
+            <div class="relative mx-auto h-[260px] w-full max-w-[320px] sm:h-[320px]">
+                <canvas id="sectorsChart"></canvas>
+            </div>
+        </div>
+    </section>
 </div>
 
-<!-- Charts View (Hidden by default) -->
-<div id="chartView" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in-down">
-    <!-- Chart 1: Growth -->
-    <div class="card p-6 lg:col-span-2 border border-gray-800 bg-[#171d21] rounded-xl">
-        <div class="flex justify-between items-center mb-6">
-            <h3 class="text-lg font-bold text-white flex items-center gap-2">
-                <i class="fas fa-chart-line text-blue-500"></i> Evolução de Cadastros
-            </h3>
-        </div>
-        <div class="h-64">
-            <canvas id="growthChart"></canvas>
-        </div>
-    </div>
-
-    <!-- Chart 2: Sectors -->
-    <div class="card p-6 border border-gray-800 bg-[#171d21] rounded-xl">
-        <div class="flex justify-between items-center mb-6">
-            <h3 class="text-lg font-bold text-white flex items-center gap-2">
-                <i class="fas fa-chart-pie text-purple-500"></i> Por Setor
-            </h3>
-        </div>
-        <div class="h-64 flex justify-center">
-            <canvas id="sectorsChart"></canvas>
-        </div>
-    </div>
-</div>
-
-<!-- Client Modal -->
-<div id="clientModal"
-    class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div
-        class="bg-[#171d21] w-full max-w-2xl rounded-xl border border-gray-700 shadow-2xl relative animate-fade-in-down">
-        <div class="flex justify-between items-center p-6 border-b border-gray-800">
-            <h3 class="text-xl font-bold text-white flex items-center gap-2">
-                <i class="fas fa-user-plus text-blue-500"></i> <span id="modalTitle">Novo Cliente</span>
-            </h3>
-            <button onclick="closeClientModal()" class="text-gray-400 hover:text-white transition"><i
-                    class="fas fa-times text-xl"></i></button>
-        </div>
-
-        <form id="clientForm" action="{{ url_for('clients.add_client') }}" method="POST" class="p-6">
-            <input type="hidden" id="clientId" name="id">
-
-            <!-- Tabs Navigation -->
-            <div class="flex border-b border-gray-700 mb-6">
-                <button type="button" onclick="switchTab('basic')" id="tabBasic"
-                    class="px-4 py-2 text-sm font-medium text-blue-500 border-b-2 border-blue-500 focus:outline-none transition-colors">
-                    Dados Básicos
-                </button>
-                <button type="button" onclick="switchTab('address')" id="tabAddress"
-                    class="px-4 py-2 text-sm font-medium text-gray-400 hover:text-gray-300 focus:outline-none transition-colors">
-                    Endereço
+<div id="clientModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 p-0 md:p-4">
+    <div class="flex min-h-full items-stretch justify-center md:items-center">
+        <div class="bg-[#171d21] w-full h-full md:h-auto md:max-w-2xl rounded-none md:rounded-2xl border-0 md:border border-gray-700 shadow-2xl relative flex flex-col max-h-screen">
+            <div class="flex justify-between items-center p-4 md:p-6 border-b border-gray-800 sticky top-0 bg-[#171d21] z-10">
+                <h3 class="text-lg md:text-xl font-bold text-white flex items-center gap-2 min-w-0">
+                    <i class="fas fa-user-plus text-blue-500"></i>
+                    <span id="modalTitle" class="truncate">Novo Cliente</span>
+                </h3>
+                <button type="button" onclick="closeClientModal()" class="text-gray-400 hover:text-white transition p-2 rounded-lg hover:bg-gray-800" aria-label="Fechar modal">
+                    <i class="fas fa-times text-xl"></i>
                 </button>
             </div>
 
-            <!-- Tab Content: Basic Info -->
-            <div id="contentBasic" class="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in">
-                <!-- Name -->
-                <div class="col-span-2">
-                    <label class="block mb-2 text-sm font-medium text-gray-400">Nome Completo</label>
-                    <input type="text" name="name" required
-                        class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                        placeholder="Ex: João da Silva">
+            <form id="clientForm" action="{{ url_for('clients.add_client') }}" method="POST" class="flex-1 overflow-y-auto p-4 md:p-6">
+                <input type="hidden" id="clientId" name="id">
+
+                <div class="flex gap-2 border-b border-gray-700 mb-6 overflow-x-auto pb-1">
+                    <button type="button" onclick="switchTab('basic')" id="tabBasic"
+                        class="shrink-0 px-4 py-2.5 text-sm font-medium text-blue-500 border-b-2 border-blue-500 focus:outline-none transition-colors">
+                        Dados Basicos
+                    </button>
+                    <button type="button" onclick="switchTab('address')" id="tabAddress"
+                        class="shrink-0 px-4 py-2.5 text-sm font-medium text-gray-400 hover:text-gray-300 focus:outline-none transition-colors">
+                        Endereco
+                    </button>
                 </div>
 
-                <!-- Sector -->
-                <div class="col-span-1">
-                    <label class="block mb-2 text-sm font-medium text-gray-400">Setor</label>
-                    <input type="text" name="sector" list="sectorsList" required
-                        class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                        placeholder="Ex: Varejo">
-                    <datalist id="sectorsList">
-                        {% for sector in sectors %}
-                        <option value="{{ sector }}">
+                <div id="contentBasic" class="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6 animate-fade-in">
+                    <div class="md:col-span-2">
+                        <label class="block mb-2 text-sm font-medium text-gray-400">Nome Completo</label>
+                        <input type="text" name="name" required
+                            class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3"
+                            placeholder="Ex: Joao da Silva">
+                    </div>
+
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-400">Setor</label>
+                        <input type="text" name="sector" list="sectorsList" required
+                            class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3"
+                            placeholder="Ex: Varejo">
+                        <datalist id="sectorsList">
+                            {% for sector in sectors %}
+                            <option value="{{ sector }}">
                             {% endfor %}
-                    </datalist>
-                </div>
+                        </datalist>
+                    </div>
 
-                <!-- CPF -->
-                <div class="col-span-1">
-                    <label class="block mb-2 text-sm font-medium text-gray-400">CPF / CNPJ</label>
-                    <input type="text" name="cpf" id="cpfInput" maxlength="18"
-                        class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                        placeholder="000.000.000-00">
-                </div>
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-400">CPF / CNPJ</label>
+                        <input type="text" name="cpf" id="cpfInput" maxlength="18"
+                            class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3"
+                            placeholder="000.000.000-00">
+                    </div>
 
-                <!-- Phone 1 -->
-                <div>
-                    <label class="block mb-2 text-sm font-medium text-gray-400">WhatsApp / Telefone 1</label>
-                    <input type="text" name="phone1" id="phone1Input" maxlength="15"
-                        class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                        placeholder="(XX) XXXXX-XXXX">
-                </div>
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-400">WhatsApp / Telefone 1</label>
+                        <input type="text" name="phone1" id="phone1Input" maxlength="15"
+                            class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3"
+                            placeholder="(XX) XXXXX-XXXX">
+                    </div>
 
-                <!-- Phone 2 -->
-                <div>
-                    <label class="block mb-2 text-sm font-medium text-gray-400">Telefone 2 <span
-                            class="text-xs text-gray-600">(Opcional)</span></label>
-                    <input type="text" name="phone2" id="phone2Input" maxlength="15"
-                        class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                        placeholder="(XX) XXXXX-XXXX">
-                </div>
-            </div>
-
-            <!-- Tab Content: Address -->
-            <div id="contentAddress" class="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in hidden">
-                <!-- CEP -->
-                <div class="col-span-1">
-                    <label class="block mb-2 text-sm font-medium text-gray-400">CEP <span class="text-xs text-gray-500">(Somente números)</span></label>
-                    <div class="flex gap-2">
-                        <input type="text" name="cep" id="cepInput" maxlength="9"
-                            class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                            placeholder="00000-000">
-                        <button type="button" onclick="searchCep()"
-                            class="px-3 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-500 focus:outline-none transition"
-                            title="Pesquisar CEP">
-                            <i class="fas fa-search"></i>
-                        </button>
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-400">Telefone 2 <span class="text-xs text-gray-600">(Opcional)</span></label>
+                        <input type="text" name="phone2" id="phone2Input" maxlength="15"
+                            class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3"
+                            placeholder="(XX) XXXXX-XXXX">
                     </div>
                 </div>
 
-                <!-- State -->
-                <div class="col-span-1">
-                    <label class="block mb-2 text-sm font-medium text-gray-400">Estado (UF)</label>
-                    <input type="text" name="state" id="ufInput" maxlength="2"
-                        class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 uppercase"
-                        placeholder="UF">
+                <div id="contentAddress" class="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6 animate-fade-in hidden">
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-400">CEP <span class="text-xs text-gray-500">(Somente numeros)</span></label>
+                        <div class="flex gap-2">
+                            <input type="text" name="cep" id="cepInput" maxlength="9"
+                                class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3"
+                                placeholder="00000-000">
+                            <button type="button" onclick="searchCep()"
+                                class="px-4 py-3 text-white bg-blue-600 rounded-xl hover:bg-blue-500 focus:outline-none transition shrink-0"
+                                title="Pesquisar CEP">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-400">Estado (UF)</label>
+                        <input type="text" name="state" id="ufInput" maxlength="2"
+                            class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3 uppercase"
+                            placeholder="UF">
+                    </div>
+
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-400">Cidade</label>
+                        <input type="text" name="city" id="cityInput"
+                            class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3"
+                            placeholder="Cidade">
+                    </div>
+
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-400">Bairro</label>
+                        <input type="text" name="neighborhood" id="neighborhoodInput"
+                            class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3"
+                            placeholder="Bairro">
+                    </div>
+
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-400">Logradouro</label>
+                        <input type="text" name="address" id="addressInput"
+                            class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3"
+                            placeholder="Nome da Rua">
+                    </div>
+
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-400">Numero</label>
+                        <input type="text" name="address_number" id="numberInput"
+                            class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3"
+                            placeholder="123">
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="block mb-2 text-sm font-medium text-gray-400">Complemento <span class="text-xs text-gray-600">(Opcional)</span></label>
+                        <input type="text" name="complement" id="complementInput"
+                            class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3"
+                            placeholder="Apto 101, Bloco B">
+                    </div>
                 </div>
 
-                <!-- City -->
-                <div class="col-span-1">
-                    <label class="block mb-2 text-sm font-medium text-gray-400">Cidade</label>
-                    <input type="text" name="city" id="cityInput"
-                        class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                        placeholder="Cidade">
+                <div class="sticky bottom-0 mt-8 border-t border-gray-800 bg-[#171d21] pt-4">
+                    <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                        <button type="button" onclick="closeClientModal()"
+                            class="w-full sm:w-auto px-5 py-3 text-sm font-medium text-gray-300 bg-gray-800 rounded-xl border border-gray-600 hover:bg-gray-700 hover:text-white transition">Cancelar</button>
+                        <button type="submit" id="submitBtn"
+                            class="w-full sm:w-auto px-5 py-3 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-500 focus:ring-4 focus:outline-none focus:ring-blue-800 transition shadow-lg shadow-blue-500/30">Salvar Cliente</button>
+                    </div>
                 </div>
-
-                <!-- Neighborhood -->
-                <div class="col-span-1">
-                    <label class="block mb-2 text-sm font-medium text-gray-400">Bairro</label>
-                    <input type="text" name="neighborhood" id="neighborhoodInput"
-                        class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                        placeholder="Bairro">
-                </div>
-
-                <!-- Address (Street) -->
-                <div class="col-span-2 md:col-span-1">
-                    <label class="block mb-2 text-sm font-medium text-gray-400">Logradouro (Rua, Av, etc)</label>
-                    <input type="text" name="address" id="addressInput"
-                        class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                        placeholder="Nome da Rua">
-                </div>
-
-                <!-- Number -->
-                <div class="col-span-1">
-                    <label class="block mb-2 text-sm font-medium text-gray-400">Número</label>
-                    <input type="text" name="address_number" id="numberInput"
-                        class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                        placeholder="123">
-                </div>
-
-                <!-- Complement -->
-                <div class="col-span-2">
-                    <label class="block mb-2 text-sm font-medium text-gray-400">Complemento <span class="text-xs text-gray-600">(Opcional)</span></label>
-                    <input type="text" name="complement" id="complementInput"
-                        class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                        placeholder="Apto 101, Bloco B">
-                </div>
-            </div>
-
-            <div class="flex justify-end gap-3 mt-8">
-                <button type="button" onclick="closeClientModal()"
-                    class="px-5 py-2.5 text-sm font-medium text-gray-300 bg-gray-800 rounded-lg border border-gray-600 hover:bg-gray-700 hover:text-white transition">Cancelar</button>
-                <button type="submit" id="submitBtn"
-                    class="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-500 focus:ring-4 focus:outline-none focus:ring-blue-800 transition shadow-lg shadow-blue-500/30">Salvar
-                    Cliente</button>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
 </div>
-
 {% endblock %}
 
 {% block scripts %}
@@ -360,13 +402,20 @@
         window.location.href = url.toString();
     }
 
+    function setModalState(isOpen) {
+        const modal = document.getElementById('clientModal');
+        if (!modal) return;
+        modal.classList.toggle('hidden', !isOpen);
+        document.body.classList.toggle('overflow-hidden', isOpen);
+    }
+
     function openClientModal() {
         resetModal();
-        document.getElementById('clientModal').classList.remove('hidden');
+        setModalState(true);
     }
 
     function closeClientModal() {
-        document.getElementById('clientModal').classList.add('hidden');
+        setModalState(false);
     }
 
     function switchTab(tab) {
@@ -397,7 +446,7 @@
     function searchCep() {
         const cep = document.getElementById('cepInput').value.replace(/\D/g, '');
         if (cep.length !== 8) {
-            alert('CEP inválido.');
+            alert('CEP invalido.');
             return;
         }
 
@@ -405,7 +454,7 @@
             .then(response => response.json())
             .then(data => {
                 if (data.erro) {
-                    alert('CEP não encontrado.');
+                    alert('CEP nao encontrado.');
                     return;
                 }
                 document.getElementById('addressInput').value = data.logradouro;
@@ -427,8 +476,6 @@
         const cpf = btn.dataset.cpf;
         const phone1 = btn.dataset.phone1;
         const phone2 = btn.dataset.phone2;
-        
-        // Address fields
         const cep = btn.dataset.cep;
         const address = btn.dataset.address;
         const addressNumber = btn.dataset.addressNumber;
@@ -438,17 +485,15 @@
         const state = btn.dataset.state;
 
         document.getElementById('modalTitle').innerText = 'Editar Cliente';
-        document.getElementById('submitBtn').innerText = 'Salvar Alterações';
+        document.getElementById('submitBtn').innerText = 'Salvar Alteracoes';
         document.getElementById('clientForm').action = `/clients/edit/${id}`;
 
-        // Basic Info
         document.getElementsByName('name')[0].value = name;
         document.getElementsByName('sector')[0].value = sector;
         document.getElementsByName('cpf')[0].value = cpf;
         document.getElementsByName('phone1')[0].value = phone1;
         document.getElementsByName('phone2')[0].value = phone2;
 
-        // Address Info
         document.getElementById('cepInput').value = cep;
         document.getElementById('addressInput').value = address;
         document.getElementById('numberInput').value = addressNumber;
@@ -458,7 +503,7 @@
         document.getElementById('ufInput').value = state;
 
         switchTab('basic');
-        document.getElementById('clientModal').classList.remove('hidden');
+        setModalState(true);
     }
 
     function resetModal() {
@@ -469,13 +514,6 @@
         switchTab('basic');
     }
 
-    function confirmDelete(id) {
-        if (confirm('Tem certeza que deseja excluir este cliente?')) {
-            window.location.href = `/clients/delete/${id}`;
-        }
-    }
-
-    // Toggle View
     function toggleView(view) {
         const listView = document.getElementById('listView');
         const chartView = document.getElementById('chartView');
@@ -500,14 +538,13 @@
         }
     }
 
-    // Animation Code (Same as other modules)
     const observerOptions = { threshold: 0.1 };
     const statsObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting && entry.target.classList.contains('count-up') && !entry.target.dataset.animated) {
                 const target = parseFloat(entry.target.getAttribute('data-target'));
                 animateValue(entry.target, 0, target, 2000);
-                entry.target.dataset.animated = "true";
+                entry.target.dataset.animated = 'true';
             }
         });
     }, observerOptions);
@@ -524,15 +561,10 @@
         window.requestAnimationFrame(step);
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        document.querySelectorAll('.count-up').forEach(c => statsObserver.observe(c));
-    });
-
     let chartsRendered = false;
     function renderCharts() {
         if (chartsRendered) return;
 
-        // Growth Chart
         const ctxGrowth = document.getElementById('growthChart').getContext('2d');
         const growthData = JSON.parse('{{ chart_growth_json | safe }}');
 
@@ -555,13 +587,18 @@
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                    y: { grid: { color: '#1f2937' }, ticks: { color: '#9ca3af' } },
-                    x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+                    y: {
+                        grid: { color: '#1f2937' },
+                        ticks: { color: '#9ca3af', font: { size: window.innerWidth < 640 ? 10 : 12 } }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#9ca3af', font: { size: window.innerWidth < 640 ? 10 : 12 } }
+                    }
                 }
             }
         });
 
-        // Sectors Chart
         const ctxSectors = document.getElementById('sectorsChart').getContext('2d');
         const sectorsData = JSON.parse('{{ chart_sectors_json | safe }}');
 
@@ -581,22 +618,22 @@
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        position: 'right',
-                        labels: { color: '#9ca3af', usePointStyle: true, padding: 20, font: { size: 12 } }
+                        position: window.innerWidth < 768 ? 'bottom' : 'right',
+                        labels: { color: '#9ca3af', usePointStyle: true, padding: 16, font: { size: 12 } }
                     }
                 },
-                layout: { padding: 10 }
+                layout: { padding: window.innerWidth < 640 ? 4 : 10 }
             }
         });
 
         chartsRendered = true;
     }
 
-    // Input Masks
     document.addEventListener('DOMContentLoaded', () => {
-        // Phone Mask
+        document.querySelectorAll('.count-up').forEach(c => statsObserver.observe(c));
+
         const phoneMask = (value) => {
-            if (!value) return "";
+            if (!value) return '';
             value = value.replace(/\D/g, '');
             value = value.replace(/^(\d{2})(\d)/g, '($1) $2');
             value = value.replace(/(\d)(\d{4})$/, '$1-$2');
@@ -612,9 +649,8 @@
             }
         });
 
-        // CPF/CNPJ Mask
         const cpfMask = (value) => {
-            if (!value) return "";
+            if (!value) return '';
             value = value.replace(/\D/g, '');
             if (value.length <= 11) {
                 value = value.replace(/(\d{3})(\d)/, '$1.$2');
@@ -635,8 +671,7 @@
                 e.target.value = cpfMask(e.target.value);
             });
         }
-        
-        // CEP Mask
+
         const cepInput = document.getElementById('cepInput');
         if (cepInput) {
             cepInput.addEventListener('input', (e) => {

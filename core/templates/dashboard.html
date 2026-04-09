@@ -1,117 +1,141 @@
 {% extends 'base.html' %}
 
 {% block title %}Dashboard{% endblock %}
+{% block mobile_header_title %}Dashboard{% endblock %}
 
 {% block content %}
-<div class="flex justify-between items-center mb-6">
-    <h2 class="text-2xl font-bold text-white">Tarefas do Dia</h2>
-    <p class="text-gray-500 text-sm">{{ now.strftime('%d de %B, %Y') if now else '' }}</p>
-</div>
+<div class="space-y-6 md:space-y-8">
+    <section class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div class="min-w-0">
+            <p class="text-[11px] uppercase tracking-[0.24em] text-blue-400 font-semibold">Resumo</p>
+            <h2 class="mt-1 text-2xl md:text-3xl font-bold text-white">Tarefas do Dia</h2>
+            <p class="mt-2 text-sm text-gray-500">Acompanhe volume, progresso e distribuicao das tarefas em um layout mais confortavel no celular.</p>
+        </div>
+        <div class="inline-flex items-center rounded-xl border border-gray-800 bg-[#171d21] px-4 py-2 text-sm text-gray-400 w-fit">
+            <i class="fas fa-calendar-day text-blue-500 mr-2"></i>
+            {{ now.strftime('%d de %B, %Y') if now else '' }}
+        </div>
+    </section>
 
-<!-- Stats Grid -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-    <!-- Stat Card 1 -->
-    <!-- Stat Card 1 -->
-    <div class="card p-5 flex items-center justify-between border border-gray-800">
-        <div>
-            <p class="text-sm text-gray-500 font-medium">Total de Tarefas</p>
-            <h4 class="text-2xl font-bold text-white mt-1 count-up" data-target="{{ stats.total }}">0</h4>
-            <p class="text-blue-500 text-xs mt-1 flex items-center gap-1">
-                <i class="fas fa-clipboard-list"></i>
-                <span class="text-gray-600 ml-1">Tarefas cadastradas</span>
-            </p>
+    <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 md:gap-6">
+        <div class="card border border-gray-800 p-5 md:p-6">
+            <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                    <p class="text-sm text-gray-500 font-medium">Total de Tarefas</p>
+                    <h4 class="text-3xl font-bold text-white mt-2 count-up" data-target="{{ stats.total }}">0</h4>
+                    <p class="text-blue-500 text-xs mt-2 flex items-center gap-1.5">
+                        <i class="fas fa-clipboard-list"></i>
+                        <span class="text-gray-600">Tarefas cadastradas</span>
+                    </p>
+                </div>
+                <div class="w-12 h-12 shrink-0 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-500">
+                    <i class="fas fa-clipboard-list text-xl"></i>
+                </div>
+            </div>
         </div>
-        <div class="w-12 h-12 bg-blue-500/10 rounded-lg flex items-center justify-center text-blue-500">
-            <i class="fas fa-clipboard-list text-xl"></i>
-        </div>
-    </div>
 
-    <!-- Stat Card 2 -->
-    <!-- Stat Card 2 -->
-    <div class="card p-5 flex items-center justify-between border border-gray-800">
-        <div>
-            <p class="text-sm text-gray-500 font-medium">Concluídas</p>
-            <h4 class="text-2xl font-bold text-white mt-1 count-up" data-target="{{ stats.done }}">0</h4>
-            <p class="text-emerald-500 text-xs mt-1 flex items-center gap-1">
-                <i class="fas fa-check-circle"></i>
-                <span class="text-gray-600 ml-1">Tarefas finalizadas</span>
-            </p>
+        <div class="card border border-gray-800 p-5 md:p-6">
+            <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                    <p class="text-sm text-gray-500 font-medium">Concluidas</p>
+                    <h4 class="text-3xl font-bold text-white mt-2 count-up" data-target="{{ stats.done }}">0</h4>
+                    <p class="text-emerald-500 text-xs mt-2 flex items-center gap-1.5">
+                        <i class="fas fa-check-circle"></i>
+                        <span class="text-gray-600">Tarefas finalizadas</span>
+                    </p>
+                </div>
+                <div class="w-12 h-12 shrink-0 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500">
+                    <i class="fas fa-check-circle text-xl"></i>
+                </div>
+            </div>
         </div>
-        <div class="w-12 h-12 bg-emerald-500/10 rounded-lg flex items-center justify-center text-emerald-500">
-            <i class="fas fa-check-circle text-xl"></i>
-        </div>
-    </div>
 
-    <!-- Stat Card 3 -->
-    <!-- Stat Card 3 -->
-    <div class="card p-5 flex items-center justify-between border border-gray-800">
-        <div>
-            <p class="text-sm text-gray-500 font-medium">Em Andamento</p>
-            <h4 class="text-2xl font-bold text-white mt-1 count-up" data-target="{{ stats.doing }}">0</h4>
-            <p class="text-purple-500 text-xs mt-1 flex items-center gap-1">
-                <i class="fas fa-spinner"></i>
-                <span class="text-gray-600 ml-1">Sendo executadas</span>
-            </p>
+        <div class="card border border-gray-800 p-5 md:p-6">
+            <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                    <p class="text-sm text-gray-500 font-medium">Em Andamento</p>
+                    <h4 class="text-3xl font-bold text-white mt-2 count-up" data-target="{{ stats.doing }}">0</h4>
+                    <p class="text-purple-500 text-xs mt-2 flex items-center gap-1.5">
+                        <i class="fas fa-spinner"></i>
+                        <span class="text-gray-600">Sendo executadas</span>
+                    </p>
+                </div>
+                <div class="w-12 h-12 shrink-0 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-500">
+                    <i class="fas fa-spinner text-xl"></i>
+                </div>
+            </div>
         </div>
-        <div class="w-12 h-12 bg-purple-500/10 rounded-lg flex items-center justify-center text-purple-500">
-            <i class="fas fa-spinner text-xl"></i>
-        </div>
-    </div>
 
-    <!-- Stat Card 4 -->
-    <!-- Stat Card 4 -->
-    <div class="card p-5 flex items-center justify-between border border-gray-800">
-        <div>
-            <p class="text-sm text-gray-500 font-medium">A Fazer</p>
-            <h4 class="text-2xl font-bold text-white mt-1 count-up" data-target="{{ stats.todo }}">0</h4>
-            <p class="text-amber-500 text-xs mt-1 flex items-center gap-1">
-                <i class="fas fa-hourglass-start"></i>
-                <span class="text-gray-600 ml-1">Aguardando início</span>
-            </p>
+        <div class="card border border-gray-800 p-5 md:p-6">
+            <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                    <p class="text-sm text-gray-500 font-medium">A Fazer</p>
+                    <h4 class="text-3xl font-bold text-white mt-2 count-up" data-target="{{ stats.todo }}">0</h4>
+                    <p class="text-amber-500 text-xs mt-2 flex items-center gap-1.5">
+                        <i class="fas fa-hourglass-start"></i>
+                        <span class="text-gray-600">Aguardando inicio</span>
+                    </p>
+                </div>
+                <div class="w-12 h-12 shrink-0 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-500">
+                    <i class="fas fa-hourglass-half text-xl"></i>
+                </div>
+            </div>
         </div>
-        <div class="w-12 h-12 bg-amber-500/10 rounded-lg flex items-center justify-center text-amber-500">
-            <i class="fas fa-hourglass-half text-xl"></i>
-        </div>
-    </div>
-</div>
+    </section>
 
-<!-- Charts Grid -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <!-- Chart 1 -->
-    <div class="card p-6 lg:col-span-2 border border-gray-800">
-        <div class="flex justify-between items-center mb-6">
-            <h3 class="text-lg font-bold text-white">Tarefas Criadas (7 Dias)</h3>
-            <button class="text-gray-500 hover:text-white"><i class="fas fa-ellipsis-h"></i></button>
+    <section class="grid grid-cols-1 gap-4 xl:grid-cols-3 md:gap-6">
+        <div class="card border border-gray-800 p-5 md:p-6 xl:col-span-2">
+            <div class="flex items-start justify-between gap-4 mb-5">
+                <div class="min-w-0">
+                    <h3 class="text-lg font-bold text-white">Tarefas Criadas</h3>
+                    <p class="text-sm text-gray-500 mt-1">Ultimos 7 dias com foco em leitura mobile.</p>
+                </div>
+                <button class="text-gray-500 hover:text-white transition p-2 rounded-lg hover:bg-gray-800/80 shrink-0" aria-label="Mais opções do gráfico de tarefas criadas">
+                    <i class="fas fa-ellipsis-h"></i>
+                </button>
+            </div>
+            <div class="relative h-[260px] sm:h-[300px] lg:h-[340px]">
+                <canvas id="salesChart"></canvas>
+            </div>
         </div>
-        <canvas id="salesChart" height="100"></canvas>
-    </div>
 
-    <!-- Chart 2 -->
-    <div class="card p-6 border border-gray-800">
-        <div class="flex justify-between items-center mb-6">
-            <h3 class="text-lg font-bold text-white">Distribuição por Status</h3>
-            <button class="text-gray-500 hover:text-white"><i class="fas fa-ellipsis-h"></i></button>
+        <div class="card border border-gray-800 p-5 md:p-6">
+            <div class="flex items-start justify-between gap-4 mb-5">
+                <div class="min-w-0">
+                    <h3 class="text-lg font-bold text-white">Distribuicao por Status</h3>
+                    <p class="text-sm text-gray-500 mt-1">Visao resumida para acompanhar a fila.</p>
+                </div>
+                <button class="text-gray-500 hover:text-white transition p-2 rounded-lg hover:bg-gray-800/80 shrink-0" aria-label="Mais opções do gráfico de distribuição">
+                    <i class="fas fa-ellipsis-h"></i>
+                </button>
+            </div>
+            <div class="relative mx-auto h-[240px] w-full max-w-[280px] sm:h-[280px] sm:max-w-[320px]">
+                <canvas id="orderChart"></canvas>
+            </div>
+            <div class="mt-6 grid grid-cols-1 gap-2 text-xs font-medium text-gray-300 sm:grid-cols-3 sm:gap-3">
+                <div class="flex items-center gap-2 rounded-lg bg-[#0f1316] px-3 py-2 border border-gray-800">
+                    <span class="w-2.5 h-2.5 rounded-full bg-green-500"></span>
+                    Concluidos
+                </div>
+                <div class="flex items-center gap-2 rounded-lg bg-[#0f1316] px-3 py-2 border border-gray-800">
+                    <span class="w-2.5 h-2.5 rounded-full bg-orange-400"></span>
+                    Fazendo
+                </div>
+                <div class="flex items-center gap-2 rounded-lg bg-[#0f1316] px-3 py-2 border border-gray-800">
+                    <span class="w-2.5 h-2.5 rounded-full bg-red-400"></span>
+                    A Fazer
+                </div>
+            </div>
         </div>
-        <canvas id="orderChart" height="200"></canvas>
-        <div class="mt-6 flex justify-center gap-4 text-xs font-medium">
-            <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-green-500"></span>
-                Concluídos</div>
-            <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-orange-400"></span>
-                Fazendo</div>
-            <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-red-400"></span>
-                A Fazer</div>
-        </div>
-    </div>
+    </section>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    // Variáveis globais para controlar as instâncias
     let salesChartInstance = null;
     let orderChartInstance = null;
 
-    // Animation for Numbers (Count Up)
     function animateValue(obj, start, end, duration) {
         let startTimestamp = null;
         const step = (timestamp) => {
@@ -127,95 +151,118 @@
         window.requestAnimationFrame(step);
     }
 
-    // Configuração do Gráfico de Vendas (Linha)
     function initSalesChart() {
-        const ctxSales = document.getElementById('salesChart').getContext('2d');
+        const salesCanvas = document.getElementById('salesChart');
+        if (!salesCanvas || salesChartInstance) return;
+
+        const ctxSales = salesCanvas.getContext('2d');
         const gradient = ctxSales.createLinearGradient(0, 0, 0, 400);
-        gradient.addColorStop(0, 'rgba(59, 130, 246, 0.2)');
+        gradient.addColorStop(0, 'rgba(59, 130, 246, 0.28)');
         gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
 
         salesChartInstance = new Chart(ctxSales, {
             type: 'line',
             data: {
                 labels: {{ chart_data.dates | tojson }},
-    datasets: [{
-        label: 'Criadas',
-        data: {{ chart_data.counts | tojson }},
-        borderColor: '#3b82f6',
-        borderWidth: 2,
-        tension: 0.4,
-        fill: true,
-        backgroundColor: gradient,
-        pointBackgroundColor: '#1d4ed8',
-        pointBorderColor: '#fff',
-        pointHoverBackgroundColor: '#fff',
-        pointHoverBorderColor: '#1d4ed8'
+                datasets: [{
+                    label: 'Criadas',
+                    data: {{ chart_data.counts | tojson }},
+                    borderColor: '#3b82f6',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true,
+                    backgroundColor: gradient,
+                    pointBackgroundColor: '#1d4ed8',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: '#1d4ed8',
+                    pointRadius: window.innerWidth < 640 ? 2 : 3,
+                    pointHoverRadius: window.innerWidth < 640 ? 4 : 5
                 }]
             },
-    options: {
-        responsive: true,
-            // maintainAspectRatio: true, // Default is true, safer for layout
-            resizeDelay: 200,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                resizeDelay: 200,
                 animation: {
-            x: {
-                duration: 1000,
-                    from: 0
-            },
-            y: {
-                duration: 1000,
-                    delay: 500
+                    x: {
+                        duration: 1000,
+                        from: 0
+                    },
+                    y: {
+                        duration: 1000,
+                        delay: 500
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                scales: {
+                    y: {
+                        grid: { color: '#1f2937' },
+                        ticks: {
+                            color: '#9ca3af',
+                            stepSize: 1,
+                            padding: 8,
+                            font: { size: window.innerWidth < 640 ? 10 : 12 }
+                        },
+                        beginAtZero: true
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: {
+                            color: '#9ca3af',
+                            maxRotation: 0,
+                            autoSkip: true,
+                            padding: 8,
+                            font: { size: window.innerWidth < 640 ? 10 : 12 }
+                        }
+                    }
+                }
             }
-        },
-        plugins: { legend: { display: false } },
-        interaction: { intersect: false, mode: 'index' },
-        scales: {
-            y: {
-                grid: { color: '#1f2937' },
-                ticks: { color: '#9ca3af', stepSize: 1 },
-                beginAtZero: true
-            },
-            x: {
-                grid: { display: false },
-                ticks: { color: '#9ca3af' }
-            }
-        }
-    }
         });
     }
 
-    // Configuração do Gráfico de Barras (Rosca)
     function initOrderChart() {
-        const ctxOrder = document.getElementById('orderChart').getContext('2d');
+        const orderCanvas = document.getElementById('orderChart');
+        if (!orderCanvas || orderChartInstance) return;
+
+        const ctxOrder = orderCanvas.getContext('2d');
         orderChartInstance = new Chart(ctxOrder, {
             type: 'doughnut',
             data: {
-                labels: ['Concluídos', 'Fazendo', 'A Fazer'],
+                labels: ['Concluidos', 'Fazendo', 'A Fazer'],
                 datasets: [{
                     data: [{{ stats.done }}, {{ stats.doing }}, {{ stats.todo }}],
-    backgroundColor: ['#22c55e', '#fb923c', '#f87171'],
-        borderWidth: 0,
-            hoverOffset: 4
+                    backgroundColor: ['#22c55e', '#fb923c', '#f87171'],
+                    borderWidth: 0,
+                    hoverOffset: 4
                 }]
             },
-    options: {
-        responsive: true,
-            // maintainAspectRatio: true, // Default is true, safer for layout
-            cutout: '80%',
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: window.innerWidth < 640 ? '72%' : '80%',
                 animation: {
-            animateScale: false,
-                animateRotate: true,
+                    animateScale: false,
+                    animateRotate: true,
                     duration: 1500,
-                        easing: 'easeOutQuart'
-        },
-        plugins: { legend: { display: false } },
-        layout: {
-            padding: 10
-        }
-    }
+                    easing: 'easeOutQuart'
+                },
+                plugins: {
+                    legend: { display: false }
+                },
+                layout: {
+                    padding: window.innerWidth < 640 ? 4 : 10
+                }
+            }
         });
     }
 
-    // Intersection Observer
     const observerOptions = {
         root: null,
         rootMargin: '0px',
@@ -224,29 +271,25 @@
 
     const chartObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                // Charts
-                if (entry.target.id === 'salesChart' && !salesChartInstance) {
-                    initSalesChart();
-                } else if (entry.target.id === 'orderChart' && !orderChartInstance) {
-                    initOrderChart();
-                }
+            if (!entry.isIntersecting) return;
 
-                // Counters
-                if (entry.target.classList.contains('count-up')) {
-                    const target = parseInt(entry.target.getAttribute('data-target'));
-                    // Check if already animated to prevent multiple triggers
-                    if (!entry.target.dataset.animated) {
-                        animateValue(entry.target, 0, target, 2000);
-                        entry.target.dataset.animated = "true";
-                        chartObserver.unobserve(entry.target);
-                    }
+            if (entry.target.id === 'salesChart' && !salesChartInstance) {
+                initSalesChart();
+            } else if (entry.target.id === 'orderChart' && !orderChartInstance) {
+                initOrderChart();
+            }
+
+            if (entry.target.classList.contains('count-up')) {
+                const target = parseInt(entry.target.getAttribute('data-target'));
+                if (!entry.target.dataset.animated) {
+                    animateValue(entry.target, 0, target, 2000);
+                    entry.target.dataset.animated = 'true';
+                    chartObserver.unobserve(entry.target);
                 }
             }
         });
     }, observerOptions);
 
-    // Observar
     document.addEventListener('DOMContentLoaded', () => {
         const salesCanvas = document.getElementById('salesChart');
         const orderCanvas = document.getElementById('orderChart');
