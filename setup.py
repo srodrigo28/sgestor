@@ -83,7 +83,8 @@ def run_app():
         else:
             print("Erro: manage.py nao encontrado.")
     except KeyboardInterrupt:
-        print("\nServidor finalizado manualmente.")
+        print("\nAplicacao encerrada com sucesso.")
+        print("Servidor finalizado manualmente pelo terminal.")
 
 
 def get_mode():
@@ -151,3 +152,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
