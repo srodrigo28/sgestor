@@ -174,15 +174,8 @@
                 <button type="button"
                     class="text-gray-400 hover:text-blue-500 transition"
                     title="Editar"
-                    onclick="openEditIncomeModal({
-                        id: {{ income.id }},
-                        description: {{ income.description | tojson }},
-                        amount: {{ income.amount | default(0) | float }},
-                        category_id: {{ (income.category_id|string if income.category_id else '') | tojson }},
-                        payment_type: {{ income.payment_type | tojson }},
-                        status: {{ income.status | default('received') | tojson }},
-                        entry_date: '{{ income.entry_date.strftime('%Y-%m-%d') }}'
-                    })">
+                    data-income='{{ income | tojson | forceescape }}'
+                    onclick="openEditIncomeModal(this)">
                     <i class="fas fa-pen"></i>
                 </button>
                 <form action="{{ url_for('financial.delete_income', id=income.id) }}" method="POST"
@@ -253,15 +246,8 @@
                         <button type="button"
                             class="text-gray-400 hover:text-blue-500 transition mr-3"
                             title="Editar"
-                            onclick="openEditIncomeModal({
-                                id: {{ income.id }},
-                                description: {{ income.description | tojson }},
-                                amount: {{ income.amount | default(0) | float }},
-                                category_id: {{ (income.category_id|string if income.category_id else '') | tojson }},
-                                payment_type: {{ income.payment_type | tojson }},
-                                status: {{ income.status | default('received') | tojson }},
-                                entry_date: '{{ income.entry_date.strftime('%Y-%m-%d') }}'
-                            })">
+                            data-income='{{ income | tojson | forceescape }}'
+                            onclick="openEditIncomeModal(this)">
                             <i class="fas fa-pen"></i>
                         </button>
                         <form action="{{ url_for('financial.delete_income', id=income.id) }}" method="POST"
@@ -631,17 +617,24 @@
         }
     });
 
-    function openEditIncomeModal(data) {
+    function openEditIncomeModal(button) {
+        let data;
+        try {
+            data = JSON.parse(button.dataset.income);
+        } catch (error) {
+            console.error('Error parsing income data', error);
+            return;
+        }
+
         const modal = document.getElementById('editIncomeModal');
         const form = document.getElementById('editIncomeForm');
         form.action = appUrl(`/financial/income/update/${data.id}`);
         document.getElementById('editIncomeDescription').value = data.description || '';
         document.getElementById('editIncomeAmount').value = data.amount || '';
-        document.getElementById('editIncomeDate').value = data.entry_date || '';
+        document.getElementById('editIncomeDate').value = data.entry_date ? String(data.entry_date).split('T')[0] : '';
         document.getElementById('editIncomeCategory').value = data.category_id || '';
         document.getElementById('editIncomePayment').value = data.payment_type || 'pix';
-        
-        // Status
+
         if (data.status === 'received') {
             document.getElementById('editStatusReceived').checked = true;
         } else {

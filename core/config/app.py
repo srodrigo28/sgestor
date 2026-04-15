@@ -73,6 +73,8 @@ def create_app() -> Flask:
                 db_perms = {row["menu_key"]: bool(row["can_view"]) for row in rows}
                 permissions = default_permissions.copy()
                 permissions.update(db_perms or {})
+                if role in {"admin", "oficina"}:
+                    permissions["mechanics"] = True
             finally:
                 conn.close()
         except Exception:
