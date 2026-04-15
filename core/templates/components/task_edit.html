@@ -1,13 +1,13 @@
 <!-- Task Edit Modal Component -->
 <div id="editTaskModal" class="fixed inset-0 z-50 hidden">
-    <!-- Backdrop -->
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="closeEditModal()"></div>
 
-    <!-- Modal Content -->
-    <div
-        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-[#171d21] border border-gray-800 rounded-xl shadow-2xl transform transition-all scale-100 p-6">
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-[#171d21] border border-gray-800 rounded-xl shadow-2xl transform transition-all scale-100 p-6">
         <div class="flex justify-between items-center mb-6">
-            <h3 class="text-xl font-bold text-white">Editar Tarefa</h3>
+            <div>
+                <h3 class="text-xl font-bold text-white">Editar Tarefa</h3>
+                <p class="mt-1 text-sm text-gray-500">Atualize a tarefa e vincule à categoria correta da conta.</p>
+            </div>
             <button onclick="closeEditModal()" class="text-gray-400 hover:text-white transition">
                 <i class="fas fa-times"></i>
             </button>
@@ -22,13 +22,15 @@
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Categoria</label>
-                    <select id="edit_category" name="category"
+                    <div class="mb-2 flex items-center justify-between gap-2">
+                        <label class="block text-xs font-bold text-gray-400 uppercase">Categoria</label>
+                        <button type="button" onclick="closeEditModal(); openCategoryModal();" class="text-[11px] font-medium text-blue-400 hover:text-blue-300 transition">Gerenciar</button>
+                    </div>
+                    <select id="edit_category_id" name="category_id"
                         class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-2 px-3 text-white focus:outline-none focus:border-blue-500 transition">
-                        <option value="Trabalho">💼 Trabalho</option>
-                        <option value="Estudo">📚 Estudo</option>
-                        <option value="Pessoal">🏠 Pessoal</option>
-                        <option value="Saúde">💪 Saúde</option>
+                        {% for category in task_categories | default([]) %}
+                        <option value="{{ category.id }}">{{ category.icon }} {{ category.name }}</option>
+                        {% endfor %}
                     </select>
                 </div>
 
@@ -71,15 +73,12 @@
 
 <script>
     function openEditModal(task) {
-        // Popula o formulário
         document.getElementById('editTaskForm').action = appUrl(`/tasks/edit/${task.id}`);
         document.getElementById('edit_title').value = task.title;
         document.getElementById('edit_description').value = task.description || '';
-        document.getElementById('edit_category').value = task.category || 'Pessoal';
+        document.getElementById('edit_category_id').value = task.category_id || '';
         document.getElementById('edit_status').value = task.status || 'a_fazer';
         document.getElementById('edit_due_date').value = task.due_date || '';
-
-        // Abre o modal
         document.getElementById('editTaskModal').classList.remove('hidden');
     }
 

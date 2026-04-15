@@ -94,14 +94,22 @@
              <h3 class="text-lg font-bold text-white mb-4 border-b border-gray-800 pb-2">
                 <i class="fas fa-user-cog text-blue-500 mr-2"></i> Responsável Técnico
             </h3>
-            <div>
-                 <label class="block mb-2 text-sm font-medium text-gray-400">Selecione o Mecânico</label>
-                 <select name="mechanic_id" id="mechanicInput" class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
-                    <option value="">-- Sem vínculo --</option>
-                    {% for mechanic in mechanics %}
-                    <option value="{{ mechanic.id }}">{{ mechanic.name }}</option>
-                    {% endfor %}
-                 </select>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                     <label class="block mb-2 text-sm font-medium text-gray-400">Selecione o Mecânico</label>
+                     <select name="mechanic_id" id="mechanicInput" class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                        <option value="">-- Sem vínculo --</option>
+                        {% for mechanic in mechanics %}
+                        <option value="{{ mechanic.id }}">{{ mechanic.name }}</option>
+                        {% endfor %}
+                     </select>
+                </div>
+                <div>
+                    <label class="block mb-2 text-sm font-medium text-gray-400">Data do Orçamento</label>
+                    <input type="date" name="budget_date" id="budgetDateInput"
+                        class="bg-[#0f1316] border border-blue-500/30 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 [color-scheme:dark]">
+                    <p class="mt-2 text-xs text-gray-500">Use esta data para lançar orçamentos antigos sem distorcer seus relatórios.</p>
+                </div>
             </div>
         </div>
 
@@ -597,6 +605,7 @@
             vehicle_year: form.vehicle_year ? form.vehicle_year.value : '',
             vehicle_km: form.vehicle_km ? form.vehicle_km.value : '',
             mechanic_id: document.getElementById('mechanicInput') ? document.getElementById('mechanicInput').value : '',
+            budget_date: document.getElementById('budgetDateInput') ? document.getElementById('budgetDateInput').value : '',
             notes: form.notes ? form.notes.value : '',
             discount: document.getElementById('discountInput').value,
             approval_status: status,
@@ -719,6 +728,10 @@
              // but datalist handles filtering for us locally once loaded.
         });
     });
+    const budgetDateInput = document.getElementById('budgetDateInput');
+    if (budgetDateInput && !budgetDateInput.value) {
+        budgetDateInput.value = new Date().toISOString().split('T')[0];
+    }
 </script>
 {% endblock %}
 

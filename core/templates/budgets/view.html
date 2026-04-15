@@ -256,6 +256,13 @@
                     <span id="finalTotal" class="text-green-500">R$ 0,00</span>
                 </div>
 
+                <div class="mt-4 pt-4 border-t border-gray-800">
+                    <label class="block mb-2 text-sm font-medium text-gray-400">Data do Orçamento</label>
+                    <input type="date" id="budgetDateInput" value="{{ budget.created_at.strftime('%Y-%m-%d') if budget.created_at else '' }}" readonly
+                        class="bg-[#0f1316] border border-blue-500/30 text-white text-sm rounded-lg block w-full p-2.5 editable-field [color-scheme:dark]">
+                    <p class="mt-2 text-xs text-gray-500">Edite esta data quando precisar lançar ou corrigir um orçamento antigo.</p>
+                </div>
+
                 <!-- Status Select (Only visible in Edit Mode) -->
                 <div id="statusSelectWrapper" class="hidden mt-4 pt-4 border-t border-gray-800">
                     <label class="block mb-2 text-sm font-medium text-gray-400">Decisão do Orçamento</label>
@@ -621,6 +628,7 @@
             mechanic_id: document.getElementById('mechanicInput') ? document.getElementById('mechanicInput').value : '',
             notes: document.getElementById('notesInput').value,
             discount: document.getElementById('discountInput').value,
+            budget_date: document.getElementById('budgetDateInput').value,
             approval_status: document.getElementById('approvalStatusSelect').value,
             stage_status: document.getElementById('stageStatusSelect').value,
             items: items

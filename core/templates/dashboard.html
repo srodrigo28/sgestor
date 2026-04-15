@@ -5,15 +5,22 @@
 
 {% block content %}
 <div class="space-y-6 md:space-y-8">
-    <section class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <section class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div class="min-w-0">
-            <p class="text-[11px] uppercase tracking-[0.24em] text-blue-400 font-semibold">Resumo</p>
-            <h2 class="mt-1 text-2xl md:text-3xl font-bold text-white">Tarefas do Dia</h2>
-            <p class="mt-2 text-sm text-gray-500">Acompanhe volume, progresso e distribuicao das tarefas em um layout mais confortavel no celular.</p>
+            <p class="text-[11px] uppercase tracking-[0.24em] text-blue-400 font-semibold">Resumo Comercial</p>
+            <h2 class="mt-1 text-2xl md:text-3xl font-bold text-white">Orcamentos e Clientes</h2>
+            <p class="mt-2 text-sm text-gray-500">Veja orcamentos, aguardando, aprovados e clientes pelos registros do dia, da semana e do mes.</p>
         </div>
-        <div class="inline-flex items-center rounded-xl border border-gray-800 bg-[#171d21] px-4 py-2 text-sm text-gray-400 w-fit">
-            <i class="fas fa-calendar-day text-blue-500 mr-2"></i>
-            {{ now.strftime('%d de %B, %Y') if now else '' }}
+        <div class="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
+            <div class="inline-flex items-center rounded-xl border border-gray-800 bg-[#171d21] px-4 py-2 text-sm text-gray-400 w-fit">
+                <i class="fas fa-calendar-day text-blue-500 mr-2"></i>
+                {{ now.strftime('%d de %B, %Y') if now else '' }}
+            </div>
+            <div class="inline-flex rounded-xl border border-gray-800 bg-[#11161b] p-1" id="periodTabs">
+                <button type="button" class="period-tab rounded-lg px-3 py-2 text-sm font-medium text-gray-400 transition" data-period="day">Dia</button>
+                <button type="button" class="period-tab rounded-lg px-3 py-2 text-sm font-medium text-gray-400 transition" data-period="week">Semana</button>
+                <button type="button" class="period-tab rounded-lg px-3 py-2 text-sm font-medium text-gray-400 transition" data-period="month">Mes</button>
+            </div>
         </div>
     </section>
 
@@ -21,15 +28,15 @@
         <div class="card border border-gray-800 p-5 md:p-6">
             <div class="flex items-start justify-between gap-4">
                 <div class="min-w-0">
-                    <p class="text-sm text-gray-500 font-medium">Total de Tarefas</p>
-                    <h4 class="text-3xl font-bold text-white mt-2 count-up" data-target="{{ stats.total }}">0</h4>
+                    <p class="text-sm text-gray-500 font-medium">Numero de Orcamentos</p>
+                    <h4 class="text-3xl font-bold text-white mt-2 stat-value" data-key="budgets">{{ stats.budgets }}</h4>
                     <p class="text-blue-500 text-xs mt-2 flex items-center gap-1.5">
-                        <i class="fas fa-clipboard-list"></i>
-                        <span class="text-gray-600">Tarefas cadastradas</span>
+                        <i class="fas fa-file-invoice-dollar"></i>
+                        <span class="text-gray-600" id="statSubtitleBudgets">Registros do dia</span>
                     </p>
                 </div>
                 <div class="w-12 h-12 shrink-0 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-500">
-                    <i class="fas fa-clipboard-list text-xl"></i>
+                    <i class="fas fa-file-invoice-dollar text-xl"></i>
                 </div>
             </div>
         </div>
@@ -37,11 +44,27 @@
         <div class="card border border-gray-800 p-5 md:p-6">
             <div class="flex items-start justify-between gap-4">
                 <div class="min-w-0">
-                    <p class="text-sm text-gray-500 font-medium">Concluidas</p>
-                    <h4 class="text-3xl font-bold text-white mt-2 count-up" data-target="{{ stats.done }}">0</h4>
+                    <p class="text-sm text-gray-500 font-medium">Numero de Aguardando</p>
+                    <h4 class="text-3xl font-bold text-white mt-2 stat-value" data-key="waiting">{{ stats.waiting }}</h4>
+                    <p class="text-amber-400 text-xs mt-2 flex items-center gap-1.5">
+                        <i class="fas fa-hourglass-half"></i>
+                        <span class="text-gray-600" id="statSubtitleWaiting">Orcamentos enviados</span>
+                    </p>
+                </div>
+                <div class="w-12 h-12 shrink-0 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-400">
+                    <i class="fas fa-hourglass-half text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border border-gray-800 p-5 md:p-6">
+            <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                    <p class="text-sm text-gray-500 font-medium">Numero de Aprovados</p>
+                    <h4 class="text-3xl font-bold text-white mt-2 stat-value" data-key="approved">{{ stats.approved }}</h4>
                     <p class="text-emerald-500 text-xs mt-2 flex items-center gap-1.5">
                         <i class="fas fa-check-circle"></i>
-                        <span class="text-gray-600">Tarefas finalizadas</span>
+                        <span class="text-gray-600" id="statSubtitleApproved">Aprovacoes no periodo</span>
                     </p>
                 </div>
                 <div class="w-12 h-12 shrink-0 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500">
@@ -53,31 +76,15 @@
         <div class="card border border-gray-800 p-5 md:p-6">
             <div class="flex items-start justify-between gap-4">
                 <div class="min-w-0">
-                    <p class="text-sm text-gray-500 font-medium">Em Andamento</p>
-                    <h4 class="text-3xl font-bold text-white mt-2 count-up" data-target="{{ stats.doing }}">0</h4>
-                    <p class="text-purple-500 text-xs mt-2 flex items-center gap-1.5">
-                        <i class="fas fa-spinner"></i>
-                        <span class="text-gray-600">Sendo executadas</span>
+                    <p class="text-sm text-gray-500 font-medium">Numero de Clientes</p>
+                    <h4 class="text-3xl font-bold text-white mt-2 stat-value" data-key="clients">{{ stats.clients }}</h4>
+                    <p class="text-cyan-400 text-xs mt-2 flex items-center gap-1.5">
+                        <i class="fas fa-users"></i>
+                        <span class="text-gray-600" id="statSubtitleClients">Novos clientes</span>
                     </p>
                 </div>
-                <div class="w-12 h-12 shrink-0 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-500">
-                    <i class="fas fa-spinner text-xl"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="card border border-gray-800 p-5 md:p-6">
-            <div class="flex items-start justify-between gap-4">
-                <div class="min-w-0">
-                    <p class="text-sm text-gray-500 font-medium">A Fazer</p>
-                    <h4 class="text-3xl font-bold text-white mt-2 count-up" data-target="{{ stats.todo }}">0</h4>
-                    <p class="text-amber-500 text-xs mt-2 flex items-center gap-1.5">
-                        <i class="fas fa-hourglass-start"></i>
-                        <span class="text-gray-600">Aguardando inicio</span>
-                    </p>
-                </div>
-                <div class="w-12 h-12 shrink-0 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-500">
-                    <i class="fas fa-hourglass-half text-xl"></i>
+                <div class="w-12 h-12 shrink-0 bg-cyan-500/10 rounded-xl flex items-center justify-center text-cyan-400">
+                    <i class="fas fa-users text-xl"></i>
                 </div>
             </div>
         </div>
@@ -87,12 +94,10 @@
         <div class="card border border-gray-800 p-5 md:p-6 xl:col-span-2">
             <div class="flex items-start justify-between gap-4 mb-5">
                 <div class="min-w-0">
-                    <h3 class="text-lg font-bold text-white">Tarefas Criadas</h3>
-                    <p class="text-sm text-gray-500 mt-1">Ultimos 7 dias com foco em leitura mobile.</p>
+                    <h3 class="text-lg font-bold text-white">Comparativo do Periodo</h3>
+                    <p class="text-sm text-gray-500 mt-1" id="chartDescription">Leitura detalhada dos registros do dia.</p>
                 </div>
-                <button class="text-gray-500 hover:text-white transition p-2 rounded-lg hover:bg-gray-800/80 shrink-0" aria-label="Mais opções do gráfico de tarefas criadas">
-                    <i class="fas fa-ellipsis-h"></i>
-                </button>
+                <span class="inline-flex items-center rounded-full border border-gray-800 bg-[#11161b] px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-gray-400" id="chartBadge">Dia</span>
             </div>
             <div class="relative h-[260px] sm:h-[300px] lg:h-[340px]">
                 <canvas id="salesChart"></canvas>
@@ -102,28 +107,30 @@
         <div class="card border border-gray-800 p-5 md:p-6">
             <div class="flex items-start justify-between gap-4 mb-5">
                 <div class="min-w-0">
-                    <h3 class="text-lg font-bold text-white">Distribuicao por Status</h3>
-                    <p class="text-sm text-gray-500 mt-1">Visao resumida para acompanhar a fila.</p>
+                    <h3 class="text-lg font-bold text-white">Distribuicao do Periodo</h3>
+                    <p class="text-sm text-gray-500 mt-1">Resumo visual seguindo o mesmo painel do dashboard.</p>
                 </div>
-                <button class="text-gray-500 hover:text-white transition p-2 rounded-lg hover:bg-gray-800/80 shrink-0" aria-label="Mais opções do gráfico de distribuição">
-                    <i class="fas fa-ellipsis-h"></i>
-                </button>
+                <span class="inline-flex items-center rounded-full border border-gray-800 bg-[#11161b] px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-gray-400" id="donutBadge">Dia</span>
             </div>
             <div class="relative mx-auto h-[240px] w-full max-w-[280px] sm:h-[280px] sm:max-w-[320px]">
                 <canvas id="orderChart"></canvas>
             </div>
-            <div class="mt-6 grid grid-cols-1 gap-2 text-xs font-medium text-gray-300 sm:grid-cols-3 sm:gap-3">
+            <div class="mt-6 grid grid-cols-1 gap-2 text-xs font-medium text-gray-300 sm:grid-cols-2 sm:gap-3">
                 <div class="flex items-center gap-2 rounded-lg bg-[#0f1316] px-3 py-2 border border-gray-800">
-                    <span class="w-2.5 h-2.5 rounded-full bg-green-500"></span>
-                    Concluidos
+                    <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                    Orcamentos
                 </div>
                 <div class="flex items-center gap-2 rounded-lg bg-[#0f1316] px-3 py-2 border border-gray-800">
-                    <span class="w-2.5 h-2.5 rounded-full bg-orange-400"></span>
-                    Fazendo
+                    <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                    Aguardando
                 </div>
                 <div class="flex items-center gap-2 rounded-lg bg-[#0f1316] px-3 py-2 border border-gray-800">
-                    <span class="w-2.5 h-2.5 rounded-full bg-red-400"></span>
-                    A Fazer
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                    Aprovados
+                </div>
+                <div class="flex items-center gap-2 rounded-lg bg-[#0f1316] px-3 py-2 border border-gray-800">
+                    <span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
+                    Clientes
                 </div>
             </div>
         </div>
@@ -135,6 +142,24 @@
 <script>
     let salesChartInstance = null;
     let orderChartInstance = null;
+    let currentPeriod = {{ selected_period | tojson }};
+
+    const statsByPeriod = {{ stats_by_period | tojson }};
+    const chartDataByPeriod = {{ chart_data_by_period | tojson }};
+    const periodMeta = {
+        day: {
+            label: 'Dia',
+            description: 'Leitura detalhada dos registros do dia.'
+        },
+        week: {
+            label: 'Semana',
+            description: 'Leitura consolidada dos ultimos 7 dias.'
+        },
+        month: {
+            label: 'Mes',
+            description: 'Leitura diaria dos registros do mes atual.'
+        }
+    };
 
     function animateValue(obj, start, end, duration) {
         let startTimestamp = null;
@@ -151,55 +176,123 @@
         window.requestAnimationFrame(step);
     }
 
+    function getLineDatasets(period) {
+        const source = chartDataByPeriod[period] || chartDataByPeriod.day;
+        return {
+            labels: source.labels,
+            datasets: [
+                {
+                    label: 'Orcamentos',
+                    data: source.budgets,
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.14)',
+                    borderWidth: 2,
+                    tension: 0.35,
+                    pointRadius: window.innerWidth < 640 ? 1.5 : 2.5,
+                    pointHoverRadius: window.innerWidth < 640 ? 3 : 4,
+                    fill: false
+                },
+                {
+                    label: 'Aguardando',
+                    data: source.waiting,
+                    borderColor: '#f59e0b',
+                    backgroundColor: 'rgba(245, 158, 11, 0.14)',
+                    borderWidth: 2,
+                    tension: 0.35,
+                    pointRadius: window.innerWidth < 640 ? 1.5 : 2.5,
+                    pointHoverRadius: window.innerWidth < 640 ? 3 : 4,
+                    fill: false
+                },
+                {
+                    label: 'Aprovados',
+                    data: source.approved,
+                    borderColor: '#22c55e',
+                    backgroundColor: 'rgba(34, 197, 94, 0.14)',
+                    borderWidth: 2,
+                    tension: 0.35,
+                    pointRadius: window.innerWidth < 640 ? 1.5 : 2.5,
+                    pointHoverRadius: window.innerWidth < 640 ? 3 : 4,
+                    fill: false
+                },
+                {
+                    label: 'Clientes',
+                    data: source.clients,
+                    borderColor: '#22d3ee',
+                    backgroundColor: 'rgba(34, 211, 238, 0.14)',
+                    borderWidth: 2,
+                    tension: 0.35,
+                    pointRadius: window.innerWidth < 640 ? 1.5 : 2.5,
+                    pointHoverRadius: window.innerWidth < 640 ? 3 : 4,
+                    fill: false
+                }
+            ]
+        };
+    }
+
+    function updateStatCards(period, animate = false) {
+        const periodStats = statsByPeriod[period] || statsByPeriod.day;
+        document.querySelectorAll('.stat-value').forEach((element) => {
+            const key = element.dataset.key;
+            const nextValue = periodStats[key] || 0;
+            const currentValue = parseInt(element.textContent, 10) || 0;
+            if (animate) {
+                animateValue(element, currentValue, nextValue, 600);
+            } else {
+                element.textContent = nextValue;
+            }
+        });
+    }
+
+    function updatePeriodChrome(period) {
+        const meta = periodMeta[period] || periodMeta.day;
+        const chartDescription = document.getElementById('chartDescription');
+        const chartBadge = document.getElementById('chartBadge');
+        const donutBadge = document.getElementById('donutBadge');
+
+        if (chartDescription) chartDescription.textContent = meta.description;
+        if (chartBadge) chartBadge.textContent = meta.label;
+        if (donutBadge) donutBadge.textContent = meta.label;
+
+        document.querySelectorAll('.period-tab').forEach((button) => {
+            const active = button.dataset.period === period;
+            button.classList.toggle('bg-blue-600/20', active);
+            button.classList.toggle('text-blue-400', active);
+            button.classList.toggle('text-gray-400', !active);
+        });
+    }
+
     function initSalesChart() {
         const salesCanvas = document.getElementById('salesChart');
         if (!salesCanvas || salesChartInstance) return;
 
         const ctxSales = salesCanvas.getContext('2d');
-        const gradient = ctxSales.createLinearGradient(0, 0, 0, 400);
-        gradient.addColorStop(0, 'rgba(59, 130, 246, 0.28)');
-        gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
+        const initial = getLineDatasets(currentPeriod);
 
         salesChartInstance = new Chart(ctxSales, {
             type: 'line',
-            data: {
-                labels: {{ chart_data.dates | tojson }},
-                datasets: [{
-                    label: 'Criadas',
-                    data: {{ chart_data.counts | tojson }},
-                    borderColor: '#3b82f6',
-                    borderWidth: 2,
-                    tension: 0.4,
-                    fill: true,
-                    backgroundColor: gradient,
-                    pointBackgroundColor: '#1d4ed8',
-                    pointBorderColor: '#fff',
-                    pointHoverBackgroundColor: '#fff',
-                    pointHoverBorderColor: '#1d4ed8',
-                    pointRadius: window.innerWidth < 640 ? 2 : 3,
-                    pointHoverRadius: window.innerWidth < 640 ? 4 : 5
-                }]
-            },
+            data: initial,
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 resizeDelay: 200,
                 animation: {
-                    x: {
-                        duration: 1000,
-                        from: 0
-                    },
-                    y: {
-                        duration: 1000,
-                        delay: 500
-                    }
-                },
-                plugins: {
-                    legend: { display: false }
+                    x: { duration: 700, from: 0 },
+                    y: { duration: 700 }
                 },
                 interaction: {
                     intersect: false,
                     mode: 'index'
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: {
+                            color: '#d1d5db',
+                            usePointStyle: true,
+                            boxWidth: 8,
+                            padding: 16
+                        }
+                    }
                 },
                 scales: {
                     y: {
@@ -218,6 +311,7 @@
                             color: '#9ca3af',
                             maxRotation: 0,
                             autoSkip: true,
+                            maxTicksLimit: window.innerWidth < 640 ? 8 : 14,
                             padding: 8,
                             font: { size: window.innerWidth < 640 ? 10 : 12 }
                         }
@@ -231,14 +325,15 @@
         const orderCanvas = document.getElementById('orderChart');
         if (!orderCanvas || orderChartInstance) return;
 
+        const periodStats = statsByPeriod[currentPeriod] || statsByPeriod.day;
         const ctxOrder = orderCanvas.getContext('2d');
         orderChartInstance = new Chart(ctxOrder, {
             type: 'doughnut',
             data: {
-                labels: ['Concluidos', 'Fazendo', 'A Fazer'],
+                labels: ['Orcamentos', 'Aguardando', 'Aprovados', 'Clientes'],
                 datasets: [{
-                    data: [{{ stats.done }}, {{ stats.doing }}, {{ stats.todo }}],
-                    backgroundColor: ['#22c55e', '#fb923c', '#f87171'],
+                    data: [periodStats.budgets, periodStats.waiting, periodStats.approved, periodStats.clients],
+                    backgroundColor: ['#3b82f6', '#f59e0b', '#22c55e', '#22d3ee'],
                     borderWidth: 0,
                     hoverOffset: 4
                 }]
@@ -250,7 +345,7 @@
                 animation: {
                     animateScale: false,
                     animateRotate: true,
-                    duration: 1500,
+                    duration: 1000,
                     easing: 'easeOutQuart'
                 },
                 plugins: {
@@ -261,6 +356,31 @@
                 }
             }
         });
+    }
+
+    function refreshCharts(period) {
+        currentPeriod = period;
+        const lineData = getLineDatasets(period);
+        const periodStats = statsByPeriod[period] || statsByPeriod.day;
+
+        if (salesChartInstance) {
+            salesChartInstance.data.labels = lineData.labels;
+            salesChartInstance.data.datasets = lineData.datasets;
+            salesChartInstance.update();
+        }
+
+        if (orderChartInstance) {
+            orderChartInstance.data.datasets[0].data = [
+                periodStats.budgets,
+                periodStats.waiting,
+                periodStats.approved,
+                periodStats.clients
+            ];
+            orderChartInstance.update();
+        }
+
+        updatePeriodChrome(period);
+        updateStatCards(period, true);
     }
 
     const observerOptions = {
@@ -278,26 +398,22 @@
             } else if (entry.target.id === 'orderChart' && !orderChartInstance) {
                 initOrderChart();
             }
-
-            if (entry.target.classList.contains('count-up')) {
-                const target = parseInt(entry.target.getAttribute('data-target'));
-                if (!entry.target.dataset.animated) {
-                    animateValue(entry.target, 0, target, 2000);
-                    entry.target.dataset.animated = 'true';
-                    chartObserver.unobserve(entry.target);
-                }
-            }
         });
     }, observerOptions);
 
     document.addEventListener('DOMContentLoaded', () => {
         const salesCanvas = document.getElementById('salesChart');
         const orderCanvas = document.getElementById('orderChart');
-        const counters = document.querySelectorAll('.count-up');
 
         if (salesCanvas) chartObserver.observe(salesCanvas);
         if (orderCanvas) chartObserver.observe(orderCanvas);
-        counters.forEach(counter => chartObserver.observe(counter));
+
+        updatePeriodChrome(currentPeriod);
+        updateStatCards(currentPeriod, false);
+
+        document.querySelectorAll('.period-tab').forEach((button) => {
+            button.addEventListener('click', () => refreshCharts(button.dataset.period));
+        });
     });
 </script>
 {% endblock %}

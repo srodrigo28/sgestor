@@ -7,53 +7,53 @@
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
     <div class="card p-5 flex items-center justify-between border border-gray-800 bg-[#171d21] rounded-xl hover:-translate-y-1 transition duration-300">
         <div>
-            <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">Atrasadas</p>
-            <h4 class="text-2xl font-bold text-red-500 mt-1">R$ <span class="count-up" data-target="{{ stats.overdue }}">0</span></h4>
+            <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">Total do Mês</p>
+            <h4 class="text-2xl font-bold text-white mt-1">R$ <span class="count-up" data-target="{{ stats.total_month }}">0</span></h4>
             <p class="text-red-400 text-xs mt-1 flex items-center gap-1 font-medium">
-                <i class="fas fa-exclamation-circle"></i> Vencidas
+                <i class="fas fa-calendar-alt"></i> {{ selected_month_label }}
             </p>
         </div>
         <div class="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center text-red-500 shadow-lg shadow-red-500/20">
-            <i class="fas fa-arrow-down text-xl"></i>
+            <i class="fas fa-file-invoice-dollar text-xl"></i>
         </div>
     </div>
 
     <div class="card p-5 flex items-center justify-between border border-gray-800 bg-[#171d21] rounded-xl hover:-translate-y-1 transition duration-300">
         <div>
-            <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">A Pagar (7 Dias)</p>
-            <h4 class="text-2xl font-bold text-white mt-1">R$ <span class="count-up" data-target="{{ stats.due_7d }}">0</span></h4>
-            <p class="text-orange-500 text-xs mt-1 flex items-center gap-1 font-medium">
-                <i class="fas fa-calendar-week"></i> Próxima semana
+            <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">Pagas no Mês</p>
+            <h4 class="text-2xl font-bold text-emerald-400 mt-1">R$ <span class="count-up" data-target="{{ stats.paid_month }}">0</span></h4>
+            <p class="text-emerald-500 text-xs mt-1 flex items-center gap-1 font-medium">
+                <i class="fas fa-check-circle"></i> Realizadas
+            </p>
+        </div>
+        <div class="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500 shadow-lg shadow-emerald-500/20">
+            <i class="fas fa-check text-xl"></i>
+        </div>
+    </div>
+
+    <div class="card p-5 flex items-center justify-between border border-gray-800 bg-[#171d21] rounded-xl hover:-translate-y-1 transition duration-300">
+        <div>
+            <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">Pendentes no Mês</p>
+            <h4 class="text-2xl font-bold text-orange-300 mt-1">R$ <span class="count-up" data-target="{{ stats.pending_month }}">0</span></h4>
+            <p class="text-orange-400 text-xs mt-1 flex items-center gap-1 font-medium">
+                <i class="fas fa-clock"></i> Em aberto
             </p>
         </div>
         <div class="w-12 h-12 bg-orange-500/10 rounded-xl flex items-center justify-center text-orange-500 shadow-lg shadow-orange-500/20">
-            <i class="fas fa-clock text-xl"></i>
+            <i class="fas fa-hourglass-half text-xl"></i>
         </div>
     </div>
 
     <div class="card p-5 flex items-center justify-between border border-gray-800 bg-[#171d21] rounded-xl hover:-translate-y-1 transition duration-300">
         <div>
-            <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">A Pagar (30 Dias)</p>
-            <h4 class="text-2xl font-bold text-white mt-1">R$ <span class="count-up" data-target="{{ stats.due_30d }}">0</span></h4>
-            <p class="text-blue-500 text-xs mt-1 flex items-center gap-1 font-medium">
-                <i class="fas fa-calendar-alt"></i> Próximo mês
+            <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">Média Diária</p>
+            <h4 class="text-2xl font-bold text-white mt-1">R$ <span class="count-up" data-target="{{ stats.avg_daily_month }}">0</span></h4>
+            <p class="text-blue-400 text-xs mt-1 flex items-center gap-1 font-medium">
+                <i class="fas fa-chart-line"></i> {{ selected_month_label }}
             </p>
         </div>
         <div class="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-500 shadow-lg shadow-blue-500/20">
-            <i class="fas fa-receipt text-xl"></i>
-        </div>
-    </div>
-
-    <div class="card p-5 flex items-center justify-between border border-gray-800 bg-[#171d21] rounded-xl hover:-translate-y-1 transition duration-300">
-        <div>
-            <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">Total Pendente</p>
-            <h4 class="text-2xl font-bold text-white mt-1">R$ <span class="count-up" data-target="{{ stats.total_pending }}">0</span></h4>
-            <p class="text-gray-500 text-xs mt-1 flex items-center gap-1 font-medium">
-                Total acumulado
-            </p>
-        </div>
-        <div class="w-12 h-12 bg-gray-700 rounded-xl flex items-center justify-center text-gray-400">
-            <i class="fas fa-wallet text-xl"></i>
+            <i class="fas fa-chart-line text-xl"></i>
         </div>
     </div>
 </div>
@@ -64,28 +64,60 @@
         <h2 class="text-2xl font-bold text-white flex items-center gap-2">
             <i class="fas fa-file-invoice-dollar text-red-500"></i> Despesas
         </h2>
-        <p class="text-gray-500 text-sm">Gerencie suas contas a pagar</p>
+        <p class="text-gray-500 text-sm">Gerencie contas a pagar e categorias exclusivas da sua operação.</p>
     </div>
 
-    <div class="flex flex-wrap items-center gap-3 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
-        <!-- Switch to Income -->
+    <div class="flex flex-wrap items-stretch gap-3 w-full md:w-auto md:items-center pb-1 md:pb-0">
         <a href="{{ url_for('financial.income_list') }}" class="bg-gray-800 text-gray-300 w-10 h-10 sm:w-auto sm:px-3 sm:py-2 rounded-lg hover:bg-gray-700 text-sm transition font-medium flex items-center justify-center gap-2 shrink-0">
             <i class="fas fa-arrow-up text-green-500"></i><span class="hidden sm:inline">Ver Receitas</span>
         </a>
 
-        <!-- Search -->
-        <div class="relative group w-full md:w-auto">
+        <div class="relative flex-1 min-w-[120px] sm:min-w-[140px]">
+            <select id="monthFilter" onchange="applyExpenseFilters()"
+                class="bg-[#171d21] border border-gray-700 text-gray-300 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block p-2.5 outline-none appearance-none cursor-pointer pr-8 hover:border-gray-600 transition">
+                {% for opt in month_options %}
+                <option value="{{ opt.value }}" {% if selected_month == opt.value %}selected{% endif %}>{{ opt.label }}</option>
+                {% endfor %}
+            </select>
+            <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-gray-500">
+                <i class="fas fa-chevron-down text-xs"></i>
+            </div>
+        </div>
+
+        <div class="relative flex-1 min-w-[140px] sm:min-w-[160px]">
+            <select id="statusFilter" onchange="applyExpenseFilters()"
+                class="bg-[#171d21] border border-gray-700 text-gray-300 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block p-2.5 outline-none appearance-none cursor-pointer pr-8 hover:border-gray-600 transition">
+                <option value="">Todos Status</option>
+                <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pendentes</option>
+                <option value="paid" {% if status_filter == 'paid' %}selected{% endif %}>Pagas</option>
+            </select>
+            <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-gray-500">
+                <i class="fas fa-chevron-down text-xs"></i>
+            </div>
+        </div>
+
+        <div class="relative group basis-full sm:flex-1 md:basis-auto md:w-auto">
             <input type="text" placeholder="Buscar despesa..." value="{{ search }}" id="searchExpenseInput"
-                onkeydown="if(event.key === 'Enter') window.location.href = '?search=' + this.value"
-                onblur="window.location.href = '?search=' + this.value"
+                onkeydown="if(event.key === 'Enter') applyExpenseFilters()"
+                onblur="applyExpenseFilters()"
                 class="bg-[#171d21] border border-gray-700 text-gray-300 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block pl-10 p-2.5 w-full md:w-64 transition-all hover:border-gray-600">
-            <button onclick="window.location.href = '?search=' + document.getElementById('searchExpenseInput').value" 
+            <button onclick="applyExpenseFilters()" 
                 class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500 hover:text-white cursor-pointer transition">
                 <i class="fas fa-search"></i>
             </button>
         </div>
 
-        <!-- Add Button -->
+        <div class="bg-[#171d21] p-1 rounded-lg border border-gray-700 flex items-center shadow-sm">
+            <button onclick="toggleExpenseView('list')" id="btnExpenseList"
+                class="px-3 py-1.5 rounded-md text-sm font-medium transition bg-gray-700 text-white shadow-sm">
+                <i class="fas fa-list"></i>
+            </button>
+            <button onclick="toggleExpenseView('chart')" id="btnExpenseChart"
+                class="px-3 py-1.5 rounded-md text-sm font-medium transition text-gray-400 hover:text-white">
+                <i class="fas fa-chart-pie"></i>
+            </button>
+        </div>
+
         <button onclick="openExpenseModal()"
             class="bg-red-600 hover:bg-red-500 text-white w-10 h-10 rounded-lg flex items-center justify-center transition shadow-lg shadow-red-500/20 transform hover:scale-105 active:scale-95">
             <i class="fas fa-plus"></i>
@@ -94,8 +126,58 @@
 </div>
 
 <!-- List View -->
-<div class="card overflow-hidden border border-gray-800 bg-[#171d21] rounded-xl shadow-xl">
-    <div class="overflow-x-auto">
+<div id="expenseListView" class="card overflow-hidden border border-gray-800 bg-[#171d21] rounded-xl shadow-xl">
+    <div class="divide-y divide-gray-800 md:hidden">
+        {% for expense in expenses %}
+        <article class="p-4 space-y-4">
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <p class="text-sm font-semibold text-white">{{ expense.description }}</p>
+                    <p class="mt-1 text-xs text-gray-500">{{ expense.due_date.strftime('%d/%m/%Y') }}</p>
+                </div>
+                <p class="text-sm font-bold text-red-400 text-right">R$ {{ "{:,.2f}".format(expense.amount or 0)|replace(",", "_")|replace(".", ",")|replace("_", ".") }}</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <span class="inline-flex items-center gap-2 rounded-full border border-gray-700 bg-[#11161a] px-3 py-1 text-xs text-gray-200">
+                    <span>{{ expense.category_icon }}</span>
+                    <span class="w-2 h-2 rounded-full" style="background-color: {{ expense.category_color }};"></span>
+                    {{ expense.category }}
+                </span>
+                {% if expense.status == 'paid' %}
+                    <span class="px-2 py-1 bg-emerald-500/10 text-emerald-500 rounded text-xs font-bold border border-emerald-500/20">PAGO</span>
+                {% elif expense.due_date < today and expense.status == 'pending' %}
+                    <span class="px-2 py-1 bg-red-500/10 text-red-500 rounded text-xs font-bold border border-red-500/20">ATRASADO</span>
+                {% else %}
+                    <span class="px-2 py-1 bg-yellow-500/10 text-yellow-500 rounded text-xs font-bold border border-yellow-500/20">PENDENTE</span>
+                {% endif %}
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-gray-400">
+                <div>
+                    <p class="uppercase tracking-[0.2em] text-gray-500 mb-1">Pagamento</p>
+                    <p>{{ expense.payment_type | title }}</p>
+                </div>
+            </div>
+            <div class="flex justify-end gap-3 pt-2 border-t border-gray-800">
+                <button data-expense='{{ expense | tojson | forceescape }}' onclick="openEditExpenseModal(this)" class="text-gray-400 hover:text-blue-500">
+                    <i class="fas fa-pen"></i>
+                </button>
+                <form action="{{ url_for('financial.delete_expense', id=expense.id) }}" method="POST" class="inline" onsubmit="return confirm('Excluir?')">
+                    <button class="text-gray-400 hover:text-red-500"><i class="fas fa-trash-alt"></i></button>
+                </form>
+            </div>
+        </article>
+        {% else %}
+        <div class="px-6 py-12 text-center text-gray-500">
+            <div class="flex flex-col items-center gap-3">
+                <div class="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center text-gray-600">
+                    <i class="fas fa-inbox text-4xl opacity-50"></i>
+                </div>
+                <p>Nenhuma despesa encontrada para os filtros selecionados.</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="hidden md:block overflow-x-auto">
         <table class="w-full text-sm text-left text-gray-400">
             <thead class="text-xs text-gray-400 uppercase bg-[#11161a] border-b border-gray-800">
                 <tr>
@@ -114,7 +196,13 @@
                         {{ expense.due_date.strftime('%d/%m/%Y') }}
                     </td>
                     <td class="px-6 py-4 font-medium text-white">{{ expense.description }}</td>
-                    <td class="px-6 py-4">{{ expense.category }}</td>
+                    <td class="px-6 py-4">
+                        <span class="inline-flex items-center gap-2 rounded-full border border-gray-700 bg-[#11161a] px-3 py-1 text-xs text-gray-200">
+                            <span>{{ expense.category_icon }}</span>
+                            <span class="w-2 h-2 rounded-full" style="background-color: {{ expense.category_color }};"></span>
+                            {{ expense.category }}
+                        </span>
+                    </td>
                     <td class="px-6 py-4">
                         {% if expense.status == 'paid' %}
                             <span class="px-2 py-1 bg-emerald-500/10 text-emerald-500 rounded text-xs font-bold border border-emerald-500/20">PAGO</span>
@@ -124,7 +212,7 @@
                             <span class="px-2 py-1 bg-yellow-500/10 text-yellow-500 rounded text-xs font-bold border border-yellow-500/20">PENDENTE</span>
                         {% endif %}
                     </td>
-                    <td class="px-6 py-4 font-mono font-bold text-red-400">R$ {{ "%.2f"|format(expense.amount) }}</td>
+                    <td class="px-6 py-4 font-mono font-bold text-red-400">R$ {{ "{:,.2f}".format(expense.amount or 0)|replace(",", "_")|replace(".", ",")|replace("_", ".") }}</td>
                     <td class="px-6 py-4 text-right">
                         <button 
                             data-expense='{{ expense | tojson | forceescape }}'
@@ -139,27 +227,83 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="6" class="px-6 py-12 text-center text-gray-500">Nenhuma despesa encontrada.</td>
+                    <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                        <div class="flex flex-col items-center gap-3">
+                            <div class="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center text-gray-600">
+                                <i class="fas fa-inbox text-4xl opacity-50"></i>
+                            </div>
+                            <p>Nenhuma despesa encontrada para os filtros selecionados.</p>
+                        </div>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
+    {% if total_pages > 1 %}
+    <div class="bg-[#11161a] border-t border-gray-800 px-6 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <span class="text-sm text-gray-500">
+            Página <span class="font-medium text-white">{{ page }}</span> de <span class="font-medium text-white">{{ total_pages }}</span>
+        </span>
+        <div class="flex gap-2">
+            {% if page > 1 %}
+            <a href="{{ url_for('financial.expenses_list', page=page-1, search=search, status=status_filter, month=selected_month) }}" class="px-3 py-1 bg-gray-800 text-gray-400 rounded hover:bg-gray-700 hover:text-white transition text-sm">Anterior</a>
+            {% endif %}
+            {% if page < total_pages %}
+            <a href="{{ url_for('financial.expenses_list', page=page+1, search=search, status=status_filter, month=selected_month) }}" class="px-3 py-1 bg-gray-800 text-gray-400 rounded hover:bg-gray-700 hover:text-white transition text-sm">Próxima</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<div id="expenseChartView" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in-down">
+    <div class="card p-6 lg:col-span-2 border border-gray-800 bg-[#171d21] rounded-xl">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-bold text-white">Histórico de Despesas</h3>
+            <div class="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+                <label for="expenseHistoryMonthSelect" class="text-xs text-gray-500 uppercase">Mês</label>
+                <div class="relative">
+                    <select id="expenseHistoryMonthSelect" onchange="updateExpenseCharts()"
+                        class="bg-[#0f1214] border border-gray-700 text-white rounded-lg p-2 pr-8 text-sm focus:border-red-500 outline-none appearance-none cursor-pointer">
+                        <option value="all">Todos</option>
+                        {% for opt in month_options %}
+                        <option value="{{ opt.value }}" {% if selected_month == opt.value %}selected{% endif %}>{{ opt.label }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-gray-500">
+                        <i class="fas fa-chevron-down text-xs"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <canvas id="expenseHistoryChart" height="100"></canvas>
+    </div>
+
+    <div class="card p-6 border border-gray-800 bg-[#171d21] rounded-xl">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-bold text-white">Por Categoria</h3>
+            <button class="text-gray-500 hover:text-white"><i class="fas fa-ellipsis-h"></i></button>
+        </div>
+        <div class="relative h-64">
+            <canvas id="expenseCategoryChart"></canvas>
+        </div>
+    </div>
 </div>
 
 <!-- Add Modal -->
 <div id="expenseModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-[#171d21] w-full max-w-md rounded-xl border border-gray-700 shadow-2xl animate-fade-in-down">
+    <div class="bg-[#171d21] w-full max-w-md rounded-xl border border-gray-700 shadow-2xl animate-fade-in-down max-h-[92vh] overflow-y-auto">
         <div class="flex justify-between items-center p-6 border-b border-gray-800">
             <h3 class="text-xl font-bold text-white"><i class="fas fa-plus-circle text-red-500"></i> Nova Despesa</h3>
             <button onclick="closeExpenseModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
         </div>
-        <form action="{{ url_for('financial.add_expense') }}" method="POST" class="p-6 space-y-4">
+        <form action="{{ url_for('financial.add_expense') }}" method="POST" class="p-4 sm:p-6 space-y-4">
             <div>
                 <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Descrição</label>
                 <input type="text" name="description" required class="w-full bg-[#0f1214] border border-gray-700 text-white rounded-lg p-3 outline-none focus:border-red-500">
             </div>
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Valor (R$)</label>
                     <input type="number" step="0.01" name="amount" required class="w-full bg-[#0f1214] border border-gray-700 text-white rounded-lg p-3 outline-none focus:border-red-500">
@@ -169,12 +313,15 @@
                     <input type="date" name="due_date" required class="w-full bg-[#0f1214] border border-gray-700 text-white rounded-lg p-3 outline-none focus:border-red-500 [color-scheme:dark]">
                 </div>
             </div>
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Categoria</label>
-                    <select name="category" class="w-full bg-[#0f1214] border border-gray-700 text-white rounded-lg p-3 outline-none focus:border-red-500 cursor-pointer">
+                    <div class="mb-1 flex items-center justify-between gap-2">
+                        <label class="block text-xs uppercase text-gray-500 font-bold">Categoria</label>
+                        <button type="button" onclick="openExpenseCategoryModal()" class="text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-400 hover:text-blue-300 transition">Gerenciar</button>
+                    </div>
+                    <select name="category_id" class="w-full bg-[#0f1214] border border-gray-700 text-white rounded-lg p-3 outline-none focus:border-red-500 cursor-pointer">
                         {% for category in expense_categories %}
-                        <option value="{{ category }}">{{ category }}</option>
+                        <option value="{{ category.id }}">{{ category.icon }} {{ category.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -190,7 +337,7 @@
             </div>
             <div>
                 <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Status</label>
-                <div class="flex gap-4">
+                <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
                     <label class="flex items-center gap-2 text-white cursor-pointer">
                         <input type="radio" name="status" value="pending" checked class="text-red-500 focus:ring-red-500 bg-gray-800 border-gray-600">
                         Pendente (Futuro)
@@ -201,27 +348,67 @@
                     </label>
                 </div>
             </div>
-            <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-800">
-                <button type="button" onclick="closeExpenseModal()" class="px-4 py-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">Cancelar</button>
-                <button type="submit" class="px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-lg">Salvar</button>
+            <div class="flex flex-col-reverse gap-3 mt-6 pt-4 border-t border-gray-800 sm:flex-row sm:justify-end">
+                <button type="button" onclick="closeExpenseModal()" class="w-full sm:w-auto px-4 py-2.5 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">Cancelar</button>
+                <button type="submit" class="w-full sm:w-auto px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-lg">Salvar</button>
             </div>
         </form>
     </div>
 </div>
 
+<div id="expenseCategoryModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-[#171d21] w-full max-w-3xl rounded-xl border border-gray-700 shadow-2xl max-h-[92vh] overflow-hidden">
+        <div class="flex justify-between items-center p-6 border-b border-gray-800">
+            <div>
+                <h3 class="text-xl font-bold text-white"><i class="fas fa-tags text-blue-500"></i> Categorias de Despesas</h3>
+                <p class="mt-1 text-sm text-gray-500">Cada conta gerencia suas próprias categorias de despesas.</p>
+            </div>
+            <button onclick="closeExpenseCategoryModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="grid grid-cols-1 gap-6 p-4 sm:p-6 lg:grid-cols-[320px,1fr] max-h-[75vh] overflow-y-auto">
+            <form action="{{ url_for('financial.add_category', kind='expense') }}" method="POST" class="space-y-4 rounded-xl border border-gray-800 bg-[#11161a] p-4">
+                <h4 class="text-sm font-semibold uppercase tracking-[0.2em] text-gray-400">Nova Categoria</h4>
+                <input type="text" name="name" required placeholder="Ex: impostos" class="w-full rounded-lg border border-gray-700 bg-[#171d21] px-3 py-2.5 text-white focus:border-blue-500 focus:outline-none">
+                <div class="grid grid-cols-1 sm:grid-cols-[90px,1fr] gap-3"><input type="text" name="icon" value="🏷️" maxlength="10" class="w-full rounded-lg border border-gray-700 bg-[#171d21] px-3 py-2.5 text-center text-white focus:border-blue-500 focus:outline-none"><input type="color" name="color" value="#6b7280" class="h-[46px] w-full rounded-lg border border-gray-700 bg-[#171d21] px-2 py-1"></div>
+                <button type="submit" class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-500 transition">Criar Categoria</button>
+            </form>
+            <div class="space-y-3">
+                {% for category in expense_categories %}
+                <div class="rounded-xl border border-gray-800 bg-[#11161a] p-4">
+                    <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+                        <form action="{{ url_for('financial.edit_category', kind='expense', category_id=category.id) }}" method="POST" class="grid flex-1 grid-cols-1 gap-3 md:grid-cols-[1.5fr,90px,120px,auto]">
+                            <input type="text" name="name" value="{{ category.name }}" required class="w-full rounded-lg border border-gray-700 bg-[#171d21] px-3 py-2.5 text-white focus:border-blue-500 focus:outline-none">
+                            <input type="text" name="icon" value="{{ category.icon }}" maxlength="10" class="w-full rounded-lg border border-gray-700 bg-[#171d21] px-3 py-2.5 text-center text-white focus:border-blue-500 focus:outline-none">
+                            <input type="color" name="color" value="{{ category.color or '#6b7280' }}" class="h-[46px] w-full rounded-lg border border-gray-700 bg-[#171d21] px-2 py-1">
+                            <button type="submit" class="inline-flex h-[46px] items-center justify-center gap-2 rounded-lg border border-blue-500/30 bg-blue-500/10 px-4 text-sm font-medium text-blue-400 hover:bg-blue-500/15 transition">Salvar</button>
+                        </form>
+                        <div class="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+                            <span class="rounded-full border border-gray-700 bg-[#171d21] px-3 py-1 text-xs text-gray-300">{{ category.usage_count }} uso(s)</span>
+                            <form action="{{ url_for('financial.delete_category', kind='expense', category_id=category.id) }}" method="POST" onsubmit="return confirm('Deseja excluir esta categoria?');">
+                                <button type="submit" class="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition {% if category.usage_count > 0 or expense_categories|length <= 1 %}cursor-not-allowed border border-red-500/20 bg-red-500/5 text-red-300{% else %}border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/15{% endif %}" {% if category.usage_count > 0 or expense_categories|length <= 1 %}disabled title="Categoria em uso ou última categoria ativa"{% endif %}>Excluir</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Edit Modal (Simplified, uses JS to populate) -->
 <div id="editExpenseModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-[#171d21] w-full max-w-md rounded-xl border border-gray-700 shadow-2xl animate-fade-in-down">
+    <div class="bg-[#171d21] w-full max-w-md rounded-xl border border-gray-700 shadow-2xl animate-fade-in-down max-h-[92vh] overflow-y-auto">
          <div class="flex justify-between items-center p-6 border-b border-gray-800">
             <h3 class="text-xl font-bold text-white"><i class="fas fa-pen text-blue-500"></i> Editar Despesa</h3>
             <button onclick="closeEditExpenseModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
         </div>
-        <form id="editExpenseForm" method="POST" class="p-6 space-y-4">
+        <form id="editExpenseForm" method="POST" class="p-4 sm:p-6 space-y-4">
              <div>
                 <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Descrição</label>
                 <input type="text" name="description" id="editDesc" required class="w-full bg-[#0f1214] border border-gray-700 text-white rounded-lg p-3 outline-none focus:border-blue-500">
             </div>
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                      <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Valor</label>
                      <input type="number" step="0.01" name="amount" id="editAmount" required class="w-full bg-[#0f1214] border border-gray-700 text-white rounded-lg p-3 outline-none">
@@ -231,12 +418,15 @@
                      <input type="date" name="due_date" id="editDate" required class="w-full bg-[#0f1214] border border-gray-700 text-white rounded-lg p-3 outline-none [color-scheme:dark]">
                 </div>
             </div>
-             <div class="grid grid-cols-2 gap-4">
+             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Categoria</label>
-                    <select name="category" id="editCategory" class="w-full bg-[#0f1214] border border-gray-700 text-white rounded-lg p-3 outline-none cursor-pointer">
+                    <div class="mb-1 flex items-center justify-between gap-2">
+                        <label class="block text-xs uppercase text-gray-500 font-bold">Categoria</label>
+                        <button type="button" onclick="openExpenseCategoryModal()" class="text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-400 hover:text-blue-300 transition">Gerenciar</button>
+                    </div>
+                    <select name="category_id" id="editCategory" class="w-full bg-[#0f1214] border border-gray-700 text-white rounded-lg p-3 outline-none cursor-pointer">
                         {% for category in expense_categories %}
-                        <option value="{{ category }}">{{ category }}</option>
+                        <option value="{{ category.id }}">{{ category.icon }} {{ category.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -252,7 +442,7 @@
             </div>
              <div>
                 <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Status</label>
-                <div class="flex gap-4">
+                <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
                     <label class="flex items-center gap-2 text-white cursor-pointer">
                         <input type="radio" name="status" value="pending" id="editStatusPending" class="text-red-500 bg-gray-800 border-gray-600">
                         Pendente
@@ -263,17 +453,36 @@
                     </label>
                 </div>
             </div>
-             <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-800">
+             <div class="flex flex-col-reverse gap-3 mt-6 pt-4 border-t border-gray-800 sm:flex-row sm:justify-end">
                 <button type="button" onclick="closeEditExpenseModal()" class="px-4 py-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg">Cancelar</button>
-                <button type="submit" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-lg">Salvar</button>
+                <button type="submit" class="w-full sm:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-lg">Salvar</button>
             </div>
         </form>
     </div>
 </div>
 
 <script>
+    function formatCurrencyBR(value) {
+        return Number(value || 0).toLocaleString('pt-BR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    }
+
+    function applyExpenseFilters() {
+        const month = document.getElementById('monthFilter').value;
+        const status = document.getElementById('statusFilter').value;
+        const search = document.getElementById('searchExpenseInput').value;
+        const params = new URLSearchParams();
+        if (month) params.append('month', month);
+        if (status) params.append('status', status);
+        if (search) params.append('search', search);
+        window.location.href = '?' + params.toString();
+    }
     function openExpenseModal() { document.getElementById('expenseModal').classList.remove('hidden'); }
     function closeExpenseModal() { document.getElementById('expenseModal').classList.add('hidden'); }
+    function openExpenseCategoryModal() { document.getElementById('expenseCategoryModal').classList.remove('hidden'); }
+    function closeExpenseCategoryModal() { document.getElementById('expenseCategoryModal').classList.add('hidden'); }
     function closeEditExpenseModal() { document.getElementById('editExpenseModal').classList.add('hidden'); }
     
     function openEditExpenseModal(btn) {
@@ -292,7 +501,7 @@
         // Format date string YYYY-MM-DD
         const d = new Date(data.due_date); 
         document.getElementById('editDate').value = d.toISOString().split('T')[0];
-        document.getElementById('editCategory').value = data.category;
+        document.getElementById('editCategory').value = data.category_id || '';
         document.getElementById('editPayment').value = data.payment_type;
         
         if (data.status === 'paid') {
@@ -309,9 +518,9 @@
             if (!startTimestamp) startTimestamp = timestamp;
             const progress = Math.min((timestamp - startTimestamp) / duration, 1);
             const currentVal = progress * (end - start) + start;
-            obj.innerHTML = currentVal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            obj.innerHTML = formatCurrencyBR(currentVal);
             if (progress < 1) window.requestAnimationFrame(step);
-            else obj.innerHTML = end.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            else obj.innerHTML = formatCurrencyBR(end);
         };
         window.requestAnimationFrame(step);
     }
@@ -328,8 +537,92 @@
     document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.count-up').forEach(c => statsObserver.observe(c));
     });
+
+    let expenseHistoryChartInstance = null;
+    let expenseCategoryChartInstance = null;
+
+    function toggleExpenseView(view) {
+        const listView = document.getElementById('expenseListView');
+        const chartView = document.getElementById('expenseChartView');
+        const btnList = document.getElementById('btnExpenseList');
+        const btnChart = document.getElementById('btnExpenseChart');
+        if (view === 'list') {
+            listView.classList.remove('hidden');
+            chartView.classList.add('hidden');
+            btnList.classList.add('bg-gray-700', 'text-white', 'shadow-sm');
+            btnList.classList.remove('text-gray-400');
+            btnChart.classList.remove('bg-gray-700', 'text-white', 'shadow-sm');
+            btnChart.classList.add('text-gray-400');
+        } else {
+            listView.classList.add('hidden');
+            chartView.classList.remove('hidden');
+            btnList.classList.remove('bg-gray-700', 'text-white', 'shadow-sm');
+            btnList.classList.add('text-gray-400');
+            btnChart.classList.add('bg-gray-700', 'text-white', 'shadow-sm');
+            btnChart.classList.remove('text-gray-400');
+            initExpenseCharts();
+        }
+    }
+
+    function getSelectedExpenseStatus() {
+        const select = document.getElementById('statusFilter');
+        return select ? select.value : '';
+    }
+
+    function getSelectedExpenseMonth() {
+        const select = document.getElementById('expenseHistoryMonthSelect');
+        return select ? select.value : 'all';
+    }
+
+    function initExpenseCharts() {
+        if (expenseHistoryChartInstance) return;
+        const ctxHistory = document.getElementById('expenseHistoryChart').getContext('2d');
+        const gradient = ctxHistory.createLinearGradient(0, 0, 0, 400);
+        gradient.addColorStop(0, 'rgba(239, 68, 68, 0.2)');
+        gradient.addColorStop(1, 'rgba(239, 68, 68, 0)');
+        const historyData = {{ chart_history_json | safe }};
+        expenseHistoryChartInstance = new Chart(ctxHistory, {
+            type: 'line',
+            data: { labels: historyData.labels, datasets: [{ label: 'Total Despesas', data: historyData.values, borderColor: '#ef4444', borderWidth: 2, tension: 0.4, fill: true, backgroundColor: gradient, pointBackgroundColor: '#ef4444', pointBorderColor: '#fff' }] },
+            options: { responsive: true, interaction: { intersect: false, mode: 'index' }, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#1f2937' }, ticks: { color: '#9ca3af', callback: function(value) { return 'R$ ' + formatCurrencyBR(value); } } }, x: { grid: { display: false }, ticks: { color: '#9ca3af' } } } }
+        });
+        const ctxCategory = document.getElementById('expenseCategoryChart').getContext('2d');
+        const categoryData = {{ chart_category_json | safe }};
+        expenseCategoryChartInstance = new Chart(ctxCategory, {
+            type: 'doughnut',
+            data: { labels: categoryData.labels, datasets: [{ data: categoryData.values, backgroundColor: ['#ef4444', '#f97316', '#eab308', '#3b82f6', '#8b5cf6', '#14b8a6'], borderWidth: 0, hoverOffset: 4 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', usePointStyle: true, padding: 20 } } }, layout: { padding: 20 } }
+        });
+    }
+
+    async function updateExpenseCharts() {
+        const month = getSelectedExpenseMonth();
+        const status = getSelectedExpenseStatus();
+        try {
+            const response = await fetch(appUrl(`/financial/expenses/charts?month=${encodeURIComponent(month)}&status=${encodeURIComponent(status)}`));
+            const data = await response.json();
+            if (!expenseHistoryChartInstance) initExpenseCharts();
+            if (expenseHistoryChartInstance) {
+                expenseHistoryChartInstance.data.labels = data.history.labels;
+                expenseHistoryChartInstance.data.datasets[0].data = data.history.values;
+                expenseHistoryChartInstance.update();
+            }
+            if (expenseCategoryChartInstance) {
+                expenseCategoryChartInstance.data.labels = data.category.labels;
+                expenseCategoryChartInstance.data.datasets[0].data = data.category.values;
+                expenseCategoryChartInstance.update();
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
 </script>
 {% endblock %}
+
+
+
+
+
 
 
 

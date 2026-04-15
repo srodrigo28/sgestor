@@ -3,23 +3,18 @@
 {% block title %}Tarefas{% endblock %}
 
 {% block content %}
-<!-- Title Row -->
-<div class="flex justify-between items-center mb-6">
+<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
     <div>
         <h2 class="text-2xl font-bold text-white">Minhas Tarefas</h2>
-        <p class="text-gray-500 text-sm">Gerencie suas atividades diárias</p>
+        <p class="text-gray-500 text-sm">Gerencie suas atividades diárias com categorias próprias da sua conta</p>
     </div>
     <div class="text-gray-500 text-sm hidden md:block">
-        <!-- Optional Date Placeholder -->
         <i class="far fa-calendar-alt mr-2"></i> Hoje
     </div>
 </div>
 
-<!-- Stats Grid (Full) -->
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 w-full">
-    <!-- Stat Card 1 -->
-    <div
-        class="card p-5 flex items-center justify-between border border-gray-800 bg-[#171d21] rounded-xl hover:-translate-y-1 transition duration-300">
+    <div class="card p-5 flex items-center justify-between border border-gray-800 bg-[#171d21] rounded-xl hover:-translate-y-1 transition duration-300">
         <div>
             <p class="text-sm text-gray-500 font-medium">Total de Tarefas</p>
             <h4 class="text-2xl font-bold text-white mt-1 count-up" data-target="{{ stats.total }}">0</h4>
@@ -28,15 +23,12 @@
                 <span class="text-gray-600 ml-1">Tarefas cadastradas</span>
             </p>
         </div>
-        <div
-            class="w-12 h-12 bg-blue-500/10 rounded-lg flex items-center justify-center text-blue-500 shadow-lg shadow-blue-500/20">
+        <div class="w-12 h-12 bg-blue-500/10 rounded-lg flex items-center justify-center text-blue-500 shadow-lg shadow-blue-500/20">
             <i class="fas fa-clipboard-list text-xl"></i>
         </div>
     </div>
 
-    <!-- Stat Card 2 -->
-    <div
-        class="card p-5 flex items-center justify-between border border-gray-800 bg-[#171d21] rounded-xl hover:-translate-y-1 transition duration-300">
+    <div class="card p-5 flex items-center justify-between border border-gray-800 bg-[#171d21] rounded-xl hover:-translate-y-1 transition duration-300">
         <div>
             <p class="text-sm text-gray-500 font-medium">Concluídas</p>
             <h4 class="text-2xl font-bold text-white mt-1 count-up" data-target="{{ stats.done }}">0</h4>
@@ -45,15 +37,12 @@
                 <span class="text-gray-600 ml-1">Tarefas finalizadas</span>
             </p>
         </div>
-        <div
-            class="w-12 h-12 bg-emerald-500/10 rounded-lg flex items-center justify-center text-emerald-500 shadow-lg shadow-emerald-500/20">
+        <div class="w-12 h-12 bg-emerald-500/10 rounded-lg flex items-center justify-center text-emerald-500 shadow-lg shadow-emerald-500/20">
             <i class="fas fa-check-circle text-xl"></i>
         </div>
     </div>
 
-    <!-- Stat Card 3 -->
-    <div
-        class="card p-5 flex items-center justify-between border border-gray-800 bg-[#171d21] rounded-xl hover:-translate-y-1 transition duration-300">
+    <div class="card p-5 flex items-center justify-between border border-gray-800 bg-[#171d21] rounded-xl hover:-translate-y-1 transition duration-300">
         <div>
             <p class="text-sm text-gray-500 font-medium">Em Andamento</p>
             <h4 class="text-2xl font-bold text-white mt-1 count-up" data-target="{{ stats.doing }}">0</h4>
@@ -62,15 +51,12 @@
                 <span class="text-gray-600 ml-1">Sendo executadas</span>
             </p>
         </div>
-        <div
-            class="w-12 h-12 bg-purple-500/10 rounded-lg flex items-center justify-center text-purple-500 shadow-lg shadow-purple-500/20">
+        <div class="w-12 h-12 bg-purple-500/10 rounded-lg flex items-center justify-center text-purple-500 shadow-lg shadow-purple-500/20">
             <i class="fas fa-spinner text-xl"></i>
         </div>
     </div>
 
-    <!-- Stat Card 4 -->
-    <div
-        class="card p-5 flex items-center justify-between border border-gray-800 bg-[#171d21] rounded-xl hover:-translate-y-1 transition duration-300">
+    <div class="card p-5 flex items-center justify-between border border-gray-800 bg-[#171d21] rounded-xl hover:-translate-y-1 transition duration-300">
         <div>
             <p class="text-sm text-gray-500 font-medium">A Fazer</p>
             <h4 class="text-2xl font-bold text-white mt-1 count-up" data-target="{{ stats.todo }}">0</h4>
@@ -79,61 +65,124 @@
                 <span class="text-gray-600 ml-1">Aguardando início</span>
             </p>
         </div>
-        <div
-            class="w-12 h-12 bg-amber-500/10 rounded-lg flex items-center justify-center text-amber-500 shadow-lg shadow-amber-500/20">
+        <div class="w-12 h-12 bg-amber-500/10 rounded-lg flex items-center justify-center text-amber-500 shadow-lg shadow-amber-500/20">
             <i class="fas fa-hourglass-half text-xl"></i>
         </div>
     </div>
 </div>
 
-<!-- Controls Row -->
 <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-    <!-- Search -->
-    <div class="relative group w-full md:w-auto">
+    <div class="relative group basis-full sm:flex-1 md:basis-auto md:w-auto">
         <input type="text" placeholder="Buscar tarefa..." value="{{ search or '' }}"
-            onkeydown="if(event.key === 'Enter') window.location.href = '?search=' + this.value + '&category={{ active_category }}'"
+            onkeydown="if(event.key === 'Enter') applyTaskFilters()"
+            id="taskSearchInput"
             class="bg-[#171d21] border border-gray-700 text-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block pl-10 p-2.5 w-full md:w-64 transition-all group-hover:border-gray-600">
         <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
             <i class="fas fa-search text-gray-500"></i>
         </div>
     </div>
 
-    <div class="flex items-center gap-3 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
-        <!-- Filter -->
-        <select onchange="window.location.href = '?category=' + this.value + '&search={{ search or '' }}'"
-            class="bg-[#171d21] border border-gray-700 text-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 cursor-pointer hover:border-gray-600 transition min-w-[140px]">
-            <option value="Todas as Categorias" {% if not active_category or active_category=='Todas as Categorias'
-                %}selected{% endif %}>Todas</option>
-            <option value="Trabalho" {% if active_category=='Trabalho' %}selected{% endif %}>Trabalho</option>
-            <option value="Estudo" {% if active_category=='Estudo' %}selected{% endif %}>Estudo</option>
-            <option value="Pessoal" {% if active_category=='Pessoal' %}selected{% endif %}>Pessoal</option>
-            <option value="Saúde" {% if active_category=='Saúde' %}selected{% endif %}>Saúde</option>
+    <div class="flex flex-wrap items-stretch gap-3 w-full md:w-auto md:items-center pb-1 md:pb-0">
+        <select id="taskCategoryFilter" onchange="applyTaskFilters()"
+            class="bg-[#171d21] border border-gray-700 text-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 cursor-pointer hover:border-gray-600 transition min-w-[180px] w-full sm:w-auto sm:flex-1 md:flex-none">
+            <option value="all" {% if active_category_id == 'all' %}selected{% endif %}>Todas as Categorias</option>
+            {% for category in task_categories %}
+            <option value="{{ category.id }}" {% if active_category_id == category.id|string %}selected{% endif %}>{{ category.icon }} {{ category.name }}</option>
+            {% endfor %}
         </select>
 
-        <!-- View Toggle -->
-        <div class="bg-[#171d21] p-1 rounded-lg border border-gray-700 flex items-center shrink-0">
+        <button type="button" onclick="openCategoryModal()"
+            class="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-700 bg-[#171d21] px-3 py-2.5 text-sm text-gray-300 hover:border-gray-600 hover:text-white transition w-full sm:w-auto shrink-0">
+            <i class="fas fa-tags"></i>
+            Categorias
+        </button>
+
+        <div class="bg-[#171d21] p-1 rounded-lg border border-gray-700 flex items-center w-full sm:w-auto shrink-0">
             <button onclick="toggleView('list')" id="btnList"
-                class="px-3 py-1.5 rounded-md text-sm font-medium transition bg-gray-700 text-white shadow-sm">
+                class="flex-1 sm:flex-none px-3 py-1.5 rounded-md text-sm font-medium transition bg-gray-700 text-white shadow-sm">
                 <i class="fas fa-list"></i>
             </button>
             <button onclick="toggleView('chart')" id="btnChart"
-                class="px-3 py-1.5 rounded-md text-sm font-medium transition text-gray-400 hover:text-white">
+                class="flex-1 sm:flex-none px-3 py-1.5 rounded-md text-sm font-medium transition text-gray-400 hover:text-white">
                 <i class="fas fa-chart-pie"></i>
             </button>
         </div>
 
-        <!-- Add Button -->
         <button onclick="openModal()"
-            class="bg-blue-600 hover:bg-blue-500 text-white w-10 h-10 rounded-lg flex items-center justify-center transition shadow-lg shadow-blue-500/20 transform hover:scale-105 active:scale-95 shrink-0">
+            class="bg-blue-600 hover:bg-blue-500 text-white w-full sm:w-10 h-10 rounded-lg flex items-center justify-center transition shadow-lg shadow-blue-500/20 transform hover:scale-105 active:scale-95 shrink-0">
             <i class="fas fa-plus"></i>
         </button>
     </div>
 </div>
 
-<!-- List View -->
-<div id="listView"
-    class="card overflow-hidden border border-gray-800 bg-[#171d21] rounded-xl shadow-xl transition-all duration-300">
-    <div class="overflow-x-auto">
+<div id="listView" class="card overflow-hidden border border-gray-800 bg-[#171d21] rounded-xl shadow-xl transition-all duration-300">
+    <div class="divide-y divide-gray-800 md:hidden">
+        {% for task in tasks %}
+        <article class="p-4 space-y-4">
+            <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                    <p class="text-sm font-semibold text-white">{{ task.title }}</p>
+                    <p class="mt-1 text-xs text-gray-500">Criado em {{ task.created_at.strftime('%d/%m/%Y') }}</p>
+                </div>
+                {% if task.status == 'feito' %}
+                <span class="bg-green-500/10 text-green-500 text-xs font-medium px-2.5 py-1 rounded border border-green-500/20">Feito</span>
+                {% elif task.status == 'fazendo' %}
+                <span class="bg-blue-500/10 text-blue-500 text-xs font-medium px-2.5 py-1 rounded border border-blue-500/20">Fazendo</span>
+                {% else %}
+                <span class="bg-gray-500/10 text-gray-400 text-xs font-medium px-2.5 py-1 rounded border border-gray-500/20">A Fazer</span>
+                {% endif %}
+            </div>
+
+            {% if task.description %}
+            <p class="text-sm text-gray-400">{{ task.description }}</p>
+            {% endif %}
+
+            <div class="flex flex-wrap gap-2">
+                <span class="inline-flex items-center gap-2 rounded-full border border-gray-700 bg-[#11161a] px-3 py-1 text-xs text-gray-200">
+                    <span class="text-sm">{{ task.category_icon }}</span>
+                    <span class="w-2 h-2 rounded-full" style="background-color: {{ task.category_color }};"></span>
+                    {{ task.category or 'Sem categoria' }}
+                </span>
+                {% if task.due_date %}
+                <span class="inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs text-amber-300">
+                    <i class="far fa-calendar"></i>
+                    {{ task.due_date.strftime('%d/%m/%Y') }}
+                </span>
+                {% endif %}
+            </div>
+
+            <div class="flex items-center justify-end gap-4 pt-2 border-t border-gray-800">
+                <button
+                    onclick='openEditModal({ id: {{ task.id }}, title: {{ task.title | tojson }}, description: {{ (task.description or "") | tojson }}, category_id: {{ (task.category_id|string if task.category_id else "") | tojson }}, status: {{ (task.status or "a_fazer") | tojson }}, due_date: {{ (task.due_date.strftime("%Y-%m-%d") if task.due_date else "") | tojson }} })'
+                    class="text-gray-400 hover:text-blue-500 transition" title="Editar">
+                    <i class="fas fa-pencil-alt"></i>
+                </button>
+                <form action="{{ url_for('tasks.toggle_task', task_id=task.id) }}" method="POST" class="inline">
+                    <button type="submit" class="text-gray-400 hover:text-green-500 transition" title="Concluir/Reabrir">
+                        <i class="fas fa-check"></i>
+                    </button>
+                </form>
+                <form action="{{ url_for('tasks.delete_task', task_id=task.id) }}" method="POST" class="inline"
+                    onsubmit="return confirm('Tem certeza que deseja excluir esta tarefa?');">
+                    <button type="submit" class="text-gray-400 hover:text-red-500 transition" title="Excluir">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </form>
+            </div>
+        </article>
+        {% else %}
+        <div class="px-6 py-12 text-center text-gray-500">
+            <div class="flex flex-col items-center gap-3">
+                <div class="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center text-gray-600">
+                    <i class="fas fa-clipboard-list text-xl"></i>
+                </div>
+                <p>Nenhuma tarefa encontrada para os filtros selecionados.</p>
+                <button onclick="openModal()" class="text-blue-500 hover:underline text-sm">Criar primeira tarefa</button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="hidden md:block overflow-x-auto">
         <table class="w-full text-sm text-left text-gray-400">
             <thead class="text-xs text-gray-400 uppercase bg-[#11161a] border-b border-gray-800">
                 <tr>
@@ -149,15 +198,11 @@
                 <tr class="border-b border-gray-800 hover:bg-gray-800/50 transition">
                     <td class="px-6 py-4">
                         {% if task.status == 'feito' %}
-                        <span
-                            class="bg-green-500/10 text-green-500 text-xs font-medium px-2.5 py-0.5 rounded border border-green-500/20">Feito</span>
+                        <span class="bg-green-500/10 text-green-500 text-xs font-medium px-2.5 py-0.5 rounded border border-green-500/20">Feito</span>
                         {% elif task.status == 'fazendo' %}
-                        <span
-                            class="bg-blue-500/10 text-blue-500 text-xs font-medium px-2.5 py-0.5 rounded border border-blue-500/20">Fazendo</span>
+                        <span class="bg-blue-500/10 text-blue-500 text-xs font-medium px-2.5 py-0.5 rounded border border-blue-500/20">Fazendo</span>
                         {% else %}
-                        <span
-                            class="bg-gray-500/10 text-gray-400 text-xs font-medium px-2.5 py-0.5 rounded border border-gray-500/20">A
-                            Fazer</span>
+                        <span class="bg-gray-500/10 text-gray-400 text-xs font-medium px-2.5 py-0.5 rounded border border-gray-500/20">A Fazer</span>
                         {% endif %}
                     </td>
                     <td class="px-6 py-4">
@@ -170,17 +215,10 @@
                         {% endif %}
                     </td>
                     <td class="px-6 py-4">
-                        <span class="flex items-center gap-2">
-                            {% if task.category == 'Trabalho' %}
-                            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                            {% elif task.category == 'Estudo' %}
-                            <span class="w-2 h-2 rounded-full bg-purple-500"></span>
-                            {% elif task.category == 'Saúde' %}
-                            <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                            {% else %}
-                            <span class="w-2 h-2 rounded-full bg-gray-500"></span>
-                            {% endif %}
-                            {{ task.category or 'Geral' }}
+                        <span class="inline-flex items-center gap-2 rounded-full border border-gray-700 bg-[#11161a] px-3 py-1 text-xs text-gray-200">
+                            <span class="text-sm">{{ task.category_icon }}</span>
+                            <span class="w-2 h-2 rounded-full" style="background-color: {{ task.category_color }};"></span>
+                            {{ task.category or 'Sem categoria' }}
                         </span>
                     </td>
                     <td class="px-6 py-4">
@@ -189,20 +227,18 @@
                     <td class="px-6 py-4 text-right">
                         <div class="flex items-center justify-end gap-3">
                             <button
-                                onclick='openEditModal({ id: {{ task.id }}, title: {{ task.title | tojson }}, description: {{ (task.description or "") | tojson }}, category: {{ (task.category or "Pessoal") | tojson }}, status: {{ (task.status or "a_fazer") | tojson }}, due_date: {{ (task.due_date.strftime("%Y-%m-%d") if task.due_date else "") | tojson }} })'
+                                onclick='openEditModal({ id: {{ task.id }}, title: {{ task.title | tojson }}, description: {{ (task.description or "") | tojson }}, category_id: {{ (task.category_id|string if task.category_id else "") | tojson }}, status: {{ (task.status or "a_fazer") | tojson }}, due_date: {{ (task.due_date.strftime("%Y-%m-%d") if task.due_date else "") | tojson }} })'
                                 class="text-gray-400 hover:text-blue-500 transition" title="Editar">
                                 <i class="fas fa-pencil-alt"></i>
                             </button>
                             <form action="{{ url_for('tasks.toggle_task', task_id=task.id) }}" method="POST" class="inline">
-                                <button type="submit" class="text-gray-400 hover:text-green-500 transition"
-                                    title="Concluir/Reabrir">
+                                <button type="submit" class="text-gray-400 hover:text-green-500 transition" title="Concluir/Reabrir">
                                     <i class="fas fa-check"></i>
                                 </button>
                             </form>
                             <form action="{{ url_for('tasks.delete_task', task_id=task.id) }}" method="POST" class="inline"
                                 onsubmit="return confirm('Tem certeza que deseja excluir esta tarefa?');">
-                                <button type="submit" class="text-gray-400 hover:text-red-500 transition"
-                                    title="Excluir">
+                                <button type="submit" class="text-gray-400 hover:text-red-500 transition" title="Excluir">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </form>
@@ -213,13 +249,11 @@
                 <tr>
                     <td colspan="5" class="px-6 py-12 text-center text-gray-500">
                         <div class="flex flex-col items-center gap-3">
-                            <div
-                                class="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center text-gray-600">
+                            <div class="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center text-gray-600">
                                 <i class="fas fa-clipboard-list text-xl"></i>
                             </div>
-                            <p>Nenhuma tarefa encontrada.</p>
-                            <button onclick="openModal()" class="text-blue-500 hover:underline text-sm">Criar primeira
-                                tarefa</button>
+                            <p>Nenhuma tarefa encontrada para os filtros selecionados.</p>
+                            <button onclick="openModal()" class="text-blue-500 hover:underline text-sm">Criar primeira tarefa</button>
                         </div>
                     </td>
                 </tr>
@@ -228,32 +262,29 @@
         </table>
     </div>
 
-    <!-- Pagination -->
-    <div class="bg-[#11161a] border-t border-gray-800 px-6 py-4 flex items-center justify-between">
+    <div class="bg-[#11161a] border-t border-gray-800 px-6 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <span class="text-sm text-gray-500">
-            Página <span class="font-medium text-white">{{ page }}</span> de <span class="font-medium text-white">{{
-                total_pages }}</span>
+            Página <span class="font-medium text-white">{{ page }}</span> de <span class="font-medium text-white">{{ total_pages }}</span>
         </span>
         <div class="flex gap-2">
             {% if page > 1 %}
-            <a href="{{ url_for('tasks.list', page=page-1, category=active_category) }}"
+            <a href="{{ url_for('tasks.list', page=page-1, category=active_category_id, search=search) }}"
                 class="px-3 py-1 bg-gray-800 text-gray-400 rounded hover:bg-gray-700 hover:text-white transition text-sm">
                 Anterior
             </a>
             {% endif %}
 
-            {% if page < total_pages %} <a href="{{ url_for('tasks.list', page=page+1, category=active_category) }}"
+            {% if page < total_pages %}
+            <a href="{{ url_for('tasks.list', page=page+1, category=active_category_id, search=search) }}"
                 class="px-3 py-1 bg-gray-800 text-gray-400 rounded hover:bg-gray-700 hover:text-white transition text-sm">
                 Próxima
-                </a>
-                {% endif %}
+            </a>
+            {% endif %}
         </div>
     </div>
 </div>
 
-<!-- Charts View (Hidden by default) -->
 <div id="chartView" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in-down">
-    <!-- Chart 1: Completed History -->
     <div class="card p-6 lg:col-span-2 border border-gray-800 bg-[#171d21] rounded-xl">
         <div class="flex justify-between items-center mb-6">
             <h3 class="text-lg font-bold text-white">Tarefas Criadas (7 Dias)</h3>
@@ -262,7 +293,6 @@
         <canvas id="salesChart" height="100"></canvas>
     </div>
 
-    <!-- Chart 2: Status Distribution -->
     <div class="card p-6 border border-gray-800 bg-[#171d21] rounded-xl">
         <div class="flex justify-between items-center mb-6">
             <h3 class="text-lg font-bold text-white">Distribuição por Status</h3>
@@ -274,13 +304,107 @@
     </div>
 </div>
 
-<!-- Edit Modal -->
+<div id="taskCategoryModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="closeCategoryModal()"></div>
+    <div class="absolute top-1/2 left-1/2 max-h-[92vh] w-[calc(100%-1rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl border border-gray-800 bg-[#171d21] shadow-2xl">
+        <div class="flex items-center justify-between border-b border-gray-800 px-6 py-5">
+            <div>
+                <h3 class="text-xl font-bold text-white">Categorias da Conta</h3>
+                <p class="mt-1 text-sm text-gray-500">Cada cliente gerencia suas próprias categorias sem impactar os outros.</p>
+            </div>
+            <button type="button" onclick="closeCategoryModal()" class="text-gray-400 hover:text-white transition">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 gap-6 p-4 sm:p-6 lg:grid-cols-[320px,1fr] overflow-y-auto max-h-[calc(92vh-88px)]">
+            <section class="rounded-xl border border-gray-800 bg-[#11161a] p-4">
+                <h4 class="text-sm font-semibold uppercase tracking-[0.2em] text-gray-400">Nova Categoria</h4>
+                <form action="{{ url_for('tasks.add_category') }}" method="POST" class="mt-4 space-y-4">
+                    <div>
+                        <label class="mb-2 block text-xs font-bold uppercase text-gray-400">Nome</label>
+                        <input type="text" name="name" required placeholder="Ex: Cliente VIP"
+                            class="w-full rounded-lg border border-gray-700 bg-[#171d21] px-3 py-2.5 text-white focus:border-blue-500 focus:outline-none">
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-[90px,1fr] gap-3">
+                        <div>
+                            <label class="mb-2 block text-xs font-bold uppercase text-gray-400">Ícone</label>
+                            <input type="text" name="icon" maxlength="10" value="🏷️"
+                                class="w-full rounded-lg border border-gray-700 bg-[#171d21] px-3 py-2.5 text-center text-white focus:border-blue-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="mb-2 block text-xs font-bold uppercase text-gray-400">Cor</label>
+                            <input type="color" name="color" value="#6b7280"
+                                class="h-[46px] w-full rounded-lg border border-gray-700 bg-[#171d21] px-2 py-1 text-white focus:border-blue-500 focus:outline-none">
+                        </div>
+                    </div>
+                    <button type="submit"
+                        class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-500">
+                        <i class="fas fa-plus"></i>
+                        Criar Categoria
+                    </button>
+                </form>
+            </section>
+
+            <section class="space-y-3">
+                {% for category in task_categories %}
+                <div class="rounded-xl border border-gray-800 bg-[#11161a] p-4">
+                    <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+                        <form action="{{ url_for('tasks.edit_category', category_id=category.id) }}" method="POST" class="grid flex-1 grid-cols-1 gap-3 md:grid-cols-[1.5fr,90px,120px,auto]">
+                            <div>
+                                <label class="mb-2 block text-xs font-bold uppercase text-gray-400">Nome</label>
+                                <input type="text" name="name" value="{{ category.name }}" required
+                                    class="w-full rounded-lg border border-gray-700 bg-[#171d21] px-3 py-2.5 text-white focus:border-blue-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="mb-2 block text-xs font-bold uppercase text-gray-400">Ícone</label>
+                                <input type="text" name="icon" value="{{ category.icon }}" maxlength="10"
+                                    class="w-full rounded-lg border border-gray-700 bg-[#171d21] px-3 py-2.5 text-center text-white focus:border-blue-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="mb-2 block text-xs font-bold uppercase text-gray-400">Cor</label>
+                                <input type="color" name="color" value="{{ category.color or '#6b7280' }}"
+                                    class="h-[46px] w-full rounded-lg border border-gray-700 bg-[#171d21] px-2 py-1 text-white focus:border-blue-500 focus:outline-none">
+                            </div>
+                            <button type="submit"
+                                class="inline-flex h-[46px] items-center justify-center gap-2 rounded-lg border border-blue-500/30 bg-blue-500/10 px-4 text-sm font-medium text-blue-400 transition hover:bg-blue-500/15">
+                                <i class="fas fa-save"></i>
+                                Salvar
+                            </button>
+                        </form>
+
+                        <div class="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between xl:justify-end">
+                            <span class="rounded-full border border-gray-700 bg-[#171d21] px-3 py-1 text-xs text-gray-300">
+                                {{ category.task_count }} tarefa(s)
+                            </span>
+                            <form action="{{ url_for('tasks.delete_category', category_id=category.id) }}" method="POST"
+                                onsubmit="return confirm('Deseja realmente excluir essa categoria?');">
+                                <button type="submit"
+                                    class="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition {% if category.task_count > 0 or task_categories|length <= 1 %}cursor-not-allowed border border-red-500/20 bg-red-500/5 text-red-300{% else %}border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/15{% endif %}"
+                                    {% if category.task_count > 0 or task_categories|length <= 1 %}disabled title="Categoria em uso ou última categoria ativa"{% endif %}>
+                                    <i class="fas fa-trash"></i>
+                                    Excluir
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% if category.task_count > 0 %}
+                    <p class="mt-3 text-xs text-amber-400">Essa categoria possui tarefas vinculadas. Reclassifique as tarefas antes de excluir.</p>
+                    {% elif task_categories|length <= 1 %}
+                    <p class="mt-3 text-xs text-amber-400">Você precisa manter pelo menos uma categoria ativa.</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </section>
+        </div>
+    </div>
+</div>
+
 {% include 'components/task_edit.html' %}
 {% endblock %}
 
 {% block scripts %}
 <script>
-    // Animation for Numbers (Count Up)
     function animateValue(obj, start, end, duration) {
         let startTimestamp = null;
         const step = (timestamp) => {
@@ -296,37 +420,44 @@
         window.requestAnimationFrame(step);
     }
 
-    // Intersection Observer for Animation
-    const observerOptions = {
-        root: null,
-        rootMargin: '0px',
-        threshold: 0.1
-    };
-
+    const observerOptions = { root: null, rootMargin: '0px', threshold: 0.1 };
     const statsObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                if (entry.target.classList.contains('count-up')) {
-                    const target = parseInt(entry.target.getAttribute('data-target'));
-                    // Check if already animated
-                    if (!entry.target.dataset.animated) {
-                        animateValue(entry.target, 0, target, 2000);
-                        entry.target.dataset.animated = "true";
-                        statsObserver.unobserve(entry.target);
-                    }
-                }
+            if (entry.isIntersecting && entry.target.classList.contains('count-up') && !entry.target.dataset.animated) {
+                const target = parseInt(entry.target.getAttribute('data-target'));
+                animateValue(entry.target, 0, target, 2000);
+                entry.target.dataset.animated = 'true';
+                statsObserver.unobserve(entry.target);
             }
         });
     }, observerOptions);
 
     document.addEventListener('DOMContentLoaded', () => {
-        const counters = document.querySelectorAll('.count-up');
-        counters.forEach(counter => statsObserver.observe(counter));
+        document.querySelectorAll('.count-up').forEach(counter => statsObserver.observe(counter));
     });
 
-    // --- Chart Logic --- //
+    function applyTaskFilters() {
+        const search = document.getElementById('taskSearchInput').value;
+        const category = document.getElementById('taskCategoryFilter').value;
+        const url = new URL(window.location.href);
 
-    // Toggle View
+        if (search) url.searchParams.set('search', search);
+        else url.searchParams.delete('search');
+
+        if (category && category !== 'all') url.searchParams.set('category', category);
+        else url.searchParams.delete('category');
+
+        window.location.href = url.toString();
+    }
+
+    function openCategoryModal() {
+        document.getElementById('taskCategoryModal').classList.remove('hidden');
+    }
+
+    function closeCategoryModal() {
+        document.getElementById('taskCategoryModal').classList.add('hidden');
+    }
+
     function toggleView(view) {
         const listView = document.getElementById('listView');
         const chartView = document.getElementById('chartView');
@@ -336,23 +467,17 @@
         if (view === 'list') {
             listView.classList.remove('hidden');
             chartView.classList.add('hidden');
-
             btnList.classList.add('bg-gray-700', 'text-white', 'shadow-sm');
             btnList.classList.remove('text-gray-400');
-
             btnChart.classList.remove('bg-gray-700', 'text-white', 'shadow-sm');
             btnChart.classList.add('text-gray-400');
         } else {
             listView.classList.add('hidden');
             chartView.classList.remove('hidden');
-
             btnList.classList.remove('bg-gray-700', 'text-white', 'shadow-sm');
             btnList.classList.add('text-gray-400');
-
             btnChart.classList.add('bg-gray-700', 'text-white', 'shadow-sm');
             btnChart.classList.remove('text-gray-400');
-
-            // Init charts if not already done
             initCharts();
         }
     }
@@ -361,80 +486,76 @@
     let orderChartInstance = null;
 
     function initCharts() {
-        if (salesChartInstance) return; // Already init
+        if (salesChartInstance) return;
 
-        // Sales (History) Chart
         const ctxSales = document.getElementById('salesChart').getContext('2d');
         const gradient = ctxSales.createLinearGradient(0, 0, 0, 400);
         gradient.addColorStop(0, 'rgba(59, 130, 246, 0.2)');
         gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
 
-        const chartData = {{ chart_data_json | safe
-    }};
-
-    salesChartInstance = new Chart(ctxSales, {
-        type: 'line',
-        data: {
-            labels: chartData.dates,
-            datasets: [{
-                label: 'Criadas',
-                data: chartData.counts,
-                borderColor: '#3b82f6',
-                borderWidth: 2,
-                tension: 0.4,
-                fill: true,
-                backgroundColor: gradient,
-                pointBackgroundColor: '#1d4ed8',
-                pointBorderColor: '#fff',
-                pointHoverBackgroundColor: '#fff',
-                pointHoverBorderColor: '#1d4ed8'
-            }]
-        },
-        options: {
-            responsive: true,
-            interaction: { intersect: false, mode: 'index' },
-            plugins: { legend: { display: false } },
-            scales: {
-                y: {
-                    grid: { color: '#1f2937' },
-                    ticks: { color: '#9ca3af', stepSize: 1 },
-                    beginAtZero: true
-                },
-                x: {
-                    grid: { display: false },
-                    ticks: { color: '#9ca3af' }
+        const chartData = {{ chart_data_json | safe }};
+        salesChartInstance = new Chart(ctxSales, {
+            type: 'line',
+            data: {
+                labels: chartData.dates,
+                datasets: [{
+                    label: 'Criadas',
+                    data: chartData.counts,
+                    borderColor: '#3b82f6',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true,
+                    backgroundColor: gradient,
+                    pointBackgroundColor: '#1d4ed8',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: '#1d4ed8'
+                }]
+            },
+            options: {
+                responsive: true,
+                interaction: { intersect: false, mode: 'index' },
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: {
+                        grid: { color: '#1f2937' },
+                        ticks: { color: '#9ca3af', stepSize: 1 },
+                        beginAtZero: true
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#9ca3af' }
+                    }
                 }
             }
-        }
-    });
+        });
 
-    // Order (Status) Chart
-    const ctxOrder = document.getElementById('orderChart').getContext('2d');
-    const statsData = {{ stats_json | safe }};
-
-    orderChartInstance = new Chart(ctxOrder, {
-        type: 'doughnut',
-        data: {
-            labels: ['Concluídos', 'Fazendo', 'A Fazer'],
-            datasets: [{
-                data: [statsData.done, statsData.doing, statsData.todo],
-                backgroundColor: ['#22c55e', '#3b82f6', '#9ca3af'],
-                borderWidth: 0,
-                hoverOffset: 4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { color: '#9ca3af', usePointStyle: true, padding: 20 }
-                }
+        const ctxOrder = document.getElementById('orderChart').getContext('2d');
+        const statsData = {{ stats_json | safe }};
+        orderChartInstance = new Chart(ctxOrder, {
+            type: 'doughnut',
+            data: {
+                labels: ['Concluídos', 'Fazendo', 'A Fazer'],
+                datasets: [{
+                    data: [statsData.done, statsData.doing, statsData.todo],
+                    backgroundColor: ['#22c55e', '#3b82f6', '#9ca3af'],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
             },
-            layout: { padding: 20 }
-        }
-    });
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: '#9ca3af', usePointStyle: true, padding: 20 }
+                    }
+                },
+                layout: { padding: 20 }
+            }
+        });
     }
 </script>
 {% endblock %}
+

@@ -80,6 +80,10 @@
                     <input type="number" name="experience_years" min="0" value="{{ mechanic.experience_years }}" 
                            class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition">
                 </div>
+                <div class="md:col-span-2 rounded-xl border {% if mechanic.is_active %}border-emerald-500/20 bg-emerald-500/5{% else %}border-amber-500/20 bg-amber-500/5{% endif %} p-4">
+                    <label class="block text-xs font-bold uppercase mb-2 {% if mechanic.is_active %}text-emerald-300{% else %}text-amber-300{% endif %}">Status</label>
+                    <p class="text-sm text-white">{{ 'Mecânico ativo e disponível para novos vínculos.' if mechanic.is_active else 'Mecânico inativo. O histórico é preservado e ele pode ser reativado a qualquer momento.' }}</p>
+                </div>
             </div>
             
             <div class="flex justify-end pt-4">

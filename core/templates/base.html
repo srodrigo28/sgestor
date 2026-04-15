@@ -103,7 +103,7 @@
                 <div class="w-8 h-8 bg-blue-600 rounded-lg shadow-lg shadow-blue-500/30 flex items-center justify-center">
                     <i class="fas fa-bolt text-sm"></i>
                 </div>
-                Rocker
+                SGestor
             </div>
             <button type="button" class="text-gray-400 hover:text-white transition p-2 rounded-lg hover:bg-gray-800" onclick="closeDrawer()" aria-label="Fechar menu">
                 <i class="fas fa-times text-lg"></i>
@@ -120,7 +120,7 @@
             <div class="w-8 h-8 bg-blue-600 rounded-lg shadow-lg shadow-blue-500/30 flex items-center justify-center">
                 <i class="fas fa-bolt text-sm"></i>
             </div>
-            Rocker
+            SGestor
         </div>
 
         {% set is_mobile = false %}
@@ -153,9 +153,54 @@
             </button>
         </div>
 
-        <div class="p-4 pt-5 md:p-6 md:pt-8 overflow-y-auto space-y-6 scroll-smooth h-full">
+        <div class="p-4 pt-5 pb-24 md:p-6 md:pt-8 md:pb-6 overflow-y-auto space-y-6 scroll-smooth h-full">
             {% block content %}{% endblock %}
         </div>
+
+        <nav class="md:hidden fixed bottom-0 inset-x-0 z-20 border-t border-gray-800 bg-[#11161a]/95 backdrop-blur px-2 py-2 safe-bottom">
+            <div class="grid grid-cols-5 gap-1 text-[11px]">
+                {% if menu_permissions.get('dashboard') %}
+                <a href="{{ url_for('tasks.dashboard') }}" class="flex flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 {% if request.path == '/dashboard' %}text-blue-400 bg-blue-500/10{% else %}text-gray-400{% endif %}">
+                    <i class="fas fa-home text-sm"></i>
+                    <span>Início</span>
+                </a>
+                {% else %}
+                <span></span>
+                {% endif %}
+
+                {% if menu_permissions.get('financial') %}
+                <a href="{{ url_for('financial.income_list') }}" class="flex flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 {% if request.path.startswith('/financial') %}text-blue-400 bg-blue-500/10{% else %}text-gray-400{% endif %}">
+                    <i class="fas fa-wallet text-sm"></i>
+                    <span>Financeiro</span>
+                </a>
+                {% else %}
+                <span></span>
+                {% endif %}
+
+                <button type="button" class="flex flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-gray-300 bg-[#171d21] border border-gray-800" onclick="openDrawer()" aria-label="Abrir menu rápido">
+                    <i class="fas fa-bars text-sm"></i>
+                    <span>Menu</span>
+                </button>
+
+                {% if menu_permissions.get('clients') %}
+                <a href="{{ url_for('clients.list') }}" class="flex flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 {% if request.path.startswith('/clients') %}text-blue-400 bg-blue-500/10{% else %}text-gray-400{% endif %}">
+                    <i class="fas fa-users text-sm"></i>
+                    <span>Clientes</span>
+                </a>
+                {% else %}
+                <span></span>
+                {% endif %}
+
+                {% if menu_permissions.get('budgets') %}
+                <a href="{{ url_for('budgets.list') }}" class="flex flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 {% if request.path.startswith('/budgets') %}text-blue-400 bg-blue-500/10{% else %}text-gray-400{% endif %}">
+                    <i class="fas fa-file-invoice-dollar text-sm"></i>
+                    <span>Orçamentos</span>
+                </a>
+                {% else %}
+                <span></span>
+                {% endif %}
+            </div>
+        </nav>
     </main>
 
     {% include 'components/task_add.html' %}

@@ -1,0 +1,12 @@
+CREATE TABLE IF NOT EXISTS task_categories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    name VARCHAR(80) NOT NULL,
+    icon VARCHAR(20) DEFAULT '🏷️',
+    color VARCHAR(20) DEFAULT '#6b7280',
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_task_categories_user_name (user_id, name),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);

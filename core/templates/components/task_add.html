@@ -1,13 +1,13 @@
 <!-- Task Modal Component -->
 <div id="taskModal" class="fixed inset-0 z-50 hidden">
-    <!-- Backdrop -->
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
 
-    <!-- Modal Content -->
-    <div
-        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-[#171d21] border border-gray-800 rounded-xl shadow-2xl transform transition-all scale-100 p-6">
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-[#171d21] border border-gray-800 rounded-xl shadow-2xl transform transition-all scale-100 p-6">
         <div class="flex justify-between items-center mb-6">
-            <h3 class="text-xl font-bold text-white">Nova Tarefa</h3>
+            <div>
+                <h3 class="text-xl font-bold text-white">Nova Tarefa</h3>
+                <p class="mt-1 text-sm text-gray-500">Escolha uma categoria própria da sua conta.</p>
+            </div>
             <button onclick="closeModal()" class="text-gray-400 hover:text-white transition">
                 <i class="fas fa-times"></i>
             </button>
@@ -21,13 +21,16 @@
             </div>
 
             <div>
-                <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Categoria</label>
-                <select name="category"
+                <div class="mb-2 flex items-center justify-between gap-3">
+                    <label class="block text-xs font-bold text-gray-400 uppercase">Categoria</label>
+                    <button type="button" onclick="closeModal(); openCategoryModal();"
+                        class="text-xs font-medium text-blue-400 hover:text-blue-300 transition">Gerenciar categorias</button>
+                </div>
+                <select name="category_id"
                     class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-2 px-3 text-white focus:outline-none focus:border-blue-500 transition">
-                    <option value="Trabalho">💼 Trabalho</option>
-                    <option value="Estudo">📚 Estudo</option>
-                    <option value="Pessoal">🏠 Pessoal</option>
-                    <option value="Saúde">💪 Saúde</option>
+                    {% for category in task_categories | default([]) %}
+                    <option value="{{ category.id }}">{{ category.icon }} {{ category.name }}</option>
+                    {% endfor %}
                 </select>
             </div>
 

@@ -25,6 +25,61 @@ def adjust_stock(cursor, budget_id, user_id, reverse=False):
 
 budgets_bp = Blueprint('budgets', __name__)
 
+
+def _resolve_month_window(raw_value=None):
+    months_pt = {1: 'Jan', 2: 'Fev', 3: 'Mar', 4: 'Abr', 5: 'Mai', 6: 'Jun',
+                 7: 'Jul', 8: 'Ago', 9: 'Set', 10: 'Out', 11: 'Nov', 12: 'Dez'}
+    today = date.today()
+    default_value = f"{today.year:04d}-{today.month:02d}"
+    selected = (raw_value or default_value).strip()
+    try:
+        start_month = datetime.strptime(selected, '%Y-%m').date()
+    except ValueError:
+        selected = default_value
+        start_month = datetime.strptime(selected, '%Y-%m').date()
+
+    if start_month.month == 12:
+        end_month = date(start_month.year + 1, 1, 1)
+    else:
+        end_month = date(start_month.year, start_month.month + 1, 1)
+
+    month_options = []
+    base = today.replace(day=1)
+    base_total = base.year * 12 + (base.month - 1)
+    for i in range(11, -1, -1):
+        total = base_total - i
+        y = total // 12
+        m = total % 12 + 1
+        value = f"{y:04d}-{m:02d}"
+        label = f"{months_pt[m]}/{str(y)[-2:]}"
+        month_options.append({'value': value, 'label': label})
+
+    return selected, start_month, end_month, month_options
+
+
+def _ensure_mechanics_schema(cursor):
+    try:
+        cursor.execute("ALTER TABLE mechanics ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1")
+    except Exception:
+        pass
+
+
+def _resolve_budget_datetime(raw_value, fallback=None):
+    value = (str(raw_value or '')).strip()
+    if not value:
+        return fallback
+    try:
+        base_date = datetime.strptime(value, '%Y-%m-%d').date()
+    except ValueError:
+        return fallback
+
+    if fallback:
+        base_time = fallback.time().replace(microsecond=0)
+    else:
+        base_time = datetime.now().time().replace(microsecond=0)
+
+    return datetime.combine(base_date, base_time)
+
 @budgets_bp.route('/budgets')
 def list():
     if 'id' not in session:
@@ -33,45 +88,68 @@ def list():
     user_id = session['id']
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    
-    # 1. Fetch Budgets List
-    search = request.args.get('search', '')
+
+    search = request.args.get('search', '').strip()
+    approval_filter = (request.args.get('approval') or 'all').strip().lower()
+    if approval_filter not in {'all', 'approved', 'sent'}:
+        approval_filter = 'all'
+
+    selected_month, start_month, end_month, month_options = _resolve_month_window(request.args.get('month'))
+    month_label = next((opt['label'] for opt in month_options if opt['value'] == selected_month), selected_month)
+
     query = """
         SELECT b.*, c.name as client_name, v.plate, v.model as vehicle_model
         FROM budgets b
         JOIN clients c ON b.client_id = c.id
         LEFT JOIN vehicles v ON b.vehicle_id = v.id
         WHERE b.user_id = %s
+          AND b.created_at >= %s
+          AND b.created_at < %s
     """
-    params = [user_id]
-    
+    params = [user_id, start_month, end_month]
+
+    if approval_filter != 'all':
+        query += " AND COALESCE(b.approval_status, b.status) = %s"
+        params.append(approval_filter)
+
     if search:
         query += " AND (c.name LIKE %s OR v.plate LIKE %s OR CAST(b.id AS CHAR) LIKE %s)"
         term = f"%{search}%"
         params.extend([term, term, term])
-        
+
     query += " ORDER BY b.created_at DESC"
-    
     cursor.execute(query, tuple(params))
     budgets = cursor.fetchall()
-    
-    # 2. Key Stats
+
     cursor.execute("""
         SELECT 
             COUNT(*) as total_count,
-            SUM(CASE WHEN approval_status = 'approved' THEN total_value ELSE 0 END) as approved_value,
+            SUM(CASE WHEN COALESCE(approval_status, status) = 'approved' THEN total_value ELSE 0 END) as approved_value,
             SUM(CASE WHEN created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 ELSE 0 END) as month_count
-        FROM budgets WHERE user_id = %s
+        FROM budgets
+        WHERE user_id = %s
     """, (user_id,))
     stats_data = cursor.fetchone()
-    
+
+    cursor.execute("""
+        SELECT
+            COUNT(*) AS total_month,
+            SUM(CASE WHEN COALESCE(approval_status, status) = 'approved' THEN 1 ELSE 0 END) AS approved_count,
+            SUM(CASE WHEN COALESCE(approval_status, status) = 'sent' THEN 1 ELSE 0 END) AS waiting_count
+        FROM budgets
+        WHERE user_id = %s AND created_at >= %s AND created_at < %s
+    """, (user_id, start_month, end_month))
+    filter_counts = cursor.fetchone() or {}
+
     stats = {
         'total_budgets': stats_data['total_count'] or 0,
         'approved_value': float(stats_data['approved_value'] or 0),
         'month_count': stats_data['month_count'] or 0
     }
-    
-    # 3. Chart Data: History (Last 6 Months)
+
+    months_pt = {1: 'Jan', 2: 'Fev', 3: 'Mar', 4: 'Abr', 5: 'Mai', 6: 'Jun',
+                 7: 'Jul', 8: 'Ago', 9: 'Set', 10: 'Out', 11: 'Nov', 12: 'Dez'}
+
     cursor.execute("""
         SELECT DATE_FORMAT(created_at, '%Y-%m') as month_year, SUM(total_value) as total
         FROM budgets 
@@ -81,9 +159,6 @@ def list():
     """, (user_id,))
     history_results = cursor.fetchall()
     totals_map = {row['month_year']: float(row['total'] or 0) for row in history_results}
-
-    months_pt = {1: 'Jan', 2: 'Fev', 3: 'Mar', 4: 'Abr', 5: 'Mai', 6: 'Jun',
-                 7: 'Jul', 8: 'Ago', 9: 'Set', 10: 'Out', 11: 'Nov', 12: 'Dez'}
 
     chart_weekly = {'labels': [], 'data': []}
     base = date.today().replace(day=1)
@@ -97,7 +172,6 @@ def list():
         chart_weekly['labels'].append(label)
         chart_weekly['data'].append(totals_map.get(key, 0))
     
-    # 4. Chart Data: Stage & Approval distributions (Last 12 Months)
     cursor.execute("""
         SELECT stage_status, COUNT(*) as count
         FROM budgets
@@ -148,16 +222,6 @@ def list():
         'colors': [approval_colors.get(row['approval_status'], '#6b7280') for row in approval_data]
     }
 
-    # Month options for chart filter (last 6 months)
-    month_options = []
-    for i in range(5, -1, -1):
-        total = base_total - i
-        y = total // 12
-        m = total % 12 + 1
-        value = f"{y:04d}-{m:02d}"
-        label = f"{months_pt[m]}/{str(y)[-2:]}"
-        month_options.append({'value': value, 'label': label})
-    
     conn.close()
     
     return render_template('budgets/index.html', 
@@ -167,6 +231,15 @@ def list():
                          chart_stage=json.dumps(chart_stage),
                          chart_approval=json.dumps(chart_approval),
                          month_options=month_options,
+                         selected_month=selected_month,
+                         approval_filter=approval_filter,
+                         month_label=month_label,
+                         filter_counts={
+                             'total': int(filter_counts.get('total_month') or 0),
+                             'approved': int(filter_counts.get('approved_count') or 0),
+                             'waiting': int(filter_counts.get('waiting_count') or 0),
+                         },
+                         search=search,
                          active_page='budgets')
 
 @budgets_bp.route('/budgets/charts')
@@ -323,7 +396,8 @@ def create():
     services_list = cursor.fetchall()
 
     # Fetch Mechanics
-    cursor.execute("SELECT id, name FROM mechanics WHERE user_id = %s ORDER BY name", (user_id,))
+    _ensure_mechanics_schema(cursor)
+    cursor.execute("SELECT id, name FROM mechanics WHERE user_id = %s AND COALESCE(is_active, 1) = 1 ORDER BY name", (user_id,))
     mechanics = cursor.fetchall()
     
     # Process images (JSON string -> list)
@@ -370,6 +444,7 @@ def save_budget():
     items = data.get('items', [])
     approval_status = data.get('approval_status') or data.get('status') or 'sent'  # Default: sent (Aguardando)
     stage_status = data.get('stage_status') or 'budget'  # Default: budget (Orçamento)
+    budget_date = _resolve_budget_datetime(data.get('budget_date')) or datetime.now().replace(microsecond=0)
 
     allowed_approval = {'sent', 'approved', 'rejected'}
     allowed_stage = {'budget', 'ready_for_pickup', 'delivered'}
@@ -413,12 +488,12 @@ def save_budget():
         # 3. Create Budget Header
         total_items = sum(float(item['total']) for item in items)
         total_value = max(0, total_items - float(discount))
-        expiration = (datetime.now() + timedelta(days=7)).strftime('%Y-%m-%d')
+        expiration = (budget_date.date() + timedelta(days=7)).strftime('%Y-%m-%d')
         
-        approved_at = datetime.now() if approval_status == 'approved' else None
-        rejected_at = datetime.now() if approval_status == 'rejected' else None
-        ready_for_pickup_at = datetime.now() if stage_status == 'ready_for_pickup' else None
-        delivered_at = datetime.now() if stage_status == 'delivered' else None
+        approved_at = budget_date if approval_status == 'approved' else None
+        rejected_at = budget_date if approval_status == 'rejected' else None
+        ready_for_pickup_at = budget_date if stage_status == 'ready_for_pickup' else None
+        delivered_at = budget_date if stage_status == 'delivered' else None
 
         cursor.execute("""
             INSERT INTO budgets (
@@ -431,13 +506,13 @@ def save_budget():
                 %s, %s, %s, %s, %s,
                 %s, %s, %s,
                 %s, %s, %s, %s,
-                %s, %s, %s, %s, NOW()
+                %s, %s, %s, %s, %s
             )
         """, (
             user_id, client_id, vehicle_id, km, mechanic_id,
             approval_status, approval_status, stage_status,
             approved_at, rejected_at, ready_for_pickup_at, delivered_at,
-            total_value, discount, notes, expiration
+            total_value, discount, notes, expiration, budget_date
         ))
         
         budget_id = cursor.lastrowid
@@ -542,7 +617,8 @@ def view_budget(id):
     services_list = cursor.fetchall()
     
     # Fetch Mechanics for editing
-    cursor.execute("SELECT id, name FROM mechanics WHERE user_id = %s ORDER BY name", (user_id,))
+    _ensure_mechanics_schema(cursor)
+    cursor.execute("SELECT id, name, is_active FROM mechanics WHERE user_id = %s AND (COALESCE(is_active, 1) = 1 OR id = %s) ORDER BY COALESCE(is_active, 1) DESC, name", (user_id, budget.get('mechanic_id') or 0))
     mechanics = cursor.fetchall()
 
     conn.close()
@@ -566,6 +642,7 @@ def update_budget(id):
     approval_status = data.get('approval_status') or data.get('status')
     stage_status = data.get('stage_status')
     vehicle_km = data.get('vehicle_km')
+    budget_date_raw = data.get('budget_date')
 
     mechanic_id = data.get('mechanic_id')
     if mechanic_id and (str(mechanic_id).lower() in ['null', 'none', 'undefined'] or str(mechanic_id).strip() == ''):
@@ -579,6 +656,10 @@ def update_budget(id):
         cursor.execute("SELECT id FROM budgets WHERE id = %s AND user_id = %s", (id, user_id))
         if not cursor.fetchone():
             return {'error': 'Budget not found'}, 404
+
+        cursor.execute("SELECT created_at FROM budgets WHERE id = %s AND user_id = %s", (id, user_id))
+        existing_budget = cursor.fetchone() or {}
+        budget_date = _resolve_budget_datetime(budget_date_raw, existing_budget.get('created_at')) or existing_budget.get('created_at') or datetime.now().replace(microsecond=0)
             
         # Update Header
         # Update Header
@@ -618,6 +699,8 @@ def update_budget(id):
             "status = %s",
             "approval_status = %s",
             "stage_status = %s",
+            "created_at = %s",
+            "expiration_date = %s",
             "total_value = %s",
             "discount = %s",
             "notes = %s",
@@ -628,6 +711,8 @@ def update_budget(id):
             approval_status,  # legacy column kept as decision
             approval_status,
             stage_status,
+            budget_date,
+            (budget_date.date() + timedelta(days=7)).strftime('%Y-%m-%d'),
             total_value,
             discount,
             notes,
@@ -635,7 +720,7 @@ def update_budget(id):
             mechanic_id,
         ]
 
-        now = datetime.now()
+        now = budget_date
         if approval_status != current_approval:
             if approval_status == 'approved':
                 fields.append("approved_at = %s")

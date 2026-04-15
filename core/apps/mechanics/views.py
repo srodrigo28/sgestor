@@ -6,6 +6,18 @@ from datetime import datetime
 
 mechanics_bp = Blueprint('mechanics', __name__)
 
+
+def _ensure_mechanics_schema(cursor):
+    try:
+        cursor.execute("ALTER TABLE mechanics ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1")
+    except Exception:
+        pass
+
+
+def _parse_status_filter(raw_value):
+    value = (raw_value or 'active').strip().lower()
+    return value if value in {'active', 'inactive', 'all'} else 'active'
+
 @mechanics_bp.route('/mechanics')
 def list_mechanics():
     if 'id' not in session:
@@ -13,12 +25,21 @@ def list_mechanics():
     
     user_id = session['id']
     search = request.args.get('search', '')
+    status_filter = _parse_status_filter(request.args.get('status'))
     
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
+    _ensure_mechanics_schema(cursor)
     
+    _ensure_mechanics_schema(cursor)
+
     query = "SELECT * FROM mechanics WHERE user_id = %s"
     params = [user_id]
+
+    if status_filter == 'active':
+        query += " AND is_active = 1"
+    elif status_filter == 'inactive':
+        query += " AND is_active = 0"
     
     if search:
         query += " AND name LIKE %s"
@@ -30,7 +51,7 @@ def list_mechanics():
     mechanics = cursor.fetchall()
     conn.close()
     
-    return render_template('mechanics/index.html', mechanics=mechanics, search=search)
+    return render_template('mechanics/index.html', mechanics=mechanics, search=search, status_filter=status_filter)
 
 @mechanics_bp.route('/mechanics/create', methods=['GET', 'POST'])
 def create():
@@ -86,13 +107,14 @@ def create():
         conn = get_db_connection()
         try:
             cursor = conn.cursor()
+            _ensure_mechanics_schema(cursor)
             cursor.execute("""
                 INSERT INTO mechanics 
-                (user_id, name, phone, birth_date, hiring_date, experience_years, photo_path, 
+                (user_id, name, phone, birth_date, hiring_date, experience_years, photo_path, is_active,
                  address_cep, address_street, address_number, address_reference, 
                  address_district, address_city, address_state, emergency_contact)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, (user_id, name, phone, birth_date, hiring_date, experience_years, photo_path,
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (user_id, name, phone, birth_date, hiring_date, experience_years, photo_path, 1,
                   addr_cep, addr_street, addr_number, address_reference,
                   addr_district, addr_city, addr_state, emergency_contact))
             conn.commit()
@@ -168,6 +190,7 @@ def edit(id):
                 new_photo_path = f"/static/uploads/mechanics/{final_filename}"
         
         try:
+            _ensure_mechanics_schema(cursor)
             cursor.execute("""
                 UPDATE mechanics SET
                 name=%s, phone=%s, birth_date=%s, hiring_date=%s, experience_years=%s, photo_path=%s,
@@ -189,22 +212,30 @@ def edit(id):
     conn.close()
     return render_template('mechanics/edit.html', mechanic=mechanic)
 
-@mechanics_bp.route('/mechanics/delete/<int:id>', methods=['GET', 'POST'])
-def delete(id):
+@mechanics_bp.route('/mechanics/toggle_status/<int:id>', methods=['POST'])
+def toggle_status(id):
     if 'id' not in session:
         return redirect(url_for('auth.login'))
-        
+
     user_id = session['id']
     conn = get_db_connection()
     try:
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM mechanics WHERE id = %s AND user_id = %s", (id, user_id))
+        cursor = conn.cursor(dictionary=True)
+        _ensure_mechanics_schema(cursor)
+        cursor.execute("SELECT id, name, is_active FROM mechanics WHERE id = %s AND user_id = %s", (id, user_id))
+        mechanic = cursor.fetchone()
+        if not mechanic:
+            flash('Mecânico não encontrado.', 'error')
+            return redirect(url_for('mechanics.list_mechanics'))
+
+        new_status = 0 if int(mechanic.get('is_active', 1) or 0) == 1 else 1
+        cursor.execute("UPDATE mechanics SET is_active = %s WHERE id = %s AND user_id = %s", (new_status, id, user_id))
         conn.commit()
-        flash('Mecânico removido com sucesso!', 'success')
-    except Exception as e:
-        flash('Erro ao remover mecânico. Verifique se existem orçamentos vinculados.', 'error')
+        flash('Mecânico reativado com sucesso!' if new_status == 1 else 'Mecânico desabilitado com sucesso!', 'success')
+    except Exception:
+        flash('Erro ao atualizar status do mecânico.', 'error')
     finally:
         conn.close()
-        
+
     return redirect(url_for('mechanics.list_mechanics'))
 
