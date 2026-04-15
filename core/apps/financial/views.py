@@ -31,6 +31,32 @@ FINANCIAL_CATEGORY_DEFAULTS = {
 def _normalize_name(value):
     return ' '.join(str(value or '').strip().split())
 
+def _normalize_payment_type(value):
+    normalized = _normalize_name(value).casefold()
+    aliases = {
+        'pix': 'pix',
+        'dinheiro': 'dinheiro',
+        'boleto': 'boleto',
+        'transfer├¬ncia': 'transfer├¬ncia',
+        'transferencia': 'transfer├¬ncia',
+        'cartao credito': 'cartao credito',
+        'cartao de credito': 'cartao credito',
+        'cart├úo de cr├®dito': 'cartao credito',
+        'cart├úo cr├®dito': 'cartao credito',
+        'cartao cr├®dito': 'cartao credito',
+        'credito': 'cartao credito',
+        'cr├®dito': 'cartao credito',
+        'cartao debito': 'cartao debito',
+        'cartao de debito': 'cartao debito',
+        'cart├úo de d├®bito': 'cartao debito',
+        'cart├úo d├®bito': 'cartao debito',
+        'cartao d├®bito': 'cartao debito',
+        'debito': 'cartao debito',
+        'd├®bito': 'cartao debito',
+    }
+    return aliases.get(normalized, normalized or 'pix')
+
+
 
 def _resolve_month_window(raw_value=None):
     today = date.today()
@@ -487,7 +513,7 @@ def expense_charts():
 def add_income():
     description = request.form['description']
     amount = request.form['amount']
-    payment_type = request.form['payment_type']
+    payment_type = _normalize_payment_type(request.form['payment_type'])
     entry_date = request.form['entry_date']
     status = request.form.get('status', 'received')
     user_id = session['id']
@@ -546,7 +572,7 @@ def delete_income(id):
 def update_income(id):
     description = request.form['description']
     amount = request.form['amount']
-    payment_type = request.form['payment_type']
+    payment_type = _normalize_payment_type(request.form['payment_type'])
     entry_date = request.form['entry_date']
     status = request.form.get('status', 'received')
     user_id = session['id']
@@ -652,7 +678,7 @@ def expenses_list():
 def add_expense():
     description = request.form['description']
     amount = request.form['amount']
-    payment_type = request.form['payment_type']
+    payment_type = _normalize_payment_type(request.form['payment_type'])
     due_date = request.form['due_date']
     status = request.form.get('status', 'pending')
     user_id = session['id']
@@ -687,7 +713,7 @@ def add_expense():
 def update_expense(id):
     description = request.form['description']
     amount = request.form['amount']
-    payment_type = request.form['payment_type']
+    payment_type = _normalize_payment_type(request.form['payment_type'])
     due_date = request.form['due_date']
     status = request.form.get('status', 'pending')
     user_id = session['id']
