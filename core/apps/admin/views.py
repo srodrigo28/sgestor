@@ -10,9 +10,10 @@ from apps.auth.views import login_required
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin', template_folder='../../templates/admin')
 
-ROLE_OPTIONS = ['admin', 'oficina', 'loja', 'pessoal']
+ROLE_OPTIONS = ['admin', 'oficina', 'loja', 'atendimentos', 'pessoal']
 MENU_OPTIONS = [
     {'key': 'dashboard', 'label': 'Dashboard'},
+    {'key': 'attendance', 'label': 'Atendimentos'},
     {'key': 'tasks', 'label': 'Tarefas'},
     {'key': 'financial', 'label': 'Financeiro'},
     {'key': 'products', 'label': 'Produtos'},
@@ -223,3 +224,4 @@ def update_permissions():
 
     flash('Permissões atualizadas com sucesso!')
     return redirect(url_for('admin.users'))
+

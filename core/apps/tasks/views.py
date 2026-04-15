@@ -11,7 +11,7 @@ TASK_CATEGORY_DEFAULTS = [
     {'name': 'Trabalho', 'icon': '💼', 'color': '#3b82f6'},
     {'name': 'Estudo', 'icon': '📚', 'color': '#8b5cf6'},
     {'name': 'Pessoal', 'icon': '🏠', 'color': '#f97316'},
-    {'name': 'Saude', 'icon': '💪', 'color': '#22c55e'},
+    {'name': 'Saúde', 'icon': '💪', 'color': '#22c55e'},
 ]
 
 
@@ -515,7 +515,7 @@ def create_task():
         cursor = conn.cursor(dictionary=True)
         category = _resolve_task_category(cursor, user_id, category_id=category_id, category_name=request.form.get('category'))
         if not category:
-            flash('Nenhuma categoria disponivel para criar a tarefa.')
+            flash('Nenhuma categoria disponível para criar a tarefa.')
             return redirect(url_for('tasks.list'))
 
         cursor.execute(

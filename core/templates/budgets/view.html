@@ -19,7 +19,7 @@
                 class="px-3 py-1 rounded-full text-xs font-bold bg-gray-500/10 text-gray-300 border border-gray-500/20">ORÇAMENTO</span>
             {% elif budget.stage_status == 'ready_for_pickup' %}
             <span
-                class="px-3 py-1 rounded-full text-xs font-bold bg-blue-500/10 text-blue-500 border border-blue-500/20">RETIRAR</span>
+                class="px-3 py-1 rounded-full text-xs font-bold bg-blue-500/10 text-blue-500 border border-blue-500/20">RETIRADA</span>
             {% elif budget.stage_status == 'delivered' %}
             <span
                 class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">ENTREGUE</span>
@@ -90,7 +90,7 @@
                 {% if session['role'] in ['oficina', 'admin'] %}
                 <!-- Placa -->
                 <div>
-                    <label class="block mb-2 text-sm font-medium text-gray-400">Placa do Veículo (Não editável)</label>
+                    <label class="block mb-2 text-sm font-medium text-gray-400">Placa do veículo (não editável)</label>
                     <input type="text" value="{{ budget.vehicle_plate }}" readonly
                         class="bg-[#0f1316] border border-gray-700 text-gray-300 text-sm rounded-lg block w-full p-2.5 font-mono uppercase cursor-not-allowed opacity-70">
                 </div>
@@ -124,7 +124,7 @@
                 <i class="fas fa-user-cog text-blue-500 mr-2"></i> Responsável Técnico
             </h3>
             <div>
-                 <label class="block mb-2 text-sm font-medium text-gray-400">Selecione o Mecânico</label>
+                 <label class="block mb-2 text-sm font-medium text-gray-400">Selecione o mecânico</label>
                  <select name="mechanic_id" id="mechanicInput" disabled class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 editable-field disabled:opacity-50 transition">
                     <option value="">-- Sem vínculo --</option>
                     {% for mechanic in mechanics %}
@@ -140,7 +140,7 @@
                 <h3 class="text-lg font-bold text-white">
                     <i class="fas fa-tools text-blue-500 mr-2"></i> Itens e Serviços
                 </h3>
-                <div class="text-xs text-gray-600">Debug: {{ items | length }} items found</div>
+                <div class="text-xs text-gray-600">{{ items | length }} item(ns) carregado(s)</div>
             </div>
 
             <!-- Add Item Form (Hidden by default, shown on Edit) -->
@@ -152,7 +152,7 @@
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" id="itemIsService" class="sr-only peer" onchange="toggleServiceMode()">
                         <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
-                        <span class="ml-3 text-sm font-medium text-gray-300" id="serviceLabel">É Serviço?</span>
+                        <span class="ml-3 text-sm font-medium text-gray-300" id="serviceLabel">É serviço?</span>
                     </label>
                 </div>
 
@@ -192,7 +192,7 @@
                 <div class="col-span-12 sm:col-span-4 md:col-span-3 flex items-center justify-between gap-2 sm:flex-col sm:items-stretch md:flex-row md:items-center">
                     <div class="flex items-center" id="takeawayWrapper">
                         <input type="checkbox" id="itemIsTakeaway" class="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded">
-                        <label for="itemIsTakeaway" class="ml-2 text-xs font-medium text-gray-300">Levou Peça?</label>
+                        <label for="itemIsTakeaway" class="ml-2 text-xs font-medium text-gray-300">Levou peça?</label>
                     </div>
                     <button type="button" onclick="addItem()"
                         class="w-full min-h-[44px] bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-xl text-sm px-3 py-2.5 transition inline-flex items-center justify-center gap-2 md:w-auto md:min-w-[44px]"
@@ -211,7 +211,7 @@
                             <th class="px-4 py-3 text-right">Valor Unit.</th>
                             <th class="px-4 py-3 text-center">Qtd.</th>
                             <th class="px-4 py-3 text-right">Total</th>
-                            <th class="px-4 py-3 text-center w-12">Action</th>
+                            <th class="px-4 py-3 text-center w-12">Ação</th>
                         </tr>
                     </thead>
                     <tbody id="itemsTableBody">
@@ -277,7 +277,7 @@
                     <select id="stageStatusSelect"
                         class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg block w-full p-2.5">
                         <option value="budget" {% if budget.stage_status=='budget' %}selected{% endif %}>Orçamento</option>
-                        <option value="ready_for_pickup" {% if budget.stage_status=='ready_for_pickup' %}selected{% endif %}>Retirar</option>
+                        <option value="ready_for_pickup" {% if budget.stage_status=='ready_for_pickup' %}selected{% endif %}>Retirada</option>
                         <option value="delivered" {% if budget.stage_status=='delivered' %}selected{% endif %}>Entregue</option>
                     </select>
                 </div>
@@ -293,14 +293,14 @@
         class="bg-[#171d21] w-full max-w-lg rounded-xl border border-gray-700 shadow-2xl relative animate-fade-in-down">
         <div class="flex justify-between items-center p-6 border-b border-gray-800">
             <h3 class="text-xl font-bold text-white flex items-center gap-2">
-                <i class="fas fa-check-circle text-green-500"></i> Aprovar e Gerar Receita
+                <i class="fas fa-check-circle text-green-500"></i> Aprovar e gerar entrada
             </h3>
             <button onclick="closeApproveModal()" class="text-gray-400 hover:text-white transition"><i
                     class="fas fa-times text-xl"></i></button>
         </div>
 
         <div class="p-6 space-y-4">
-            <p class="text-sm text-gray-400" id="approveModalSubtitle">Confirme os dados para lançar no financeiro:</p>
+            <p class="text-sm text-gray-400" id="approveModalSubtitle">Confirme os dados para lançar em entradas:</p>
 
             <div>
                 <label class="block mb-1 text-xs font-medium text-gray-500 uppercase">Descrição</label>
@@ -327,8 +327,8 @@
                     class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg block w-full p-2.5">
                     <option value="pix">PIX</option>
                     <option value="dinheiro">Dinheiro</option>
-                    <option value="cartao credito">Cartao de Credito</option>
-                    <option value="cartao debito">Cartao de Debito</option>
+                    <option value="cartao credito">Cartão de Crédito</option>
+                    <option value="cartao debito">Cartão de Débito</option>
                 </select>
             </div>
             <div>
@@ -645,7 +645,7 @@
             const result = await response.json();
 
             if (result.success) {
-                Toastify({ text: "Orçamento atualizado!", backgroundColor: "#10b981" }).showToast();
+                Toastify({ text: "Orçamento atualizado com sucesso!", backgroundColor: "#10b981" }).showToast();
                 setTimeout(() => location.reload(), 1000);
             } else {
                 Toastify({ text: "Erro: " + result.error, backgroundColor: "#ef4444" }).showToast();
@@ -671,8 +671,8 @@
             if (subtitleEl) subtitleEl.textContent = 'Atualize os dados do recebimento:';
             if (confirmBtn) confirmBtn.textContent = 'Salvar Alterações';
         } else {
-            if (titleEl) titleEl.innerHTML = '<i class="fas fa-check-circle text-green-500"></i> Aprovar e Gerar Receita';
-            if (subtitleEl) subtitleEl.textContent = 'Confirme os dados para lançar no financeiro:';
+            if (titleEl) titleEl.innerHTML = '<i class="fas fa-check-circle text-green-500"></i> Aprovar e gerar entrada';
+            if (subtitleEl) subtitleEl.textContent = 'Confirme os dados para lançar em entradas:';
             if (confirmBtn) confirmBtn.textContent = 'Confirmar Aprovação';
         }
 
@@ -710,7 +710,7 @@
             const result = await response.json();
 
             if (result.success) {
-                const msg = approveMode === 'edit' ? "Recebimento atualizado!" : "Aprovado e Gerado Receita!";
+                const msg = approveMode === 'edit' ? "Recebimento atualizado!" : "Aprovado e entrada gerada!";
                 Toastify({ text: msg, backgroundColor: "#10b981" }).showToast();
                 setTimeout(() => location.reload(), 1500);
             } else {

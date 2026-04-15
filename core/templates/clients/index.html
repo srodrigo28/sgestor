@@ -9,7 +9,7 @@
         <div class="min-w-0">
             <p class="text-[11px] uppercase tracking-[0.24em] text-blue-400 font-semibold">Relacionamento</p>
             <h2 class="mt-1 text-2xl md:text-3xl font-bold text-white">Clientes</h2>
-            <p class="mt-2 text-sm text-gray-500">Consulte a base, filtre por setor e cadastre clientes em uma experiencia mais confortavel no mobile.</p>
+            <p class="mt-2 text-sm text-gray-500">Consulte a base, filtre por setor e cadastre clientes em uma experiência mais confortável no mobile.</p>
         </div>
         <button onclick="openClientModal()"
             class="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-medium text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-500 w-full sm:w-auto">
@@ -36,18 +36,18 @@
                 <h4 class="text-3xl font-bold text-white mt-2 text-green-500 count-up" data-target="{{ stats.new_weekly }}">0</h4>
                 <p class="text-green-500 text-xs mt-2 flex items-center gap-1.5">
                     <i class="fas fa-arrow-up"></i>
-                    <span class="text-gray-600">Ultimos 7 dias</span>
+                    <span class="text-gray-600">Últimos 7 dias</span>
                 </p>
             </div>
         </div>
 
         <div class="card border border-gray-800 p-5 md:p-6 sm:col-span-2 xl:col-span-1">
             <div>
-                <p class="text-sm text-gray-500 font-medium">Novos no Mes</p>
+                <p class="text-sm text-gray-500 font-medium">Novos no Mês</p>
                 <h4 class="text-3xl font-bold text-white mt-2 text-purple-500 count-up" data-target="{{ stats.new_monthly }}">0</h4>
                 <p class="text-purple-500 text-xs mt-2 flex items-center gap-1.5">
                     <i class="fas fa-calendar-alt"></i>
-                    <span class="text-gray-600">Ultimos 30 dias</span>
+                    <span class="text-gray-600">Últimos 30 dias</span>
                 </p>
             </div>
         </div>
@@ -82,7 +82,7 @@
                     <button type="button" onclick="toggleView('chart')" id="btnChart"
                         class="flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-medium transition text-gray-400 hover:text-white inline-flex items-center justify-center gap-2">
                         <i class="fas fa-chart-pie"></i>
-                        Graficos
+                        Gráficos
                     </button>
                 </div>
 
@@ -106,7 +106,7 @@
                         </div>
                         <div class="min-w-0">
                             <h3 class="text-sm font-semibold text-white truncate">{{ client.name }}</h3>
-                            <p class="mt-1 text-xs text-gray-500 break-all">{{ client.cpf or 'CPF nao informado' }}</p>
+                            <p class="mt-1 text-xs text-gray-500 break-all">{{ client.cpf or 'CPF não informado' }}</p>
                         </div>
                     </div>
                     <span class="shrink-0 rounded-full border border-gray-700 bg-[#0f1316] px-2.5 py-1 text-[11px] font-medium text-gray-300">
@@ -163,7 +163,7 @@
                         <th scope="col" class="px-6 py-4">Contatos</th>
                         <th scope="col" class="px-6 py-4">Setor</th>
                         <th scope="col" class="px-6 py-4">Data de Cadastro</th>
-                        <th scope="col" class="px-6 py-4 text-center">Acoes</th>
+                        <th scope="col" class="px-6 py-4 text-center">Ações</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -241,7 +241,7 @@
             <div class="flex justify-between items-center mb-6 gap-4">
                 <h3 class="text-lg font-bold text-white flex items-center gap-2 min-w-0">
                     <i class="fas fa-chart-pie text-purple-500"></i>
-                    <span class="truncate">Distribuicao por Setor</span>
+                    <span class="truncate">Distribuição por Setor</span>
                 </h3>
             </div>
             <div class="relative mx-auto h-[260px] w-full max-w-[320px] sm:h-[320px]">
@@ -270,11 +270,11 @@
                 <div class="flex gap-2 border-b border-gray-700 mb-6 overflow-x-auto pb-1 sticky top-[72px] md:top-0 bg-[#171d21] z-10">
                     <button type="button" onclick="switchTab('basic')" id="tabBasic"
                         class="shrink-0 px-4 py-2.5 text-sm font-medium text-blue-500 border-b-2 border-blue-500 focus:outline-none transition-colors">
-                        Dados Basicos
+                        Dados Básicos
                     </button>
                     <button type="button" onclick="switchTab('address')" id="tabAddress"
                         class="shrink-0 px-4 py-2.5 text-sm font-medium text-gray-400 hover:text-gray-300 focus:outline-none transition-colors">
-                        Endereco
+                        Endereço
                     </button>
                 </div>
 
@@ -290,7 +290,7 @@
                         <label class="block mb-2 text-sm font-medium text-gray-400">Setor</label>
                         <input type="text" name="sector" list="sectorsList" required
                             class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3"
-                            placeholder="Ex: Varejo">
+                            placeholder="Ex: Setor Bueno">
                         <datalist id="sectorsList">
                             {% for sector in sectors %}
                             <option value="{{ sector }}">
@@ -322,7 +322,7 @@
 
                 <div id="contentAddress" class="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6 animate-fade-in hidden">
                     <div>
-                        <label class="block mb-2 text-sm font-medium text-gray-400">CEP <span class="text-xs text-gray-500">(Somente numeros)</span></label>
+                        <label class="block mb-2 text-sm font-medium text-gray-400">CEP <span class="text-xs text-gray-500">(Somente números)</span></label>
                         <div class="flex gap-2">
                             <input type="text" name="cep" id="cepInput" maxlength="9"
                                 class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3"
@@ -364,7 +364,7 @@
                     </div>
 
                     <div>
-                        <label class="block mb-2 text-sm font-medium text-gray-400">Numero</label>
+                        <label class="block mb-2 text-sm font-medium text-gray-400">Número</label>
                         <input type="text" name="address_number" id="numberInput"
                             class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3"
                             placeholder="123">
@@ -374,7 +374,7 @@
                         <label class="block mb-2 text-sm font-medium text-gray-400">Complemento <span class="text-xs text-gray-600">(Opcional)</span></label>
                         <input type="text" name="complement" id="complementInput"
                             class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3"
-                            placeholder="Apto 101, Bloco B">
+                            placeholder="Ex: Casa 2, fundos">
                     </div>
                 </div>
 
@@ -454,7 +454,7 @@
     function searchCep() {
         const cep = document.getElementById('cepInput').value.replace(/\D/g, '');
         if (cep.length !== 8) {
-            alert('CEP invalido.');
+            alert('CEP inválido.');
             return;
         }
 
@@ -462,7 +462,7 @@
             .then(response => response.json())
             .then(data => {
                 if (data.erro) {
-                    alert('CEP nao encontrado.');
+                    alert('CEP não encontrado.');
                     return;
                 }
                 document.getElementById('addressInput').value = data.logradouro;
@@ -472,8 +472,8 @@
                 document.getElementById('numberInput').focus();
             })
             .catch(error => {
-                console.error('Erro ao buscar CEP:', error);
-                alert('Erro ao buscar CEP.');
+                console.error('Erro ao buscar o CEP:', error);
+                alert('Erro ao buscar o CEP.');
             });
     }
 
@@ -493,7 +493,7 @@
         const state = btn.dataset.state;
 
         document.getElementById('modalTitle').innerText = 'Editar Cliente';
-        document.getElementById('submitBtn').innerText = 'Salvar Alteracoes';
+        document.getElementById('submitBtn').innerText = 'Salvar Alterações';
         document.getElementById('clientForm').action = `/clients/edit/${id}`;
 
         document.getElementsByName('name')[0].value = name;

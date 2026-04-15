@@ -10,6 +10,13 @@
 
     <div class="text-xs uppercase text-gray-500 font-bold tracking-wider mb-3 mt-8 px-2">Aplicações</div>
 
+    {% if menu_permissions.get('attendance') %}
+    <a href="{{ url_for('attendance.index') }}"
+        class="flex items-center gap-3 p-3 rounded-lg {% if request.path.startswith('/atendimentos') %}bg-emerald-600/10 text-emerald-400 border border-emerald-600/20{% else %}text-gray-400 hover:bg-gray-800 hover:text-white transition{% endif %} group">
+        <i class="fas fa-headset w-5 group-hover:text-emerald-400 transition"></i> Atendimentos
+    </a>
+    {% endif %}
+
     {% if menu_permissions.get('schedule') %}
     <a href="{{ url_for('schedule.index') }}"
         class="flex items-center gap-3 p-3 rounded-lg {% if request.path.startswith('/schedule') %}bg-blue-600/10 text-blue-500 border border-blue-600/20{% else %}text-gray-400 hover:bg-gray-800 hover:text-white transition{% endif %} group">

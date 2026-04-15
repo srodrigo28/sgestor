@@ -295,8 +295,21 @@
         const isService = typeInput ? typeInput.checked : false;
         const isTakeaway = takeawayInput ? takeawayInput.checked : false;
 
-        if (!desc || price <= 0) {
-            Toastify({ text: "Preencha descrição e valor!", backgroundColor: "#ef4444" }).showToast();
+        if (!desc) {
+            Toastify({ text: "Informe a descrição do item.", backgroundColor: "#ef4444" }).showToast();
+            descInput.focus();
+            return;
+        }
+
+        if (price <= 0) {
+            Toastify({ text: "Informe um valor unitário válido.", backgroundColor: "#ef4444" }).showToast();
+            priceInput.focus();
+            return;
+        }
+
+        if (qty <= 0) {
+            Toastify({ text: "Informe uma quantidade válida.", backgroundColor: "#ef4444" }).showToast();
+            qtyInput.focus();
             return;
         }
 
@@ -499,8 +512,15 @@
         const name = nameInput.value.trim();
         const price = parseFloat(priceInput.value);
 
-        if (!name || isNaN(price)) {
-            Toastify({ text: "Preencha nome e valor válidos!", backgroundColor: "#ef4444" }).showToast();
+        if (!name) {
+            Toastify({ text: "Informe o nome do serviço.", backgroundColor: "#ef4444" }).showToast();
+            nameInput.focus();
+            return;
+        }
+
+        if (isNaN(price) || price <= 0) {
+            Toastify({ text: "Informe um valor válido para o serviço.", backgroundColor: "#ef4444" }).showToast();
+            priceInput.focus();
             return;
         }
 
@@ -575,25 +595,36 @@
     // --- Save Budget Logic ---
     async function saveBudget(status) {
         if (items.length === 0) {
-            Toastify({ text: "Adicione pelo menos um item!", backgroundColor: "#ef4444" }).showToast();
+            Toastify({ text: "Adicione pelo menos um item ao orçamento.", backgroundColor: "#ef4444" }).showToast();
+            document.getElementById('itemDescInput').focus();
             return;
         }
 
         const form = document.getElementById('budgetForm');
-        const client_name = form.client_name ? form.client_name.value : '';
+        const client_name_full = form.client_name ? form.client_name.value.trim() : '';
+        const client_name = client_name_full.includes('|') ? client_name_full.split('|')[0].trim() : client_name_full;
         
         // Handle optional vehicle plate (only required if field exists)
         let vehicle_plate = '';
         if (form.vehicle_plate) {
             vehicle_plate = form.vehicle_plate.value;
             if (!vehicle_plate) {
-                Toastify({ text: "Preencha a Placa do Veículo!", backgroundColor: "#ef4444" }).showToast();
+                Toastify({ text: "Informe a placa do veículo.", backgroundColor: "#ef4444" }).showToast();
+                form.vehicle_plate.focus();
                 return;
             }
         }
 
         if (!client_name) {
-            Toastify({ text: "Preencha o Nome do Cliente!", backgroundColor: "#ef4444" }).showToast();
+            Toastify({ text: "Informe o cliente do orçamento.", backgroundColor: "#ef4444" }).showToast();
+            form.client_name.focus();
+            return;
+        }
+
+        const budgetDateField = document.getElementById('budgetDateInput');
+        if (budgetDateField && !budgetDateField.value) {
+            Toastify({ text: "Informe a data do orçamento.", backgroundColor: "#ef4444" }).showToast();
+            budgetDateField.focus();
             return;
         }
 
@@ -637,7 +668,7 @@
             }
         } catch (e) {
             console.error(e);
-            Toastify({ text: "Erro de conexão ao salvar", backgroundColor: "#ef4444" }).showToast();
+            Toastify({ text: "Erro de conexão ao salvar o orçamento.", backgroundColor: "#ef4444" }).showToast();
         }
     }
 

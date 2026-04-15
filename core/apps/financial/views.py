@@ -16,7 +16,7 @@ FINANCIAL_CATEGORY_DEFAULTS = {
     'income': [
         {'name': 'serviço', 'icon': '🛠️', 'color': '#8b5cf6'},
         {'name': 'contrato', 'icon': '📄', 'color': '#3b82f6'},
-        {'name': 'salario mensal', 'icon': '💼', 'color': '#22c55e'},
+        {'name': 'salário mensal', 'icon': '💼', 'color': '#22c55e'},
         {'name': 'bico', 'icon': '⚡', 'color': '#eab308'},
     ],
     'expense': [
@@ -493,7 +493,7 @@ def add_income():
     user_id = session['id']
 
     if not description or not amount or not entry_date:
-        flash('Preencha campos (desc, valor, data)', 'error')
+        flash('Preencha os campos de descrição, valor e data.', 'error')
         return redirect(url_for('financial.income_list'))
 
     conn = get_db_connection()
@@ -510,10 +510,10 @@ def add_income():
         """
         cursor.execute(query, (user_id, description, amount, category['name'], payment_type, entry_date, status, received_date))
         conn.commit()
-        flash('Receita registrada!', 'success')
+        flash('Entrada registrada com sucesso!', 'success')
     except Exception as e:
         conn.rollback()
-        flash(f'Erro: {str(e)}', 'error')
+        flash(f'Erro ao salvar: {str(e)}', 'error')
     finally:
         cursor.close()
         conn.close()
@@ -552,7 +552,7 @@ def update_income(id):
     user_id = session['id']
 
     if not description or not amount or not entry_date:
-        flash('Preencha campos (desc, valor, data)', 'error')
+        flash('Preencha os campos de descrição, valor e data.', 'error')
         return redirect(url_for('financial.income_list'))
 
     conn = get_db_connection()
@@ -560,7 +560,7 @@ def update_income(id):
     try:
         cursor.execute("SELECT id FROM financial_income WHERE id=%s AND user_id=%s", (id, user_id))
         if not cursor.fetchone():
-            flash('Não encontrado/sem permissão.', 'error')
+            flash('Registro não encontrado ou sem permissão.', 'error')
             return redirect(url_for('financial.income_list'))
 
         category = _resolve_financial_category(cursor, user_id, 'income', category_id=request.form.get('category_id'), category_name=request.form.get('category'))
@@ -576,10 +576,10 @@ def update_income(id):
         """
         cursor.execute(update_query, (description, amount, category['name'], payment_type, entry_date, status, received_date, id, user_id))
         conn.commit()
-        flash('Receita atualizada!', 'success')
+        flash('Entrada atualizada com sucesso!', 'success')
     except Exception as e:
         conn.rollback()
-        flash(f'Erro: {str(e)}', 'error')
+        flash(f'Erro ao salvar: {str(e)}', 'error')
     finally:
         cursor.close()
         conn.close()
@@ -658,7 +658,7 @@ def add_expense():
     user_id = session['id']
 
     if not description or not amount or not due_date:
-        flash('Preencha campos (desc, valor, data)', 'error')
+        flash('Preencha os campos de descrição, valor e data.', 'error')
         return redirect(url_for('financial.expenses_list'))
 
     conn = get_db_connection()
@@ -672,10 +672,10 @@ def add_expense():
         query = "INSERT INTO financial_expenses (user_id, description, amount, category, payment_type, due_date, status, paid_date) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
         cursor.execute(query, (user_id, description, amount, category['name'], payment_type, due_date, status, paid_date))
         conn.commit()
-        flash('Despesa registrada!', 'success')
+        flash('Despesa registrada com sucesso!', 'success')
     except Exception as e:
         conn.rollback()
-        flash(f'Erro: {str(e)}', 'error')
+        flash(f'Erro ao salvar: {str(e)}', 'error')
     finally:
         cursor.close()
         conn.close()
@@ -703,10 +703,10 @@ def update_expense(id):
         query = "UPDATE financial_expenses SET description=%s, amount=%s, category=%s, payment_type=%s, due_date=%s, status=%s, paid_date=%s WHERE id=%s AND user_id=%s"
         cursor.execute(query, (description, amount, category['name'], payment_type, due_date, status, paid_date, id, user_id))
         conn.commit()
-        flash('Despesa atualizada!', 'success')
+        flash('Despesa atualizada com sucesso!', 'success')
     except Exception as e:
         conn.rollback()
-        flash(f'Erro: {str(e)}', 'error')
+        flash(f'Erro ao salvar: {str(e)}', 'error')
     finally:
         cursor.close()
         conn.close()
@@ -721,10 +721,10 @@ def delete_expense(id):
     try:
         cursor.execute("DELETE FROM financial_expenses WHERE id=%s AND user_id=%s", (id, session['id']))
         conn.commit()
-        flash('Despesa removida!', 'success')
+        flash('Despesa removida com sucesso!', 'success')
     except Exception as e:
         conn.rollback()
-        flash(f'Erro: {str(e)}', 'error')
+        flash(f'Erro ao salvar: {str(e)}', 'error')
     finally:
         cursor.close()
         conn.close()

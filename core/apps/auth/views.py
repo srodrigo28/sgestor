@@ -89,7 +89,7 @@ def register():
     role = request.form.get('role', 'pessoal')
 
     # Validate role
-    if role not in ['pessoal', 'loja', 'oficina']:
+    if role not in ['pessoal', 'loja', 'oficina', 'atendimentos']:
         role = 'pessoal'
     
     hashed_password = generate_password_hash(password)
@@ -231,4 +231,5 @@ def update_profile():
 def logout():
     session.clear()
     return redirect(url_for('auth.home'))
+
 

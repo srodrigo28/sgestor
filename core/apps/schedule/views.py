@@ -9,43 +9,40 @@ schedule_bp = Blueprint('schedule', __name__)
 def index():
     if 'id' not in session:
         return redirect(url_for('auth.home'))
-    
+
     user_id = session['id']
+    selected_client_id = request.args.get('client_id', type=int)
+    open_schedule_modal = request.args.get('open') == '1'
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    
-    # Fetch Clients for the dropdown
+
     cursor.execute("SELECT id, name FROM clients WHERE user_id = %s ORDER BY name", (user_id,))
     clients = cursor.fetchall()
-    
-    # Fetch Appointments for Calendar (can filter by date range if needed later)
-    # For now, fetch all future or recent ones to show on calendar
+    preselected_client = next((client for client in clients if client['id'] == selected_client_id), None)
+
     cursor.execute("""
-        SELECT a.*, c.name as client_name 
-        FROM appointments a 
-        LEFT JOIN clients c ON a.client_id = c.id 
-        WHERE a.user_id = %s 
+        SELECT a.*, c.name as client_name
+        FROM appointments a
+        LEFT JOIN clients c ON a.client_id = c.id
+        WHERE a.user_id = %s
         ORDER BY a.start_time ASC
     """, (user_id,))
     appointments_db = cursor.fetchall()
-    
-    # Transform for FullCalendar
+
     events = []
     for appt in appointments_db:
-        color = '#3b82f6' # Blue default
+        color = '#3b82f6'
         if appt['status'] == 'completed':
-            color = '#22c55e' # Green
+            color = '#22c55e'
         elif appt['status'] == 'cancelled':
-            color = '#ef4444' # Red
+            color = '#ef4444'
         elif appt['status'] == 'no_show':
-            color = '#f59e0b' # Orange
-            
+            color = '#f59e0b'
+
         display_title = f"{appt['client_name']} - {appt['title']}" if appt['client_name'] else appt['title']
-        
-        # Prepend time to title for better visibility in month view
         time_str = appt['start_time'].strftime('%H:%M')
         display_title = f"{time_str} {display_title}"
-            
+
         events.append({
             'id': appt['id'],
             'title': display_title,
@@ -60,42 +57,42 @@ def index():
                 'status': appt['status']
             }
         })
-    
+
     conn.close()
-    
-    return render_template('schedule/index.html', 
-                         clients=clients, 
-                         events_json=json.dumps(events),
-                         active_page='schedule')
+
+    return render_template(
+        'schedule/index.html',
+        clients=clients,
+        events_json=json.dumps(events),
+        active_page='schedule',
+        preselected_client_id=preselected_client['id'] if preselected_client else '',
+        preselected_client_name=preselected_client['name'] if preselected_client else '',
+        open_schedule_modal=open_schedule_modal,
+    )
 
 @schedule_bp.route('/schedule/add', methods=['POST'])
 def add_appointment():
     if 'id' not in session:
         return redirect(url_for('auth.home'))
-        
+
     user_id = session['id']
     client_id = request.form.get('client_id') or None
     title = request.form.get('title')
     description = request.form.get('description')
     start_date = request.form.get('start_date')
     start_time = request.form.get('start_time')
-    end_time_val = request.form.get('end_time') # Duration or specific time
-    
-    # Combine date and time
+    end_time_val = request.form.get('end_time')
+
     try:
         start_dt = datetime.strptime(f"{start_date} {start_time}", "%Y-%m-%d %H:%M")
-        
-        # Calculate end time (default to 1 hour if not specified properly, but form should handle it)
-        # Assuming end_time is a duration in minutes or a specific time. Let's assume specific time for now.
         if end_time_val:
              end_dt = datetime.strptime(f"{start_date} {end_time_val}", "%Y-%m-%d %H:%M")
-             # Handle overnight events if end time < start time? Simplify: assume same day
              if end_dt < start_dt:
-                 end_dt = end_dt.replace(day=end_dt.day + 1) # Next day? Or just error.
+                 end_dt = end_dt.replace(day=end_dt.day + 1)
         else:
              from datetime import timedelta
              end_dt = start_dt + timedelta(hours=1)
-             
+
     except ValueError:
         flash('Erro no formato de data/hora.')
         return redirect(url_for('schedule.index'))
@@ -113,21 +110,19 @@ def add_appointment():
         flash(f'Erro ao criar agendamento: {str(e)}')
     finally:
         conn.close()
-        
+
     return redirect(url_for('schedule.index'))
 
 @schedule_bp.route('/schedule/edit/<int:id>', methods=['POST'])
 def edit_appointment(id):
     if 'id' not in session:
         return redirect(url_for('auth.home'))
-    
+
     user_id = session['id']
     client_id = request.form.get('client_id') or None
     title = request.form.get('title')
     description = request.form.get('description')
     status = request.form.get('status')
-    
-    # If dating changed
     start_date = request.form.get('start_date')
     start_time = request.form.get('start_time')
     end_time_val = request.form.get('end_time')
@@ -136,7 +131,7 @@ def edit_appointment(id):
         start_dt = datetime.strptime(f"{start_date} {start_time}", "%Y-%m-%d %H:%M")
         if end_time_val:
              end_dt = datetime.strptime(f"{start_date} {end_time_val}", "%Y-%m-%d %H:%M")
-        else: # Calculate based on old duration or default?
+        else:
              from datetime import timedelta
              end_dt = start_dt + timedelta(hours=1)
     except ValueError:
@@ -147,7 +142,7 @@ def edit_appointment(id):
     try:
         cursor = conn.cursor()
         cursor.execute("""
-            UPDATE appointments 
+            UPDATE appointments
             SET client_id=%s, title=%s, description=%s, start_time=%s, end_time=%s, status=%s
             WHERE id=%s AND user_id=%s
         """, (client_id, title, description, start_dt, end_dt, status, id, user_id))
@@ -164,7 +159,7 @@ def edit_appointment(id):
 def delete_appointment(id):
     if 'id' not in session:
         return redirect(url_for('auth.home'))
-        
+
     user_id = session['id']
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -173,4 +168,3 @@ def delete_appointment(id):
     conn.close()
     flash('Agendamento removido!')
     return redirect(url_for('schedule.index'))
-

@@ -1,0 +1,468 @@
+{% extends 'base.html' %}
+
+{% block title %}Atendimentos{% endblock %}
+{% block mobile_header_title %}Atendimentos{% endblock %}
+
+{% block head %}
+<style>
+    .client-sheet-panel {
+        transform: translateX(100%);
+        transition: transform 0.28s ease;
+    }
+
+    .client-sheet-panel.open {
+        transform: translateX(0);
+    }
+
+    .client-tab {
+        border: 1px solid rgba(55, 65, 81, 0.85);
+        background: rgba(15, 19, 22, 0.92);
+        color: #94a3b8;
+        transition: all 0.2s ease;
+    }
+
+    .client-tab[data-color='emerald'].active {
+        border-color: rgba(16, 185, 129, 0.45);
+        background: rgba(16, 185, 129, 0.12);
+        color: #6ee7b7;
+    }
+
+    .client-tab[data-color='cyan'].active {
+        border-color: rgba(34, 211, 238, 0.45);
+        background: rgba(34, 211, 238, 0.12);
+        color: #67e8f9;
+    }
+
+    .client-tab[data-color='amber'].active {
+        border-color: rgba(251, 191, 36, 0.45);
+        background: rgba(251, 191, 36, 0.12);
+        color: #fcd34d;
+    }
+
+    .client-tab[data-color='violet'].active {
+        border-color: rgba(167, 139, 250, 0.45);
+        background: rgba(167, 139, 250, 0.12);
+        color: #c4b5fd;
+    }
+
+    .client-tab-panel {
+        display: none;
+    }
+
+    .client-tab-panel.active {
+        display: block;
+    }
+
+    @media (max-width: 767px) {
+        .client-sheet-panel {
+            transform: translateY(100%);
+            transition: transform 0.28s ease;
+        }
+
+        .client-sheet-panel.open {
+            transform: translateY(0);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6 md:space-y-8">
+    <section class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+        <div class="min-w-0">
+            <p class="text-[11px] uppercase tracking-[0.24em] text-emerald-400 font-semibold">Operação de Atendimento</p>
+            <h2 class="mt-1 text-2xl md:text-3xl font-bold text-white">Agenda, equipe e financeiro no mesmo lugar</h2>
+            <p class="mt-2 max-w-3xl text-sm text-gray-500">Este módulo centraliza o que o atendimento precisa acompanhar no dia a dia: agendamentos, tarefas abertas, clientes ativos, equipe cadastrada e resultado financeiro do mês.</p>
+        </div>
+        <div class="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 px-5 py-4">
+            <p class="text-xs uppercase tracking-[0.24em] text-emerald-300">Saldo do mês</p>
+            <p class="mt-2 text-3xl font-bold text-white">R$ {{ '%.2f'|format(summary.balance_month) }}</p>
+            <p class="mt-1 text-xs text-gray-400">Entradas menos despesas previstas no período atual.</p>
+        </div>
+    </section>
+
+    <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div class="card border border-gray-800 p-5"><div class="flex items-start justify-between gap-4"><div><p class="text-sm text-gray-500 font-medium">Agendados hoje</p><h3 class="mt-2 text-3xl font-bold text-white">{{ stats.appointments_today }}</h3><p class="mt-2 text-xs text-cyan-400 flex items-center gap-2"><i class="fas fa-calendar-day"></i> Atendimentos previstos para hoje</p></div><div class="w-12 h-12 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center"><i class="fas fa-calendar-check text-xl"></i></div></div></div>
+        <div class="card border border-gray-800 p-5"><div class="flex items-start justify-between gap-4"><div><p class="text-sm text-gray-500 font-medium">Próximos agendamentos</p><h3 class="mt-2 text-3xl font-bold text-white">{{ stats.appointments_pending }}</h3><p class="mt-2 text-xs text-blue-400 flex items-center gap-2"><i class="fas fa-clock"></i> Ainda aguardando execução</p></div><div class="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center"><i class="fas fa-hourglass-half text-xl"></i></div></div></div>
+        <div class="card border border-gray-800 p-5"><div class="flex items-start justify-between gap-4"><div><p class="text-sm text-gray-500 font-medium">Tarefas abertas</p><h3 class="mt-2 text-3xl font-bold text-white">{{ stats.tasks_open }}</h3><p class="mt-2 text-xs text-amber-400 flex items-center gap-2"><i class="fas fa-list-check"></i> Pendências da operação</p></div><div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center"><i class="fas fa-clipboard-list text-xl"></i></div></div></div>
+        <div class="card border border-gray-800 p-5"><div class="flex items-start justify-between gap-4"><div><p class="text-sm text-gray-500 font-medium">Clientes cadastrados</p><h3 class="mt-2 text-3xl font-bold text-white">{{ stats.clients_total }}</h3><p class="mt-2 text-xs text-violet-400 flex items-center gap-2"><i class="fas fa-users"></i> Base disponível para atendimento</p></div><div class="w-12 h-12 rounded-xl bg-violet-500/10 text-violet-400 flex items-center justify-center"><i class="fas fa-user-group text-xl"></i></div></div></div>
+        <div class="card border border-gray-800 p-5"><div class="flex items-start justify-between gap-4"><div><p class="text-sm text-gray-500 font-medium">Equipe ativa</p><h3 class="mt-2 text-3xl font-bold text-white">{{ stats.employees_active }}</h3><p class="mt-2 text-xs text-emerald-400 flex items-center gap-2"><i class="fas fa-user-cog"></i> Funcionários disponíveis</p></div><div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center"><i class="fas fa-id-badge text-xl"></i></div></div></div>
+        <div class="card border border-gray-800 p-5"><div class="flex items-start justify-between gap-4"><div><p class="text-sm text-gray-500 font-medium">Despesas do mês</p><h3 class="mt-2 text-3xl font-bold text-white">R$ {{ '%.2f'|format(stats.expenses_month) }}</h3><p class="mt-2 text-xs text-rose-400 flex items-center gap-2"><i class="fas fa-wallet"></i> Custos previstos no período</p></div><div class="w-12 h-12 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center"><i class="fas fa-file-invoice-dollar text-xl"></i></div></div></div>
+    </section>
+
+    <section class="grid grid-cols-1 gap-4 xl:grid-cols-[1.1fr,0.9fr]">
+        <div class="card border border-gray-800 p-5 md:p-6">
+            <div class="mb-5 flex items-center justify-between gap-3">
+                <div>
+                    <h3 class="text-lg font-bold text-white">Clientes e Contratos</h3>
+                    <p class="mt-1 text-sm text-gray-500">Toque na seta para abrir o detalhe completo do cliente.</p>
+                </div>
+                <a href="{{ url_for('clients.list') }}" class="text-sm text-emerald-400 hover:text-emerald-300 transition">Ver base completa</a>
+            </div>
+
+            <div class="space-y-3">
+                {% for client in contract_clients %}
+                <div class="rounded-2xl border border-gray-800 bg-[#11161b] px-4 py-3">
+                    <div class="flex items-center gap-3">
+                        <div class="min-w-0 flex flex-1 items-center gap-3">
+                            <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-400">
+                                <i class="fas fa-building text-sm"></i>
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <p class="truncate text-sm font-semibold text-white">{{ client.trade_name or client.name }}</p>
+                                <p class="mt-1 text-xs text-gray-500">{{ client.sector or 'Sem segmento definido' }}</p>
+                            </div>
+                        </div>
+                        <button type="button" class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-gray-700 bg-[#171d21] text-gray-300 transition hover:border-emerald-500/40 hover:text-white" aria-label="Abrir detalhes de {{ client.name }}" onclick="openClientSheet(this)" data-id="{{ client.id }}" data-name="{{ client.name }}" data-legal-name="{{ client.legal_name or '' }}" data-trade-name="{{ client.trade_name or '' }}" data-sector="{{ client.sector or '' }}" data-contract-start-date="{{ client.contract_start_date or '' }}" data-cpf="{{ client.cpf or '' }}" data-phone1="{{ client.phone1 or '' }}" data-phone2="{{ client.phone2 or '' }}" data-cep="{{ client.cep or '' }}" data-address="{{ client.address or '' }}" data-address-number="{{ client.address_number or '' }}" data-complement="{{ client.complement or '' }}" data-neighborhood="{{ client.neighborhood or '' }}" data-city="{{ client.city or '' }}" data-state="{{ client.state or '' }}" data-contracts="{{ client.contracts_total }}"><i class="fas fa-arrow-right text-sm"></i></button>
+                    </div>
+                </div>
+                {% else %}
+                <div class="rounded-2xl border border-dashed border-gray-700 p-6 text-center text-sm text-gray-500">Nenhuma empresa cadastrada para exibir nesta lista.</div>
+                {% endfor %}
+            </div>
+
+            <div class="mt-5 flex items-center justify-between gap-3 border-t border-gray-800 pt-4 text-sm">
+                <a href="{{ url_for('attendance.index', client_page=client_page - 1) }}" class="inline-flex items-center gap-2 rounded-xl border border-gray-700 px-3 py-2 transition {% if client_page > 1 %}text-gray-200 hover:border-gray-600 hover:text-white{% else %}pointer-events-none text-gray-600{% endif %}"><i class="fas fa-chevron-left text-xs"></i> Anterior</a>
+                <span class="text-gray-500">Página {{ client_page }} de {{ client_total_pages }}</span>
+                <a href="{{ url_for('attendance.index', client_page=client_page + 1) }}" class="inline-flex items-center gap-2 rounded-xl border border-gray-700 px-3 py-2 transition {% if client_page < client_total_pages %}text-gray-200 hover:border-gray-600 hover:text-white{% else %}pointer-events-none text-gray-600{% endif %}">Próxima <i class="fas fa-chevron-right text-xs"></i></a>
+            </div>
+        </div>
+
+        <div class="card border border-gray-800 p-5 md:p-6">
+            <div class="mb-5 flex items-center justify-between gap-3"><div><h3 class="text-lg font-bold text-white">Próximos agendamentos</h3><p class="mt-1 text-sm text-gray-500">Fila imediata do atendimento.</p></div></div>
+            <div class="space-y-3">
+                {% for appointment in upcoming_appointments %}
+                <div class="rounded-2xl border border-gray-800 bg-[#11161b] p-4"><p class="text-sm font-semibold text-white">{{ appointment.title }}</p><p class="mt-1 text-xs text-gray-400">{{ appointment.client_name or 'Cliente não vinculado' }}</p><div class="mt-3 flex items-center justify-between gap-3 text-xs"><span class="text-cyan-400">{{ appointment.start_time.strftime('%d/%m/%Y %H:%M') }}</span><span class="rounded-full border border-gray-700 px-2 py-1 uppercase tracking-wide text-gray-300">{{ appointment.status }}</span></div></div>
+                {% else %}
+                <div class="rounded-2xl border border-dashed border-gray-700 p-6 text-center text-sm text-gray-500">Nenhum agendamento futuro encontrado.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <section class="card border border-gray-800 p-5 md:p-6">
+        <div class="mb-5 flex items-center justify-between gap-3"><div><h3 class="text-lg font-bold text-white">Fila de tarefas</h3><p class="mt-1 text-sm text-gray-500">Itens que ainda exigem ação da equipe.</p></div></div>
+        <div class="grid grid-cols-1 gap-3 lg:grid-cols-2">
+            {% for task in task_queue %}
+            <div class="rounded-2xl border border-gray-800 bg-[#11161b] p-4"><div class="flex items-start justify-between gap-3"><div><p class="text-sm font-semibold text-white">{{ task.title }}</p><p class="mt-1 text-xs text-gray-400">{{ task.category or 'Sem categoria' }}</p></div><span class="rounded-full border border-gray-700 px-2 py-1 text-[10px] uppercase tracking-wide text-gray-300">{{ task.status }}</span></div><p class="mt-3 text-xs text-gray-500">{% if task.due_date %}Prazo: {{ task.due_date.strftime('%d/%m/%Y') }}{% else %}Sem prazo definido{% endif %}</p></div>
+            {% else %}
+            <div class="rounded-2xl border border-dashed border-gray-700 p-6 text-center text-sm text-gray-500 lg:col-span-2">Nenhuma tarefa em aberto no momento.</div>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+<div id="clientSheetOverlay" class="hidden fixed inset-0 z-40 bg-black/70 backdrop-blur-sm" onclick="closeClientSheet()"></div>
+<div id="clientSheetPanel" class="client-sheet-panel fixed bottom-0 right-0 top-auto z-50 h-[84vh] w-full rounded-t-3xl border border-gray-800 bg-[#11161a] shadow-2xl md:top-0 md:h-full md:max-w-lg md:rounded-none md:rounded-l-3xl">
+    <div class="flex h-full flex-col">
+        <div class="border-b border-gray-800 px-5 py-4 md:px-6">
+            <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                    <p class="text-[11px] uppercase tracking-[0.24em] text-emerald-400">Cliente</p>
+                    <h3 id="sheetClientName" class="mt-1 truncate text-xl font-bold text-white">Detalhes do Cliente</h3>
+                    <p id="sheetClientSubtitle" class="mt-1 text-sm text-gray-500">Razão social e contrato em um só lugar.</p>
+                </div>
+                <button type="button" class="rounded-xl p-2 text-gray-400 transition hover:bg-gray-800 hover:text-white" onclick="closeClientSheet()" aria-label="Fechar detalhes do cliente"><i class="fas fa-times text-lg"></i></button>
+            </div>
+
+            <div class="mt-4 flex flex-wrap gap-2">
+                <button type="button" class="client-tab active inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold uppercase tracking-wide" data-tab="identification" data-color="emerald" onclick="switchClientTab('identification')"><i class="fas fa-id-card"></i> Identificação</button>
+                <button type="button" class="client-tab inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold uppercase tracking-wide" data-tab="contract" data-color="cyan" onclick="switchClientTab('contract')"><i class="fas fa-file-signature"></i> Contrato</button>
+                <button type="button" class="client-tab inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold uppercase tracking-wide" data-tab="address" data-color="amber" onclick="switchClientTab('address')"><i class="fas fa-location-dot"></i> Endereço</button>
+                <button type="button" class="client-tab inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold uppercase tracking-wide" data-tab="edit" data-color="violet" onclick="switchClientTab('edit')"><i class="fas fa-pen"></i> Editar</button>
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto px-5 py-5 md:px-6">
+            <div class="rounded-3xl border border-emerald-500/20 bg-emerald-500/5 p-4 md:p-5">
+                <div class="flex items-start gap-4">
+                    <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-400"><i class="fas fa-building text-lg"></i></div>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex flex-wrap items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <p id="sheetClientTradeName" class="truncate text-base font-semibold text-emerald-300">Nome fantasia</p>
+                                <p id="sheetClientLegalName" class="mt-1 text-sm text-gray-400">Razão social</p>
+                            </div>
+                            <div class="rounded-2xl border border-emerald-500/20 bg-[#0f1817] px-4 py-3 text-right">
+                                <p class="text-[11px] uppercase tracking-wide text-emerald-200/70">Contratos</p>
+                                <p id="sheetClientContracts" class="mt-1 text-2xl font-bold text-white">0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="clientTabIdentification" class="client-tab-panel active mt-5 space-y-3">
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div class="rounded-2xl border border-gray-800 bg-[#171d21] p-4 sm:col-span-2"><p class="text-[11px] uppercase tracking-wide text-gray-500">Nome principal</p><p id="sheetClientDisplayName" class="mt-2 text-sm font-medium text-white">Não informado</p></div>
+                    <div class="rounded-2xl border border-gray-800 bg-[#171d21] p-4 sm:col-span-2"><p class="text-[11px] uppercase tracking-wide text-gray-500">CPF/CNPJ</p><p id="sheetClientDocument" class="mt-2 text-sm font-medium text-white">Não informado</p></div>
+                    <div class="rounded-2xl border border-gray-800 bg-[#171d21] p-4"><p class="text-[11px] uppercase tracking-wide text-gray-500">Telefone principal</p><p id="sheetClientPhone1" class="mt-2 text-sm font-medium text-white">Não informado</p></div>
+                    <div class="rounded-2xl border border-gray-800 bg-[#171d21] p-4"><p class="text-[11px] uppercase tracking-wide text-gray-500">Contato alternativo</p><p id="sheetClientPhone2" class="mt-2 text-sm font-medium text-white">Não informado</p></div>
+                    <div class="rounded-2xl border border-gray-800 bg-[#171d21] p-4 sm:col-span-2"><p class="text-[11px] uppercase tracking-wide text-gray-500">Segmento</p><p id="sheetClientSector" class="mt-2 text-sm font-medium text-white">Sem segmento definido</p></div>
+                </div>
+            </div>
+
+            <div id="clientTabContract" class="client-tab-panel mt-5 space-y-3">
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div class="rounded-2xl border border-gray-800 bg-[#171d21] p-4"><p class="text-[11px] uppercase tracking-wide text-gray-500">Início do contrato</p><p id="sheetClientContractStart" class="mt-2 text-sm font-medium text-white">Não informado</p></div>
+                    <div class="rounded-2xl border border-gray-800 bg-[#171d21] p-4"><p class="text-[11px] uppercase tracking-wide text-gray-500">Contratos vinculados</p><p id="sheetClientContractsLabel" class="mt-2 text-sm font-medium text-white">0 contratos</p></div>
+                    <div class="rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-4 sm:col-span-2"><p class="text-[11px] uppercase tracking-wide text-cyan-300">Resumo operacional</p><p class="mt-2 text-sm text-white">Cliente preparado para edição, agendamento e acompanhamento sem sair do módulo.</p></div>
+                </div>
+            </div>
+
+            <div id="clientTabAddress" class="client-tab-panel mt-5 space-y-3">
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div class="rounded-2xl border border-gray-800 bg-[#171d21] p-4"><p class="text-[11px] uppercase tracking-wide text-gray-500">CEP</p><p id="sheetClientCep" class="mt-2 text-sm font-medium text-white">Não informado</p></div>
+                    <div class="rounded-2xl border border-gray-800 bg-[#171d21] p-4"><p class="text-[11px] uppercase tracking-wide text-gray-500">UF</p><p id="sheetClientState" class="mt-2 text-sm font-medium text-white">Não informado</p></div>
+                    <div class="rounded-2xl border border-gray-800 bg-[#171d21] p-4 sm:col-span-2"><p class="text-[11px] uppercase tracking-wide text-gray-500">Logradouro</p><p id="sheetClientAddress" class="mt-2 text-sm font-medium text-white">Endereço não informado</p></div>
+                    <div class="rounded-2xl border border-gray-800 bg-[#171d21] p-4"><p class="text-[11px] uppercase tracking-wide text-gray-500">Bairro</p><p id="sheetClientNeighborhood" class="mt-2 text-sm font-medium text-white">Não informado</p></div>
+                    <div class="rounded-2xl border border-gray-800 bg-[#171d21] p-4"><p class="text-[11px] uppercase tracking-wide text-gray-500">Cidade</p><p id="sheetClientCity" class="mt-2 text-sm font-medium text-white">Não informado</p></div>
+                    <div class="rounded-2xl border border-gray-800 bg-[#171d21] p-4 sm:col-span-2"><p class="text-[11px] uppercase tracking-wide text-gray-500">Complemento</p><p id="sheetClientComplement" class="mt-2 text-sm font-medium text-white">Não informado</p></div>
+                </div>
+            </div>
+
+            <div id="clientTabEdit" class="client-tab-panel mt-5">
+                <div class="rounded-3xl border border-violet-500/20 bg-violet-500/5 p-4">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <h4 class="text-sm font-semibold text-white">Cadastro rápido</h4>
+                            <p class="mt-1 text-xs text-gray-400">Se informar um CNPJ válido, tentamos completar a razão social, fantasia e endereço via API.</p>
+                        </div>
+                        <button id="cnpjLookupButton" type="button" class="inline-flex items-center gap-2 rounded-xl border border-violet-400/30 px-3 py-2 text-xs font-semibold text-violet-200 transition hover:border-violet-300 hover:text-white"><i class="fas fa-magnifying-glass"></i> Consultar CNPJ</button>
+                    </div>
+                </div>
+
+                <form id="clientEditForm" method="POST" class="mt-4 space-y-3">
+                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div class="sm:col-span-2"><label class="mb-2 block text-xs font-bold uppercase text-gray-400">Nome principal</label><input id="editClientName" name="name" type="text" class="w-full rounded-xl border border-gray-700 bg-[#0f1316] px-4 py-3 text-sm text-white focus:border-emerald-500 focus:outline-none"></div>
+                        <div><label class="mb-2 block text-xs font-bold uppercase text-gray-400">Razão social</label><input id="editClientLegalName" name="legal_name" type="text" class="w-full rounded-xl border border-gray-700 bg-[#0f1316] px-4 py-3 text-sm text-white focus:border-emerald-500 focus:outline-none"></div>
+                        <div><label class="mb-2 block text-xs font-bold uppercase text-gray-400">Nome fantasia</label><input id="editClientTradeName" name="trade_name" type="text" class="w-full rounded-xl border border-gray-700 bg-[#0f1316] px-4 py-3 text-sm text-white focus:border-emerald-500 focus:outline-none"></div>
+                        <div><label class="mb-2 block text-xs font-bold uppercase text-gray-400">CPF/CNPJ</label><input id="editClientCpf" name="cpf" type="text" inputmode="numeric" class="w-full rounded-xl border border-gray-700 bg-[#0f1316] px-4 py-3 text-sm text-white focus:border-emerald-500 focus:outline-none"></div>
+                        <div><label class="mb-2 block text-xs font-bold uppercase text-gray-400">Segmento</label><input id="editClientSector" name="sector" type="text" class="w-full rounded-xl border border-gray-700 bg-[#0f1316] px-4 py-3 text-sm text-white focus:border-emerald-500 focus:outline-none"></div>
+                        <div><label class="mb-2 block text-xs font-bold uppercase text-gray-400">Início do contrato</label><input id="editClientContractStartDate" name="contract_start_date" type="date" class="w-full rounded-xl border border-gray-700 bg-[#0f1316] px-4 py-3 text-sm text-white focus:border-emerald-500 focus:outline-none"></div>
+                        <div><label class="mb-2 block text-xs font-bold uppercase text-gray-400">Telefone</label><input id="editClientPhone1" name="phone1" type="text" class="w-full rounded-xl border border-gray-700 bg-[#0f1316] px-4 py-3 text-sm text-white focus:border-emerald-500 focus:outline-none"></div>
+                        <div><label class="mb-2 block text-xs font-bold uppercase text-gray-400">Telefone 2</label><input id="editClientPhone2" name="phone2" type="text" class="w-full rounded-xl border border-gray-700 bg-[#0f1316] px-4 py-3 text-sm text-white focus:border-emerald-500 focus:outline-none"></div>
+                        <div><label class="mb-2 block text-xs font-bold uppercase text-gray-400">CEP</label><input id="editClientCep" name="cep" type="text" inputmode="numeric" class="w-full rounded-xl border border-gray-700 bg-[#0f1316] px-4 py-3 text-sm text-white focus:border-emerald-500 focus:outline-none"></div>
+                        <div><label class="mb-2 block text-xs font-bold uppercase text-gray-400">Logradouro</label><input id="editClientAddress" name="address" type="text" class="w-full rounded-xl border border-gray-700 bg-[#0f1316] px-4 py-3 text-sm text-white focus:border-emerald-500 focus:outline-none"></div>
+                        <div><label class="mb-2 block text-xs font-bold uppercase text-gray-400">Número</label><input id="editClientAddressNumber" name="address_number" type="text" class="w-full rounded-xl border border-gray-700 bg-[#0f1316] px-4 py-3 text-sm text-white focus:border-emerald-500 focus:outline-none"></div>
+                        <div><label class="mb-2 block text-xs font-bold uppercase text-gray-400">Complemento</label><input id="editClientComplement" name="complement" type="text" class="w-full rounded-xl border border-gray-700 bg-[#0f1316] px-4 py-3 text-sm text-white focus:border-emerald-500 focus:outline-none"></div>
+                        <div><label class="mb-2 block text-xs font-bold uppercase text-gray-400">Bairro</label><input id="editClientNeighborhood" name="neighborhood" type="text" class="w-full rounded-xl border border-gray-700 bg-[#0f1316] px-4 py-3 text-sm text-white focus:border-emerald-500 focus:outline-none"></div>
+                        <div><label class="mb-2 block text-xs font-bold uppercase text-gray-400">Cidade</label><input id="editClientCity" name="city" type="text" class="w-full rounded-xl border border-gray-700 bg-[#0f1316] px-4 py-3 text-sm text-white focus:border-emerald-500 focus:outline-none"></div>
+                        <div><label class="mb-2 block text-xs font-bold uppercase text-gray-400">UF</label><input id="editClientState" name="state" type="text" maxlength="2" class="w-full rounded-xl border border-gray-700 bg-[#0f1316] px-4 py-3 text-sm uppercase text-white focus:border-emerald-500 focus:outline-none"></div>
+                    </div>
+                    <div class="flex justify-end"><button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-medium text-white transition hover:bg-emerald-500"><i class="fas fa-save"></i> Salvar alterações</button></div>
+                </form>
+            </div>
+        </div>
+
+        <div class="border-t border-gray-800 px-5 py-4 md:px-6">
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <a id="sheetScheduleLink" href="#" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-3 text-sm font-medium text-white transition hover:bg-blue-500"><i class="fas fa-calendar-plus"></i> Agendar</a>
+                <form id="clientDeleteForm" method="POST" onsubmit="return confirm('Deseja realmente excluir este cliente?');"><button type="submit" class="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm font-medium text-red-300 transition hover:bg-red-500/20"><i class="fas fa-trash"></i> Excluir</button></form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const clientSheetOverlay = document.getElementById('clientSheetOverlay');
+    const clientSheetPanel = document.getElementById('clientSheetPanel');
+    const clientEditForm = document.getElementById('clientEditForm');
+    const clientTabs = Array.from(document.querySelectorAll('.client-tab'));
+    const clientTabPanels = Array.from(document.querySelectorAll('.client-tab-panel'));
+    const cnpjLookupButton = document.getElementById('cnpjLookupButton');
+    const cpfCnpjInput = document.getElementById('editClientCpf');
+    const phone1Input = document.getElementById('editClientPhone1');
+    const phone2Input = document.getElementById('editClientPhone2');
+    const cepInput = document.getElementById('editClientCep');
+
+    function safeText(value, fallback = 'Não informado') {
+        const normalized = String(value || '').trim();
+        return normalized || fallback;
+    }
+
+    function onlyDigits(value) {
+        return String(value || '').replace(/\D/g, '');
+    }
+
+    function formatCpfCnpj(value) {
+        const digits = onlyDigits(value).slice(0, 14);
+        if (digits.length <= 11) {
+            return digits.replace(/^(\d{3})(\d)/, '$1.$2').replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3').replace(/\.(\d{3})(\d)/, '.$1-$2');
+        }
+        return digits.replace(/^(\d{2})(\d)/, '$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3').replace(/\.(\d{3})(\d)/, '.$1/$2').replace(/(\d{4})(\d)/, '$1-$2');
+    }
+
+    function formatPhone(value) {
+        const digits = onlyDigits(value).slice(0, 11);
+        if (digits.length <= 10) {
+            return digits.replace(/^(\d{2})(\d)/, '($1) $2').replace(/(\d{4})(\d)/, '$1-$2');
+        }
+        return digits.replace(/^(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d)/, '$1-$2');
+    }
+
+    function formatCep(value) {
+        return onlyDigits(value).slice(0, 8).replace(/^(\d{5})(\d)/, '$1-$2');
+    }
+
+    function formatDateDisplay(value) {
+        if (!value) return 'Não informado';
+        const parts = String(value).split('-');
+        if (parts.length !== 3) return value;
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+
+    function buildAddress(data) {
+        const line = [safeText(data.address, ''), safeText(data.addressNumber, '')].filter(Boolean).join(', ');
+        return line || 'Endereço não informado';
+    }
+
+    function switchClientTab(tabName) {
+        clientTabs.forEach((tab) => {
+            tab.classList.toggle('active', tab.dataset.tab === tabName);
+        });
+        clientTabPanels.forEach((panel) => {
+            panel.classList.toggle('active', panel.id === `clientTab${tabName.charAt(0).toUpperCase()}${tabName.slice(1)}`);
+        });
+    }
+
+    function fillSheet(data) {
+        document.getElementById('sheetClientName').textContent = safeText(data.tradeName || data.name, 'Cliente');
+        document.getElementById('sheetClientSubtitle').textContent = safeText(data.legalName || data.name, 'Razão social e contrato em um só lugar.');
+        document.getElementById('sheetClientTradeName').textContent = safeText(data.tradeName || data.name, 'Nome fantasia não informado');
+        document.getElementById('sheetClientLegalName').textContent = safeText(data.legalName || data.name, 'Razão social não informada');
+        document.getElementById('sheetClientContracts').textContent = safeText(data.contracts, '0');
+        document.getElementById('sheetClientDisplayName').textContent = safeText(data.name);
+        document.getElementById('sheetClientDocument').textContent = safeText(formatCpfCnpj(data.cpf));
+        document.getElementById('sheetClientPhone1').textContent = safeText(formatPhone(data.phone1));
+        document.getElementById('sheetClientPhone2').textContent = safeText(formatPhone(data.phone2));
+        document.getElementById('sheetClientSector').textContent = safeText(data.sector, 'Sem segmento definido');
+        document.getElementById('sheetClientContractStart').textContent = formatDateDisplay(data.contractStartDate);
+        document.getElementById('sheetClientContractsLabel').textContent = `${safeText(data.contracts, '0')} contratos`;
+        document.getElementById('sheetClientCep').textContent = safeText(formatCep(data.cep));
+        document.getElementById('sheetClientState').textContent = safeText(data.state);
+        document.getElementById('sheetClientAddress').textContent = buildAddress(data);
+        document.getElementById('sheetClientNeighborhood').textContent = safeText(data.neighborhood);
+        document.getElementById('sheetClientCity').textContent = safeText(data.city);
+        document.getElementById('sheetClientComplement').textContent = safeText(data.complement);
+    }
+
+    function fillForm(data) {
+        document.getElementById('editClientName').value = data.name || '';
+        document.getElementById('editClientLegalName').value = data.legalName || '';
+        document.getElementById('editClientTradeName').value = data.tradeName || '';
+        document.getElementById('editClientCpf').value = formatCpfCnpj(data.cpf || '');
+        document.getElementById('editClientSector').value = data.sector || '';
+        document.getElementById('editClientContractStartDate').value = data.contractStartDate || '';
+        document.getElementById('editClientPhone1').value = formatPhone(data.phone1 || '');
+        document.getElementById('editClientPhone2').value = formatPhone(data.phone2 || '');
+        document.getElementById('editClientCep').value = formatCep(data.cep || '');
+        document.getElementById('editClientAddress').value = data.address || '';
+        document.getElementById('editClientAddressNumber').value = data.addressNumber || '';
+        document.getElementById('editClientComplement').value = data.complement || '';
+        document.getElementById('editClientNeighborhood').value = data.neighborhood || '';
+        document.getElementById('editClientCity').value = data.city || '';
+        document.getElementById('editClientState').value = data.state || '';
+    }
+    function openClientSheet(button) {
+        const data = {
+            id: button.dataset.id,
+            name: button.dataset.name,
+            legalName: button.dataset.legalName,
+            tradeName: button.dataset.tradeName,
+            sector: button.dataset.sector,
+            contractStartDate: button.dataset.contractStartDate,
+            cpf: button.dataset.cpf,
+            phone1: button.dataset.phone1,
+            phone2: button.dataset.phone2,
+            cep: button.dataset.cep,
+            address: button.dataset.address,
+            addressNumber: button.dataset.addressNumber,
+            complement: button.dataset.complement,
+            neighborhood: button.dataset.neighborhood,
+            city: button.dataset.city,
+            state: button.dataset.state,
+            contracts: button.dataset.contracts,
+        };
+
+        fillSheet(data);
+        fillForm(data);
+
+        clientEditForm.action = appUrl(`/clients/edit/${data.id}`);
+        document.getElementById('clientDeleteForm').action = appUrl(`/clients/delete/${data.id}`);
+        document.getElementById('sheetScheduleLink').href = appUrl(`/schedule?client_id=${data.id}&open=1`);
+
+        switchClientTab('identification');
+        clientSheetOverlay.classList.remove('hidden');
+        clientSheetPanel.classList.add('open');
+        document.body.classList.add('overflow-hidden');
+    }
+
+    function closeClientSheet() {
+        clientSheetPanel.classList.remove('open');
+        clientSheetOverlay.classList.add('hidden');
+        switchClientTab('identification');
+        document.body.classList.remove('overflow-hidden');
+    }
+
+    async function lookupCnpj() {
+        const digits = onlyDigits(cpfCnpjInput.value);
+        if (digits.length !== 14) {
+            switchClientTab('edit');
+            alert('Informe um CNPJ completo para consultar os dados.');
+            return;
+        }
+
+        cnpjLookupButton.disabled = true;
+        cnpjLookupButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Consultando';
+
+        try {
+            const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${digits}`);
+            if (!response.ok) throw new Error('Falha na consulta');
+            const payload = await response.json();
+            document.getElementById('editClientLegalName').value = payload.razao_social || document.getElementById('editClientLegalName').value;
+            document.getElementById('editClientTradeName').value = payload.nome_fantasia || document.getElementById('editClientTradeName').value;
+            document.getElementById('editClientName').value = payload.nome_fantasia || payload.razao_social || document.getElementById('editClientName').value;
+            document.getElementById('editClientCep').value = formatCep(payload.cep || '');
+            document.getElementById('editClientAddress').value = payload.logradouro || document.getElementById('editClientAddress').value;
+            document.getElementById('editClientAddressNumber').value = payload.numero || document.getElementById('editClientAddressNumber').value;
+            document.getElementById('editClientComplement').value = payload.complemento || document.getElementById('editClientComplement').value;
+            document.getElementById('editClientNeighborhood').value = payload.bairro || document.getElementById('editClientNeighborhood').value;
+            document.getElementById('editClientCity').value = payload.municipio || document.getElementById('editClientCity').value;
+            document.getElementById('editClientState').value = (payload.uf || document.getElementById('editClientState').value).toUpperCase();
+        } catch (error) {
+            alert('Nao foi possivel consultar o CNPJ agora. Confira o numero e tente novamente.');
+        } finally {
+            cnpjLookupButton.disabled = false;
+            cnpjLookupButton.innerHTML = '<i class="fas fa-magnifying-glass"></i> Consultar CNPJ';
+        }
+    }
+
+    cpfCnpjInput.addEventListener('input', (event) => {
+        event.target.value = formatCpfCnpj(event.target.value);
+    });
+
+    phone1Input.addEventListener('input', (event) => {
+        event.target.value = formatPhone(event.target.value);
+    });
+
+    phone2Input.addEventListener('input', (event) => {
+        event.target.value = formatPhone(event.target.value);
+    });
+
+    cepInput.addEventListener('input', (event) => {
+        event.target.value = formatCep(event.target.value);
+    });
+
+    cnpjLookupButton.addEventListener('click', lookupCnpj);
+
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeClientSheet();
+        }
+    });
+</script>
+{% endblock %}
+
+

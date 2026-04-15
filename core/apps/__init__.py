@@ -1,6 +1,7 @@
 __all__ = [
     "auth",
     "tasks",
+    "attendance",
     "financial",
     "products",
     "clients",

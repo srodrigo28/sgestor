@@ -319,9 +319,9 @@ def add_product():
             (user_id, name, sku, category_id, supplier_id, cost_price, sell_price, stock_quantity, images_json, request.form.get('min_quantity') or 0)
         )
         conn.commit()
-        flash('Produto adicionado com sucesso!')
+        flash('Produto adicionado com sucesso!', 'success')
     except Exception as e:
-        flash(f'Erro ao adicionar produto: {str(e)}')
+        flash(f'Erro ao adicionar o produto: {str(e)}', 'error')
     finally:
         conn.close()
     
@@ -341,7 +341,7 @@ def add_supplier():
     
     if not name:
         if is_ajax: return {'error': 'Nome é obrigatório'}, 400
-        flash('Nome do fornecedor é obrigatório')
+        flash('Informe o nome do fornecedor.', 'error')
         return redirect(url_for('products.list_products'))
 
     conn = get_db_connection()
@@ -355,10 +355,10 @@ def add_supplier():
         if is_ajax:
             return {'success': True, 'id': new_id, 'name': name}
 
-        flash('Fornecedor adicionado com sucesso!')
+        flash('Fornecedor adicionado com sucesso!', 'success')
     except Exception as e:
         if is_ajax: return {'error': str(e)}, 500
-        flash(f'Erro ao adicionar fornecedor: {str(e)}')
+        flash(f'Erro ao adicionar o fornecedor: {str(e)}', 'error')
     finally:
         conn.close()
     
@@ -394,7 +394,7 @@ def add_category():
     is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.accept_mimetypes.accept_json
 
     if not name:
-        msg = 'Nome da categoria é obrigatório'
+        msg = 'Informe o nome da categoria.'
         if is_ajax: return {'error': msg}, 400
         flash(msg)
         return redirect(url_for('products.list_categories'))
@@ -410,10 +410,10 @@ def add_category():
         if is_ajax:
             return {'success': True, 'id': new_id, 'name': name}
             
-        flash('Categoria adicionada com sucesso!')
+        flash('Categoria adicionada com sucesso!', 'success')
     except Exception as e:
         if is_ajax: return {'error': str(e)}, 500
-        flash(f'Erro ao adicionar categoria: {str(e)}')
+        flash(f'Erro ao adicionar a categoria: {str(e)}', 'error')
     finally:
         conn.close()
 
@@ -432,7 +432,7 @@ def edit_category(id):
     conn.commit()
     conn.close()
     
-    flash('Categoria atualizada!')
+    flash('Categoria atualizada com sucesso!', 'success')
     return redirect(url_for('products.list_categories'))
 
 @products_bp.route('/categories/delete/<int:id>', methods=['POST'])
@@ -445,9 +445,9 @@ def delete_category(id):
     try:
         cursor.execute("DELETE FROM categories WHERE id = %s AND user_id = %s", (id, user_id))
         conn.commit()
-        flash('Categoria excluída!')
+        flash('Categoria excluída com sucesso!', 'success')
     except Exception as e:
-        flash('Erro ao excluir: Categoria pode estar em uso.')
+        flash('Erro ao excluir a categoria: ela pode estar em uso.', 'error')
     finally:
         conn.close()
         
@@ -467,7 +467,7 @@ def delete_product(id):
     conn.commit()
     conn.close()
     
-    flash('Produto excluído com sucesso!')
+    flash('Produto excluído com sucesso!', 'success')
     return redirect(url_for('products.list_products'))
 
 @products_bp.route('/products/edit/<int:id>', methods=['POST'])

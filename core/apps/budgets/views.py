@@ -192,7 +192,7 @@ def list():
 
     stage_map = {
         'budget': 'Orçamento',
-        'ready_for_pickup': 'Retirar',
+        'ready_for_pickup': 'Retirada',
         'delivered': 'Entregue',
     }
     stage_colors = {
@@ -340,7 +340,7 @@ def charts():
 
     stage_map = {
         'budget': 'Orçamento',
-        'ready_for_pickup': 'Retirar',
+        'ready_for_pickup': 'Retirada',
         'delivered': 'Entregue',
     }
     stage_colors = {
@@ -417,34 +417,93 @@ def create():
 @budgets_bp.route('/budgets/save', methods=['POST'])
 def save_budget():
     if 'id' not in session:
-        return {'error': 'Unauthorized'}, 401
+        return {'error': 'Sessão expirada. Faça login novamente.'}, 401
     
-    data = request.get_json()
+    data = request.get_json() or {}
     user_id = session['id']
+    user_role = session.get('role')
     
     # Extract Data
-    client_name_full = data.get('client_name', '') # "Name | CPF: ..."
-    # Simple parse to get name if format matches, otherwise use full string
-    client_name = client_name_full.split('|')[0].strip() if '|' in client_name_full else client_name_full
+    client_name_full = (data.get('client_name') or '').strip()  # "Nome | CPF: ..."
+    client_name = client_name_full.split('|')[0].strip() if '|' in client_name_full else client_name_full.strip()
     
-    plate_raw = data.get('vehicle_plate')
-    plate = plate_raw.upper().strip() if plate_raw else None
+    plate_raw = (data.get('vehicle_plate') or '').strip()
+    plate = plate_raw.upper() if plate_raw else None
     
-    brand = data.get('vehicle_brand')
-    model = data.get('vehicle_model')
-    year = data.get('vehicle_year')
-    km = data.get('vehicle_km')
+    brand = (data.get('vehicle_brand') or '').strip() or None
+    model = (data.get('vehicle_model') or '').strip() or None
+
+    year_raw = data.get('vehicle_year')
+    km_raw = data.get('vehicle_km')
+
+    try:
+        year = int(str(year_raw).strip()) if str(year_raw).strip() not in {'', 'None', 'null', 'undefined'} else None
+    except (TypeError, ValueError):
+        return {'error': 'Informe um ano válido para o veículo.'}, 400
+
+    try:
+        km = int(float(str(km_raw).strip())) if str(km_raw).strip() not in {'', 'None', 'null', 'undefined'} else None
+    except (TypeError, ValueError):
+        return {'error': 'Informe uma quilometragem válida para o veículo.'}, 400
 
     mechanic_id = data.get('mechanic_id')
     if mechanic_id and (str(mechanic_id).lower() in ['null', 'none', 'undefined'] or str(mechanic_id).strip() == ''):
         mechanic_id = None
     
     notes = data.get('notes')
-    discount = data.get('discount', 0)
     items = data.get('items', [])
     approval_status = data.get('approval_status') or data.get('status') or 'sent'  # Default: sent (Aguardando)
     stage_status = data.get('stage_status') or 'budget'  # Default: budget (Orçamento)
-    budget_date = _resolve_budget_datetime(data.get('budget_date')) or datetime.now().replace(microsecond=0)
+
+    raw_budget_date = data.get('budget_date')
+    budget_date = _resolve_budget_datetime(raw_budget_date)
+    if raw_budget_date and not budget_date:
+        return {'error': 'Informe uma data válida para o orçamento.'}, 400
+    budget_date = budget_date or datetime.now().replace(microsecond=0)
+
+    try:
+        discount = float(data.get('discount', 0) or 0)
+    except (TypeError, ValueError):
+        return {'error': 'Informe um desconto válido.'}, 400
+
+    if discount < 0:
+        return {'error': 'O desconto não pode ser negativo.'}, 400
+
+    if not client_name:
+        return {'error': 'Informe o cliente do orçamento.'}, 400
+
+    if user_role in {'oficina', 'admin'} and not plate:
+        return {'error': 'Informe a placa do veículo.'}, 400
+
+    if not items:
+        return {'error': 'Adicione pelo menos um item ao orçamento.'}, 400
+
+    normalized_items = []
+    for index, item in enumerate(items, start=1):
+        desc = (item.get('desc') or '').strip()
+        try:
+            qty = float(item.get('qty') or 0)
+        except (TypeError, ValueError):
+            qty = 0
+        try:
+            price = float(item.get('price') or 0)
+        except (TypeError, ValueError):
+            price = 0
+
+        if not desc:
+            return {'error': f'Informe a descrição do item {index}.'}, 400
+        if qty <= 0:
+            return {'error': f'Informe uma quantidade válida para o item {index}.'}, 400
+        if price <= 0:
+            return {'error': f'Informe um valor unitário válido para o item {index}.'}, 400
+
+        item['desc'] = desc
+        item['qty'] = qty
+        item['price'] = price
+        item['total'] = float(item.get('total') or (qty * price))
+        normalized_items.append(item)
+
+    items = normalized_items
 
     allowed_approval = {'sent', 'approved', 'rejected'}
     allowed_stage = {'budget', 'ready_for_pickup', 'delivered'}
@@ -641,8 +700,13 @@ def update_budget(id):
     items = data.get('items', [])
     approval_status = data.get('approval_status') or data.get('status')
     stage_status = data.get('stage_status')
-    vehicle_km = data.get('vehicle_km')
+    vehicle_km_raw = data.get('vehicle_km')
     budget_date_raw = data.get('budget_date')
+
+    try:
+        vehicle_km = int(float(str(vehicle_km_raw).strip())) if str(vehicle_km_raw).strip() not in {'', 'None', 'null', 'undefined'} else None
+    except (TypeError, ValueError):
+        return {'error': 'Informe uma quilometragem válida para o veículo.'}, 400
 
     mechanic_id = data.get('mechanic_id')
     if mechanic_id and (str(mechanic_id).lower() in ['null', 'none', 'undefined'] or str(mechanic_id).strip() == ''):
@@ -655,7 +719,7 @@ def update_budget(id):
         # Check ownership
         cursor.execute("SELECT id FROM budgets WHERE id = %s AND user_id = %s", (id, user_id))
         if not cursor.fetchone():
-            return {'error': 'Budget not found'}, 404
+            return {'error': 'Orçamento não encontrado.'}, 404
 
         cursor.execute("SELECT created_at FROM budgets WHERE id = %s AND user_id = %s", (id, user_id))
         existing_budget = cursor.fetchone() or {}
@@ -686,14 +750,14 @@ def update_budget(id):
         if stage_status not in allowed_stage:
             stage_status = current_stage or 'budget'
 
-        # Guard: allow "Retirar" even when still awaiting decision (e.g. cliente vai retirar sem aprovar).
+        # Permite "Retirada" mesmo quando ainda estiver aguardando decisão (ex.: cliente vai retirar sem aprovar).
         # But "Entregue" must have a decision to avoid "Entregue + Aguardando" on reports.
         if approval_status == 'sent' and stage_status == 'delivered':
             return {'error': 'Defina Aprovado/Reprovado antes de marcar Entregue.'}, 400
 
         # Guard: avoid skipping stage order when delivering.
         if stage_status == 'delivered' and current_stage != 'ready_for_pickup':
-            return {'error': 'Marque Retirar antes de marcar Entregue.'}, 400
+            return {'error': 'Marque Retirada antes de marcar Entregue.'}, 400
 
         fields = [
             "status = %s",
@@ -804,7 +868,7 @@ def quick_status(id):
         """, (id, user_id))
         budget = cursor.fetchone()
         if not budget:
-            return {'error': 'Budget not found'}, 404
+            return {'error': 'Orçamento não encontrado.'}, 404
 
         current_approval = budget.get('approval_status') or budget.get('status') or 'sent'
         current_stage = budget.get('stage_status') or 'budget'
@@ -826,7 +890,7 @@ def quick_status(id):
             if current_approval == 'sent':
                 return {'error': 'Defina Aprovado/Reprovado antes de marcar Entregue.'}, 400
             if current_stage != 'ready_for_pickup':
-                return {'error': 'Marque Retirar antes de marcar Entregue.'}, 400
+                return {'error': 'Marque Retirada antes de marcar Entregue.'}, 400
             new_stage = 'delivered'
 
         fields = [
@@ -925,7 +989,7 @@ def approve_financial(id):
     entry_date = data.get('entry_date')
     
     if not description or not amount or not entry_date:
-         return {'error': 'Dados incompletos'}, 400
+         return {'error': 'Preencha descrição, valor e data de recebimento.'}, 400
 
     print(f"Approving Budget {id}: Desc={description}, Amount={amount}, Type={payment_type}, Date={entry_date}")
 
@@ -937,7 +1001,7 @@ def approve_financial(id):
         cursor.execute("SELECT id, approval_status FROM budgets WHERE id = %s AND user_id = %s", (id, user_id))
         budget_row = cursor.fetchone()
         if not budget_row:
-            return {'error': 'Budget not found'}, 404
+            return {'error': 'Orçamento não encontrado.'}, 404
             
         current_approval = budget_row['approval_status']
         
@@ -1006,7 +1070,7 @@ def update_financial(id):
         # Check ownership
         cursor.execute("SELECT id FROM budgets WHERE id = %s AND user_id = %s", (id, user_id))
         if not cursor.fetchone():
-            return {'error': 'Budget not found'}, 404
+            return {'error': 'Orçamento não encontrado.'}, 404
 
         # Update existing financial entry
         cursor.execute("""

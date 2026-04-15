@@ -3,7 +3,7 @@
 {% block content %}
 <div class="flex justify-between items-center mb-6 animate-fade-in-down">
     <div>
-        <h2 class="text-2xl font-bold text-white">Categorias de Produtos</h2>
+        <h2 class="text-2xl font-bold text-white">Categorias de produtos</h2>
         <p class="text-gray-500 text-sm">Gerencie as categorias para organizar seu estoque.</p>
     </div>
     <div class="flex gap-3">
@@ -11,7 +11,7 @@
             <i class="fas fa-arrow-left mr-2"></i> Voltar
         </a>
         <button onclick="openCategoryModal()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm transition shadow-lg shadow-blue-500/20">
-            <i class="fas fa-plus mr-2"></i> Nova Categoria
+            <i class="fas fa-plus mr-2"></i> Nova categoria
         </button>
     </div>
 </div>
@@ -20,7 +20,7 @@
     <table class="w-full text-sm text-left text-gray-400">
         <thead class="text-xs text-gray-500 uppercase bg-gray-900/50 border-b border-gray-800">
             <tr>
-                <th scope="col" class="px-6 py-4">Nome da Categoria</th>
+                <th scope="col" class="px-6 py-4">Nome da categoria</th>
                 <th scope="col" class="px-6 py-4 text-right">Ações</th>
             </tr>
         </thead>
@@ -62,7 +62,7 @@
     <div class="bg-[#171d21] w-full max-w-sm rounded-xl border border-gray-700 shadow-2xl relative animate-fade-in-down">
         <div class="flex justify-between items-center p-6 border-b border-gray-800">
             <h3 id="modalTitle" class="text-xl font-bold text-white flex items-center gap-2">
-                <i class="fas fa-tags text-blue-500"></i> Nova Categoria
+                <i class="fas fa-tags text-blue-500"></i> Nova categoria
             </h3>
             <button onclick="closeCategoryModal()" class="text-gray-400 hover:text-white transition"><i class="fas fa-times text-xl"></i></button>
         </div>
@@ -91,7 +91,7 @@
 <script>
     function openCategoryModal() {
         document.getElementById('categoryModal').classList.remove('hidden');
-        document.getElementById('modalTitle').innerHTML = '<i class="fas fa-tags text-blue-500"></i> Nova Categoria';
+        document.getElementById('modalTitle').innerHTML = '<i class="fas fa-tags text-blue-500"></i> Nova categoria';
         document.getElementById('categoryForm').action = "{{ url_for('products.add_category') }}";
         document.getElementById('catName').value = '';
     }
@@ -101,7 +101,7 @@
         const name = btn.getAttribute('data-name');
         
         document.getElementById('categoryModal').classList.remove('hidden');
-        document.getElementById('modalTitle').innerHTML = '<i class="fas fa-edit text-blue-500"></i> Editar Categoria';
+        document.getElementById('modalTitle').innerHTML = '<i class="fas fa-edit text-blue-500"></i> Editar categoria';
         document.getElementById('categoryForm').action = "/categories/edit/" + id;
         document.getElementById('catName').value = name;
     }

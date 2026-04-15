@@ -46,14 +46,15 @@ def create_app() -> Flask:
         role = session.get("role", "pessoal")
         default_permissions = {
             "dashboard": True,
-            "schedule": True,
-            "tasks": True,
-            "financial": True,
-            "products": True,
-            "clients": True,
-            "budgets": True,
-            "services": True,
-            "mechanics": True,
+            "attendance": role in {"admin", "atendimentos"},
+            "schedule": role in {"admin", "oficina", "atendimentos", "pessoal"},
+            "tasks": role in {"admin", "oficina", "atendimentos", "pessoal"},
+            "financial": role in {"admin", "oficina", "loja", "atendimentos", "pessoal"},
+            "products": role in {"admin", "oficina", "loja"},
+            "clients": role in {"admin", "oficina", "loja", "atendimentos"},
+            "budgets": role in {"admin", "oficina", "loja"},
+            "services": role in {"admin", "oficina"},
+            "mechanics": role in {"admin", "oficina"},
             "admin_users": role == "admin",
         }
         if "id" not in session:

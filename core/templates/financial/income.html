@@ -90,7 +90,7 @@
         <div class="relative flex-1 min-w-[140px] sm:min-w-[160px]">
             <select id="statusFilter" onchange="applyFilters()"
                 class="bg-[#171d21] border border-gray-700 text-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 outline-none appearance-none cursor-pointer pr-8 hover:border-gray-600 transition">
-                <option value="">Todos Status</option>
+                <option value="">Todos os status</option>
                 <option value="received" {% if status_filter == 'received' %}selected{% endif %}>Recebidas</option>
                 <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>A Receber</option>
             </select>
@@ -162,8 +162,8 @@
                     <p>
                         {% if income.payment_type == 'pix' %}<i class="fas fa-qrcode text-teal-500 mr-1"></i>
                         {% elif income.payment_type == 'dinheiro' %}<i class="fas fa-money-bill text-green-500 mr-1"></i>
-                        {% elif income.payment_type == 'cartao credito' %}<i class="fas fa-credit-card text-blue-500 mr-1"></i>
-                        {% elif income.payment_type == 'cartao debito' %}<i class="fas fa-credit-card text-emerald-500 mr-1"></i>
+                        {% elif income.payment_type == 'cartão de crédito' %}<i class="fas fa-credit-card text-blue-500 mr-1"></i>
+                        {% elif income.payment_type == 'cartão de débito' %}<i class="fas fa-credit-card text-emerald-500 mr-1"></i>
                         {% elif income.payment_type == 'boleto' %}<i class="fas fa-barcode text-gray-400 mr-1"></i>
                         {% else %}<i class="fas fa-exchange-alt text-blue-500 mr-1"></i>{% endif %}
                         {{ income.payment_type | title }}
@@ -233,9 +233,9 @@
                         {% if income.payment_type == 'pix' %}<i class="fas fa-qrcode text-teal-500 mr-1"></i>
                         {% elif income.payment_type == 'dinheiro' %}<i
                             class="fas fa-money-bill text-green-500 mr-1"></i>
-                        {% elif income.payment_type == 'cartao credito' %}<i
+                        {% elif income.payment_type == 'cartão de crédito' %}<i
                             class="fas fa-credit-card text-blue-500 mr-1"></i>
-                        {% elif income.payment_type == 'cartao debito' %}<i
+                        {% elif income.payment_type == 'cartão de débito' %}<i
                             class="fas fa-credit-card text-emerald-500 mr-1"></i>
                         {% elif income.payment_type == 'boleto' %}<i class="fas fa-barcode text-gray-400 mr-1"></i>
                         {% else %}<i class="fas fa-exchange-alt text-blue-500 mr-1"></i>{% endif %}
@@ -317,7 +317,7 @@
     <!-- Chart 1: History -->
     <div class="card p-6 lg:col-span-2 border border-gray-800 bg-[#171d21] rounded-xl">
         <div class="flex justify-between items-center mb-6">
-            <h3 class="text-lg font-bold text-white">Histórico de Entradas (6 Meses)</h3>
+            <h3 class="text-lg font-bold text-white">Histórico de Entradas (6 meses)</h3>
             <div class="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
                 <label for="historyMonthSelect" class="text-xs text-gray-500 uppercase">Mês</label>
                 <div class="relative">
@@ -340,7 +340,7 @@
     <!-- Chart 2: Categories -->
     <div class="card p-6 border border-gray-800 bg-[#171d21] rounded-xl">
         <div class="flex justify-between items-center mb-6">
-            <h3 class="text-lg font-bold text-white">Por Categoria (12 Meses)</h3>
+            <h3 class="text-lg font-bold text-white">Por Categoria (12 meses)</h3>
             <button class="text-gray-500 hover:text-white"><i class="fas fa-ellipsis-h"></i></button>
         </div>
         <div class="relative h-64">
@@ -414,8 +414,8 @@
                         class="w-full bg-[#0f1214] border border-gray-700 text-white rounded-lg p-3 focus:border-blue-500 outline-none appearance-none cursor-pointer">
                         <option value="pix">PIX</option>
                         <option value="dinheiro">Dinheiro</option>
-                        <option value="cartao credito">Cartao de Credito</option>
-                        <option value="cartao debito">Cartao de Debito</option>
+                        <option value="cartão de crédito">Cartão de Crédito</option>
+                        <option value="cartão de débito">Cartão de Débito</option>
                     </select>
                 </div>
             </div>
@@ -560,8 +560,8 @@
                         class="w-full bg-[#0f1214] border border-gray-700 text-white rounded-lg p-3 focus:border-blue-500 outline-none appearance-none cursor-pointer">
                         <option value="pix">PIX</option>
                         <option value="dinheiro">Dinheiro</option>
-                        <option value="cartao credito">Cartao de Credito</option>
-                        <option value="cartao debito">Cartao de Debito</option>
+                        <option value="cartão de crédito">Cartão de Crédito</option>
+                        <option value="cartão de débito">Cartão de Débito</option>
                     </select>
                 </div>
             </div>

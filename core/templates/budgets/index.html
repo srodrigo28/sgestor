@@ -155,7 +155,7 @@
                 {% if budget.stage_status == 'budget' %}
                 <span class="px-2.5 py-1 rounded text-xs font-medium bg-gray-500/10 text-gray-300 border border-gray-500/20">Orçamento</span>
                 {% elif budget.stage_status == 'ready_for_pickup' %}
-                <span class="px-2.5 py-1 rounded text-xs font-medium bg-blue-500/10 text-blue-500 border border-blue-500/20">Retirar</span>
+                <span class="px-2.5 py-1 rounded text-xs font-medium bg-blue-500/10 text-blue-500 border border-blue-500/20">Retirada</span>
                 {% elif budget.stage_status == 'delivered' %}
                 <span class="px-2.5 py-1 rounded text-xs font-medium bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">Entregue</span>
                 {% else %}
@@ -231,7 +231,7 @@
                                 class="px-2.5 py-1 rounded text-xs font-medium bg-gray-500/10 text-gray-300 border border-gray-500/20">Orçamento</span>
                             {% elif budget.stage_status == 'ready_for_pickup' %}
                             <span
-                                class="px-2.5 py-1 rounded text-xs font-medium bg-blue-500/10 text-blue-500 border border-blue-500/20">Retirar</span>
+                                class="px-2.5 py-1 rounded text-xs font-medium bg-blue-500/10 text-blue-500 border border-blue-500/20">Retirada</span>
                             {% elif budget.stage_status == 'delivered' %}
                             <span
                                 class="px-2.5 py-1 rounded text-xs font-medium bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">Entregue</span>
@@ -331,8 +331,8 @@
             <div class="text-xs text-gray-500" id="qsCurrentStatus"></div>
 
             <div class="p-3 rounded-lg border border-yellow-500/20 bg-yellow-500/5 text-yellow-200 text-xs">
-                Atenção: isso altera a etapa do veículo e afeta relatórios. Retirar pode ficar em Aguardando. Entregue
-                só após Retirar e exige decisão (Aprovado/Reprovado).
+                Atenção: isso altera a etapa do veículo e afeta relatórios. Retirada pode ficar em Aguardando. Entregue
+                só após Retirada e exige decisão (Aprovado/Reprovado).
             </div>
 
             <div class="space-y-2">
@@ -350,7 +350,7 @@
                     <input type="radio" name="qsAction" value="ready_for_pickup" class="mt-1">
                     <div>
                         <div class="text-sm font-semibold text-white flex items-center gap-2">
-                            <i class="fas fa-truck text-blue-500"></i> Retirar
+                            <i class="fas fa-truck text-blue-500"></i> Retirada
                         </div>
                         <div class="text-xs text-gray-500">Marca como pronto para retirada</div>
                     </div>
@@ -362,7 +362,7 @@
                         <div class="text-sm font-semibold text-white flex items-center gap-2">
                             <i class="fas fa-check text-emerald-500"></i> Entregue
                         </div>
-                        <div class="text-xs text-gray-500">Só permitido se já estiver em Retirar</div>
+                        <div class="text-xs text-gray-500">Só permitido se já estiver em Retirada</div>
                     </div>
                 </label>
             </div>
@@ -385,7 +385,7 @@
     <div class="lg:col-span-2 card p-6 border border-gray-800 bg-[#171d21] rounded-xl">
         <div class="flex justify-between items-center mb-4">
             <h3 class="text-lg font-bold text-white flex items-center gap-2">
-                <i class="fas fa-chart-bar text-blue-500"></i> <span id="budgetChartTitle">Propostas (6 Meses)</span>
+                <i class="fas fa-chart-bar text-blue-500"></i> <span id="budgetChartTitle">Propostas (6 meses)</span>
             </h3>
             <div class="flex items-center gap-3">
                 <label for="budgetMonthSelect" class="text-xs text-gray-500 uppercase">Mês</label>
@@ -596,7 +596,7 @@
         const title = document.getElementById('budgetChartTitle');
         if (!title) return;
         if (!monthValue || monthValue === 'all') {
-            title.textContent = 'Propostas (6 Meses)';
+            title.textContent = 'Propostas (6 meses)';
             return;
         }
         const parts = monthValue.split('-');
@@ -648,7 +648,7 @@
     }
 
     function qsLabelStage(v) {
-        if (v === 'ready_for_pickup') return 'Retirar';
+        if (v === 'ready_for_pickup') return 'Retirada';
         if (v === 'delivered') return 'Entregue';
         return 'Orçamento';
     }
