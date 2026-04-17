@@ -133,7 +133,8 @@
 
                 <div class="mt-4 grid grid-cols-2 gap-2">
                     <button type="button" onclick="openEditModal(this)" data-id="{{ client.id }}" data-name="{{ client.name }}"
-                        data-sector="{{ client.sector }}" data-cpf="{{ client.cpf }}" data-phone1="{{ client.phone1 }}"
+                        data-legal-name="{{ client.legal_name or '' }}" data-trade-name="{{ client.trade_name or '' }}"
+                        data-sector="{{ client.sector }}" data-contract-start-date="{{ client.contract_start_date or '' }}" data-cpf="{{ client.cpf }}" data-phone1="{{ client.phone1 }}"
                         data-phone2="{{ client.phone2 or '' }}" data-cep="{{ client.cep or '' }}"
                         data-address="{{ client.address or '' }}" data-address-number="{{ client.address_number or '' }}"
                         data-complement="{{ client.complement or '' }}" data-neighborhood="{{ client.neighborhood or '' }}"
@@ -202,7 +203,8 @@
                         </td>
                         <td class="px-6 py-4 text-center">
                             <button type="button" onclick="openEditModal(this)" data-id="{{ client.id }}" data-name="{{ client.name }}"
-                                data-sector="{{ client.sector }}" data-cpf="{{ client.cpf }}" data-phone1="{{ client.phone1 }}"
+                                data-legal-name="{{ client.legal_name or '' }}" data-trade-name="{{ client.trade_name or '' }}"
+                                data-sector="{{ client.sector }}" data-contract-start-date="{{ client.contract_start_date or '' }}" data-cpf="{{ client.cpf }}" data-phone1="{{ client.phone1 }}"
                                 data-phone2="{{ client.phone2 or '' }}" data-cep="{{ client.cep or '' }}"
                                 data-address="{{ client.address or '' }}" data-address-number="{{ client.address_number or '' }}"
                                 data-complement="{{ client.complement or '' }}" data-neighborhood="{{ client.neighborhood or '' }}"
@@ -287,6 +289,20 @@
                     </div>
 
                     <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-400">Razão Social <span class="text-xs text-gray-600">(Opcional)</span></label>
+                        <input type="text" name="legal_name" id="legalNameInput"
+                            class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3"
+                            placeholder="Ex: Empresa Silva LTDA">
+                    </div>
+
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-400">Nome Fantasia <span class="text-xs text-gray-600">(Opcional)</span></label>
+                        <input type="text" name="trade_name" id="tradeNameInput"
+                            class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3"
+                            placeholder="Ex: Silva Auto Pecas">
+                    </div>
+
+                    <div>
                         <label class="block mb-2 text-sm font-medium text-gray-400">Setor</label>
                         <input type="text" name="sector" list="sectorsList" required
                             class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3"
@@ -296,6 +312,12 @@
                             <option value="{{ sector }}">
                             {% endfor %}
                         </datalist>
+                    </div>
+
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-400">Início do Contrato <span class="text-xs text-gray-600">(Opcional)</span></label>
+                        <input type="date" name="contract_start_date" id="contractStartDateInput"
+                            class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3">
                     </div>
 
                     <div>
@@ -480,7 +502,10 @@
     function openEditModal(btn) {
         const id = btn.dataset.id;
         const name = btn.dataset.name;
+        const legalName = btn.dataset.legalName;
+        const tradeName = btn.dataset.tradeName;
         const sector = btn.dataset.sector;
+        const contractStartDate = btn.dataset.contractStartDate;
         const cpf = btn.dataset.cpf;
         const phone1 = btn.dataset.phone1;
         const phone2 = btn.dataset.phone2;
@@ -497,7 +522,10 @@
         document.getElementById('clientForm').action = `/clients/edit/${id}`;
 
         document.getElementsByName('name')[0].value = name;
+        document.getElementsByName('legal_name')[0].value = legalName;
+        document.getElementsByName('trade_name')[0].value = tradeName;
         document.getElementsByName('sector')[0].value = sector;
+        document.getElementsByName('contract_start_date')[0].value = contractStartDate;
         document.getElementsByName('cpf')[0].value = cpf;
         document.getElementsByName('phone1')[0].value = phone1;
         document.getElementsByName('phone2')[0].value = phone2;
