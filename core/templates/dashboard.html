@@ -14,7 +14,7 @@
         <div class="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
             <div class="inline-flex items-center rounded-xl border border-gray-800 bg-[#171d21] px-4 py-2 text-sm text-gray-400 w-fit">
                 <i class="fas fa-calendar-day text-blue-500 mr-2"></i>
-                {{ now.strftime('%d de %B, %Y') if now else '' }}
+                {{ current_date_label or '' }}
             </div>
             <div class="inline-flex rounded-xl border border-gray-800 bg-[#11161b] p-1" id="periodTabs">
                 <button type="button" class="period-tab rounded-lg px-3 py-2 text-sm font-medium text-gray-400 transition" data-period="day">Dia</button>
@@ -161,6 +161,27 @@
         }
     };
 
+    const statSubtitles = {
+        day: {
+            budgets: 'Registros do dia',
+            waiting: 'Orcamentos enviados hoje',
+            approved: 'Aprovacoes de hoje',
+            clients: 'Clientes cadastrados hoje'
+        },
+        week: {
+            budgets: 'Registros da semana',
+            waiting: 'Orcamentos enviados na semana',
+            approved: 'Aprovacoes na semana',
+            clients: 'Clientes cadastrados na semana'
+        },
+        month: {
+            budgets: 'Registros do mes',
+            waiting: 'Orcamentos enviados no mes',
+            approved: 'Aprovacoes no mes',
+            clients: 'Clientes cadastrados no mes'
+        }
+    };
+
     function animateValue(obj, start, end, duration) {
         let startTimestamp = null;
         const step = (timestamp) => {
@@ -239,6 +260,22 @@
                 animateValue(element, currentValue, nextValue, 600);
             } else {
                 element.textContent = nextValue;
+            }
+        });
+    }
+
+    function updateStatSubtitles(period) {
+        const subtitles = statSubtitles[period] || statSubtitles.day;
+        const subtitleMap = {
+            budgets: document.getElementById('statSubtitleBudgets'),
+            waiting: document.getElementById('statSubtitleWaiting'),
+            approved: document.getElementById('statSubtitleApproved'),
+            clients: document.getElementById('statSubtitleClients')
+        };
+
+        Object.entries(subtitleMap).forEach(([key, element]) => {
+            if (element) {
+                element.textContent = subtitles[key];
             }
         });
     }
@@ -381,6 +418,7 @@
 
         updatePeriodChrome(period);
         updateStatCards(period, true);
+        updateStatSubtitles(period);
     }
 
     const observerOptions = {
@@ -410,6 +448,7 @@
 
         updatePeriodChrome(currentPeriod);
         updateStatCards(currentPeriod, false);
+        updateStatSubtitles(currentPeriod);
 
         document.querySelectorAll('.period-tab').forEach((button) => {
             button.addEventListener('click', () => refreshCharts(button.dataset.period));

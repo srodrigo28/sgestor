@@ -134,7 +134,7 @@
                 <div class="mt-4 grid grid-cols-2 gap-2">
                     <button type="button" onclick="openEditModal(this)" data-id="{{ client.id }}" data-name="{{ client.name }}"
                         data-legal-name="{{ client.legal_name or '' }}" data-trade-name="{{ client.trade_name or '' }}"
-                        data-sector="{{ client.sector }}" data-contract-start-date="{{ client.contract_start_date or '' }}" data-cpf="{{ client.cpf }}" data-phone1="{{ client.phone1 }}"
+                        data-sector="{{ client.sector }}" data-contract-start-date="{{ client.contract_start_date or '' }}" data-cpf="{{ client.cpf or '' }}" data-phone1="{{ client.phone1 or '' }}"
                         data-phone2="{{ client.phone2 or '' }}" data-cep="{{ client.cep or '' }}"
                         data-address="{{ client.address or '' }}" data-address-number="{{ client.address_number or '' }}"
                         data-complement="{{ client.complement or '' }}" data-neighborhood="{{ client.neighborhood or '' }}"
@@ -177,7 +177,7 @@
                                 </div>
                                 <div>
                                     <div class="font-medium text-white">{{ client.name }}</div>
-                                    <div class="text-xs text-gray-500">{{ client.cpf }}</div>
+                                    <div class="text-xs text-gray-500">{{ client.cpf or 'CPF/CNPJ não informado' }}</div>
                                 </div>
                             </div>
                         </td>
@@ -204,7 +204,7 @@
                         <td class="px-6 py-4 text-center">
                             <button type="button" onclick="openEditModal(this)" data-id="{{ client.id }}" data-name="{{ client.name }}"
                                 data-legal-name="{{ client.legal_name or '' }}" data-trade-name="{{ client.trade_name or '' }}"
-                                data-sector="{{ client.sector }}" data-contract-start-date="{{ client.contract_start_date or '' }}" data-cpf="{{ client.cpf }}" data-phone1="{{ client.phone1 }}"
+                                data-sector="{{ client.sector }}" data-contract-start-date="{{ client.contract_start_date or '' }}" data-cpf="{{ client.cpf or '' }}" data-phone1="{{ client.phone1 or '' }}"
                                 data-phone2="{{ client.phone2 or '' }}" data-cep="{{ client.cep or '' }}"
                                 data-address="{{ client.address or '' }}" data-address-number="{{ client.address_number or '' }}"
                                 data-complement="{{ client.complement or '' }}" data-neighborhood="{{ client.neighborhood or '' }}"

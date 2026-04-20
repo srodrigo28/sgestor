@@ -663,7 +663,20 @@
         const currentEl = document.getElementById('qsCurrentStatus');
 
         if (idEl) idEl.textContent = `#${id}`;
-        if (currentEl) currentEl.textContent = `Atual: ${qsLabelStage(qsStage)} / ${qsLabelApproval(qsApproval)}`;
+        if (currentEl) currentEl.textContent = `Atual: etapa ${qsLabelStage(qsStage)} e decisão ${qsLabelApproval(qsApproval)}`;
+
+        const deliveredInput = document.querySelector('input[name="qsAction"][value="delivered"]');
+        const deliveredLabel = deliveredInput ? deliveredInput.closest('label') : null;
+        const canDeliver = qsStage === 'ready_for_pickup' || qsStage === 'delivered';
+
+        if (deliveredInput) {
+            deliveredInput.disabled = !canDeliver;
+        }
+
+        if (deliveredLabel) {
+            deliveredLabel.classList.toggle('opacity-50', !canDeliver);
+            deliveredLabel.classList.toggle('pointer-events-none', !canDeliver);
+        }
 
         // Default selection based on current status.
         let defaultAction = 'awaiting';
@@ -671,6 +684,10 @@
         else if (qsStage === 'ready_for_pickup') defaultAction = 'ready_for_pickup';
         else if (qsApproval === 'sent') defaultAction = 'awaiting';
         else defaultAction = 'ready_for_pickup';
+
+        if (!canDeliver && defaultAction === 'delivered') {
+            defaultAction = 'awaiting';
+        }
 
         document.querySelectorAll('input[name="qsAction"]').forEach(el => {
             el.checked = (el.value === defaultAction);

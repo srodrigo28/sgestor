@@ -15,6 +15,27 @@ TASK_CATEGORY_DEFAULTS = [
 ]
 
 
+MONTH_NAMES_PT_BR = {
+    1: 'janeiro',
+    2: 'fevereiro',
+    3: 'marco',
+    4: 'abril',
+    5: 'maio',
+    6: 'junho',
+    7: 'julho',
+    8: 'agosto',
+    9: 'setembro',
+    10: 'outubro',
+    11: 'novembro',
+    12: 'dezembro',
+}
+
+
+def _format_dashboard_date(now):
+    month_name = MONTH_NAMES_PT_BR.get(now.month, '')
+    return f"{now.day:02d} de {month_name} de {now.year}"
+
+
 def _get_period_ranges(now):
     day_start = datetime(now.year, now.month, now.day)
     next_day = day_start + timedelta(days=1)
@@ -495,6 +516,8 @@ def dashboard():
         stats_by_period=stats_by_period,
         chart_data_by_period=chart_data_by_period,
         selected_period='day',
+        now=now,
+        current_date_label=_format_dashboard_date(now),
     )
 
 

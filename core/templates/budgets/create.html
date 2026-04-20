@@ -29,14 +29,15 @@
                     <div class="relative">
                         <input type="text" list="clientsList" name="client_name" id="clientInput" required
                             class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                            placeholder="Buscar Cliente...">
+                            placeholder="Selecione um cliente cadastrado...">
                         <datalist id="clientsList">
                             {% for client in clients %}
-                            <option value="{{ client.name }} | CPF: {{ client.cpf }}" data-id="{{ client.id }}">
+                            <option value="{{ client.name }}{% if client.cpf %} | CPF: {{ client.cpf }}{% endif %}" data-id="{{ client.id }}" data-name="{{ client.name }}">
                             {% endfor %}
                         </datalist>
                         <input type="hidden" name="client_id" id="clientId">
                     </div>
+                    <p class="mt-2 text-xs text-gray-500">O orçamento usa um cliente já cadastrado. Se precisar, faça o cadastro antes.</p>
                 </div>
 
                 {% if session['role'] == 'oficina' or session['role'] == 'admin' %}
@@ -149,18 +150,35 @@
                         {% endfor %}
                     </datalist>
                 </div>
-                <!-- Preco (Auto-fill) -->
                 <div class="col-span-6 sm:col-span-4 md:col-span-2">
+                    <label class="block mb-1 text-xs text-gray-500">Tipo</label>
+                    <select id="itemTypeInput"
+                        class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg block w-full p-2">
+                        <option value="product">Peça / Produto</option>
+                        <option value="service">Serviço</option>
+                    </select>
+                </div>
+                <!-- Preco (Auto-fill) -->
+                <div class="col-span-6 sm:col-span-4 md:col-span-1">
                     <label class="block mb-1 text-xs text-gray-500">Valor Unit.</label>
                     <input type="number" step="0.01" id="itemPriceInput"
                         class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg block w-full p-2">
                 </div>
-                <div class="col-span-6 sm:col-span-4 md:col-span-2">
+                <div class="col-span-6 sm:col-span-4 md:col-span-1">
                     <label class="block mb-1 text-xs text-gray-500">Qtd.</label>
                     <input type="number" step="0.1" id="itemQtyInput" value="1"
                         class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg block w-full p-2">
                 </div>
-                <div class="col-span-12 sm:col-span-4 md:col-span-3">
+                <div class="col-span-12 sm:col-span-6 md:col-span-2">
+                    <label class="mb-1 flex min-h-[24px] items-center gap-2 text-xs text-gray-500">
+                        <input type="checkbox" id="itemTakeawayInput" class="rounded border-gray-700 bg-[#0f1316] text-yellow-500 focus:ring-yellow-500">
+                        Cliente levou a peça
+                    </label>
+                    <div id="stockIndicator" class="hidden rounded-lg border border-gray-800 bg-[#0f1316] px-3 py-2 text-xs text-gray-400">
+                        Estoque atual: <span id="stockValue" class="font-semibold text-white">0</span>
+                    </div>
+                </div>
+                <div class="col-span-12 sm:col-span-6 md:col-span-1">
                     <button type="button" onclick="addItem()"
                         class="w-full min-h-[44px] bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-xl text-sm px-3 py-2.5 transition inline-flex items-center justify-center gap-2">
                         <i class="fas fa-plus"></i>
@@ -281,6 +299,35 @@
 <script>
     let items = [];
 
+    function getOptionByValue(listId, value) {
+        const list = document.getElementById(listId);
+        if (!list || !list.options) return null;
+
+        for (let i = 0; i < list.options.length; i++) {
+            if (list.options[i].value === value) {
+                return list.options[i];
+            }
+        }
+
+        return null;
+    }
+
+    function syncSelectedClient() {
+        const clientInput = document.getElementById('clientInput');
+        const clientIdInput = document.getElementById('clientId');
+        const selectedOption = getOptionByValue('clientsList', clientInput.value.trim());
+
+        clientIdInput.value = selectedOption ? selectedOption.getAttribute('data-id') : '';
+        return Boolean(selectedOption);
+    }
+
+    function clearStockIndicator() {
+        const stockIndicator = document.getElementById('stockIndicator');
+        if (!stockIndicator) return;
+        stockIndicator.classList.add('hidden');
+        stockIndicator.classList.remove('flex', 'text-red-500');
+    }
+
     // --- Item Management ---
     function addItem() {
         const descInput = document.getElementById('itemDescInput');
@@ -292,7 +339,7 @@
         const desc = descInput.value.trim();
         const price = parseFloat(priceInput.value) || 0;
         const qty = parseFloat(qtyInput.value) || 1;
-        const isService = typeInput ? typeInput.checked : false;
+        const isService = typeInput ? typeInput.value === 'service' : false;
         const isTakeaway = takeawayInput ? takeawayInput.checked : false;
 
         if (!desc) {
@@ -344,10 +391,9 @@
         descInput.value = '';
         priceInput.value = '';
         qtyInput.value = '1';
-        if(typeInput) typeInput.checked = false;
+        if(typeInput) typeInput.value = 'product';
         if(takeawayInput) takeawayInput.checked = false;
-        // Hide stock indicator
-        if(document.getElementById('stockIndicator')) document.getElementById('stockIndicator').classList.add('hidden');
+        clearStockIndicator();
         descInput.focus();
     }
 
@@ -387,8 +433,8 @@
             }
 
             tr.innerHTML = `
-                <td class="px-4 py-3 align-top">${typeBadge}</td>
                 <td class="px-4 py-3 align-top">
+                    <div class="mb-2">${typeBadge}</div>
                     ${item.desc}
                     ${flags}
                 </td>
@@ -425,50 +471,43 @@
 
     // --- Auto-fill Logic ---
 
-    // Product Price autofill
     document.getElementById('itemDescInput').addEventListener('input', function (e) {
         const val = e.target.value;
-        const options = document.getElementById('productsList').options;
-        const stockIndicator = document.getElementById('stockIndicator');
+        const productOption = getOptionByValue('productsList', val);
+        const serviceOption = getOptionByValue('servicesList', val);
         const typeInput = document.getElementById('itemTypeInput');
 
-        let found = false;
-        for (let i = 0; i < options.length; i++) {
-            if (options[i].value === val) {
-                document.getElementById('itemPriceInput').value = options[i].getAttribute('data-price');
-                
-                // Show stock
-                const stock = options[i].getAttribute('data-stock');
-                if(stock && stockIndicator) {
-                     stockIndicator.classList.remove('hidden');
-                     stockIndicator.classList.add('flex');
-                     document.getElementById('stockValue').innerText = stock;
-                     if(parseFloat(stock) <= 0) {
-                         stockIndicator.classList.add('text-red-500');
-                     } else {
-                         stockIndicator.classList.remove('text-red-500');
-                     }
+        if (productOption) {
+            document.getElementById('itemPriceInput').value = productOption.getAttribute('data-price');
+            const stock = productOption.getAttribute('data-stock');
+            const stockIndicator = document.getElementById('stockIndicator');
+            if (stock && stockIndicator) {
+                stockIndicator.classList.remove('hidden');
+                stockIndicator.classList.add('flex');
+                document.getElementById('stockValue').innerText = stock;
+                if (parseFloat(stock) <= 0) {
+                    stockIndicator.classList.add('text-red-500');
+                } else {
+                    stockIndicator.classList.remove('text-red-500');
                 }
-                
-                // If it's a product, likely not a service
-                if(typeInput) typeInput.checked = false;
-                found = true;
-                break;
             }
+            if (typeInput) typeInput.value = 'product';
+            return;
         }
-        
-        if(!found && stockIndicator) {
-             stockIndicator.classList.add('hidden');
+
+        if (serviceOption) {
+            document.getElementById('itemPriceInput').value = serviceOption.getAttribute('data-price');
+            if (typeInput) typeInput.value = 'service';
+            clearStockIndicator();
+            return;
         }
+
+        clearStockIndicator();
     });
 
-    // Client ID autofill (Basic implementation)
-    document.getElementById('clientInput').addEventListener('input', function (e) {
-        // Advanced logic would require matching the exact datalist string
-        // For MVP we just keep the text used
-    });
+    document.getElementById('clientInput').addEventListener('input', syncSelectedClient);
+    document.getElementById('clientInput').addEventListener('change', syncSelectedClient);
 
-    // Plate Search Mock
     function searchPlate() {
         const plate = document.getElementById('plateInput').value.toUpperCase();
         if (plate.length < 7) {
@@ -477,13 +516,7 @@
         }
 
         // Mock Result
-        Toastify({ text: "Simulando busca da placa...", backgroundColor: "#3b82f6" }).showToast();
-        setTimeout(() => {
-            document.getElementById('brandInput').value = 'MOCK BRAND';
-            document.getElementById('modelInput').value = 'MOCK MODEL';
-            document.getElementById('yearInput').value = '2023';
-            Toastify({ text: "Dados encontrados (Simulação)!", backgroundColor: "#10b981" }).showToast();
-        }, 1000);
+        Toastify({ text: "Consulta de placa ainda não integrada. Preencha os dados do veículo manualmente.", backgroundColor: "#3b82f6" }).showToast();
     }
 
     // Quick Add Service Logic
@@ -601,8 +634,9 @@
         }
 
         const form = document.getElementById('budgetForm');
-        const client_name_full = form.client_name ? form.client_name.value.trim() : '';
-        const client_name = client_name_full.includes('|') ? client_name_full.split('|')[0].trim() : client_name_full;
+        const clientDisplay = form.client_name ? form.client_name.value.trim() : '';
+        const selectedClient = syncSelectedClient();
+        const clientId = document.getElementById('clientId').value;
         
         // Handle optional vehicle plate (only required if field exists)
         let vehicle_plate = '';
@@ -615,8 +649,14 @@
             }
         }
 
-        if (!client_name) {
+        if (!clientDisplay) {
             Toastify({ text: "Informe o cliente do orçamento.", backgroundColor: "#ef4444" }).showToast();
+            form.client_name.focus();
+            return;
+        }
+
+        if (!selectedClient || !clientId) {
+            Toastify({ text: "Selecione um cliente cadastrado na lista.", backgroundColor: "#ef4444" }).showToast();
             form.client_name.focus();
             return;
         }
@@ -629,7 +669,8 @@
         }
 
         const payload = {
-            client_name: client_name,
+            client_id: clientId,
+            client_name: clientDisplay,
             vehicle_plate: vehicle_plate,
             vehicle_model: document.getElementById('modelInput').value, // Use the input value
             vehicle_brand: document.getElementById('brandNameHidden').value || form.vehicle_brand.value, 
@@ -752,6 +793,7 @@
     // Initialize FIPE
     document.addEventListener('DOMContentLoaded', () => {
         loadBrands();
+        syncSelectedClient();
         
         // Setup input handler for Brand to clear model on change if needed
         document.getElementById('brandInput').addEventListener('input', function(e) {

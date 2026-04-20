@@ -80,6 +80,134 @@ def _resolve_budget_datetime(raw_value, fallback=None):
 
     return datetime.combine(base_date, base_time)
 
+
+def _parse_client_id(raw_value):
+    value = str(raw_value or '').strip()
+    if not value or value.lower() in {'null', 'none', 'undefined'}:
+        return None
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        return None
+    return parsed if parsed > 0 else None
+
+
+def _resolve_selected_client(cursor, user_id, raw_client_id, raw_client_name):
+    client_id = _parse_client_id(raw_client_id)
+    client_name = (raw_client_name or '').strip()
+
+    if client_id:
+        cursor.execute("SELECT id, name FROM clients WHERE id = %s AND user_id = %s", (client_id, user_id))
+        client = cursor.fetchone()
+        if client:
+            return client, None
+        return None, 'O cliente selecionado não foi encontrado.'
+
+    if not client_name:
+        return None, 'Selecione um cliente cadastrado antes de salvar o orçamento.'
+
+    cursor.execute("SELECT id, name FROM clients WHERE user_id = %s AND name = %s ORDER BY id DESC", (user_id, client_name))
+    matches = cursor.fetchall()
+    if len(matches) == 1:
+        return matches[0], None
+    if len(matches) > 1:
+        return None, 'Há mais de um cliente com esse nome. Selecione o cliente pela lista.'
+    return None, 'Selecione um cliente já cadastrado. O orçamento não cria cliente automaticamente.'
+
+
+def _validate_product_stock(cursor, user_id, items):
+    for index, item in enumerate(items, start=1):
+        product_id = item.get('product_id')
+        if not product_id or item.get('is_service'):
+            continue
+
+        cursor.execute("SELECT name, quantity FROM products WHERE id = %s AND user_id = %s", (product_id, user_id))
+        product = cursor.fetchone()
+        if not product:
+            return f'O produto do item {index} não foi encontrado.'
+
+        available = float(product.get('quantity') or 0)
+        requested = float(item.get('qty') or 0)
+        if requested > available:
+            return f"Estoque insuficiente para '{product.get('name')}'. Disponível: {available:g}."
+
+    return None
+
+
+def _normalize_budget_items(items):
+    normalized_items = []
+    for index, item in enumerate(items or [], start=1):
+        desc = (item.get('desc') or '').strip()
+        try:
+            qty = float(item.get('qty') or 0)
+        except (TypeError, ValueError):
+            qty = 0
+        try:
+            price = float(item.get('price') or 0)
+        except (TypeError, ValueError):
+            price = 0
+
+        if not desc:
+            return None, f'Informe a descrição do item {index}.'
+        if qty <= 0:
+            return None, f'Informe uma quantidade válida para o item {index}.'
+        if price <= 0:
+            return None, f'Informe um valor unitário válido para o item {index}.'
+
+        product_id = item.get('product_id')
+        if not product_id or str(product_id).lower() in ['null', 'undefined', '']:
+            product_id = None
+
+        normalized_items.append({
+            'desc': desc,
+            'qty': qty,
+            'price': price,
+            'total': float(item.get('total') or (qty * price)),
+            'product_id': product_id,
+            'is_service': bool(item.get('is_service')),
+            'is_takeaway': bool(item.get('is_takeaway')),
+        })
+
+    return normalized_items, None
+
+
+def _resolve_status_transition(current_approval, current_stage, requested_approval, requested_stage):
+    allowed_approval = {'sent', 'approved', 'rejected'}
+    allowed_stage = {'budget', 'ready_for_pickup', 'delivered'}
+
+    approval_status = requested_approval if requested_approval in allowed_approval else (current_approval or 'sent')
+    stage_status = requested_stage if requested_stage in allowed_stage else (current_stage or 'budget')
+
+    if approval_status == 'sent' and stage_status == 'delivered':
+        return None, None, 'Defina Aprovado/Reprovado antes de marcar Entregue.'
+
+    if stage_status == 'delivered' and current_stage not in {'ready_for_pickup', 'delivered'}:
+        return None, None, 'Marque Retirada antes de marcar Entregue.'
+
+    return approval_status, stage_status, None
+
+
+def _build_status_update_fields(approval_status, stage_status, now):
+    fields = [
+        "status = %s",
+        "approval_status = %s",
+        "stage_status = %s",
+        "approved_at = %s",
+        "rejected_at = %s",
+        "ready_for_pickup_at = %s",
+        "delivered_at = %s",
+    ]
+    params = [
+        approval_status,
+        approval_status,
+        stage_status,
+        now if approval_status == 'approved' else None,
+        now if approval_status == 'rejected' else None,
+        now if stage_status in {'ready_for_pickup', 'delivered'} else None,
+        now if stage_status == 'delivered' else None,
+    ]
+    return fields, params
+
 @budgets_bp.route('/budgets')
 def list():
     if 'id' not in session:
@@ -424,8 +552,8 @@ def save_budget():
     user_role = session.get('role')
     
     # Extract Data
-    client_name_full = (data.get('client_name') or '').strip()  # "Nome | CPF: ..."
-    client_name = client_name_full.split('|')[0].strip() if '|' in client_name_full else client_name_full.strip()
+    client_name = (data.get('client_name') or '').strip()
+    client_id = _parse_client_id(data.get('client_id'))
     
     plate_raw = (data.get('vehicle_plate') or '').strip()
     plate = plate_raw.upper() if plate_raw else None
@@ -469,8 +597,8 @@ def save_budget():
     if discount < 0:
         return {'error': 'O desconto não pode ser negativo.'}, 400
 
-    if not client_name:
-        return {'error': 'Informe o cliente do orçamento.'}, 400
+    if not client_name and not client_id:
+        return {'error': 'Selecione um cliente cadastrado para o orçamento.'}, 400
 
     if user_role in {'oficina', 'admin'} and not plate:
         return {'error': 'Informe a placa do veículo.'}, 400
@@ -511,21 +639,29 @@ def save_budget():
         approval_status = 'sent'
     if stage_status not in allowed_stage:
         stage_status = 'budget'
+
+    items, item_error = _normalize_budget_items(items)
+    if item_error:
+        return {'error': item_error}, 400
+
+    approval_status, stage_status, status_error = _resolve_status_transition(None, 'budget', approval_status, stage_status)
+    if status_error:
+        return {'error': status_error}, 400
     
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     
     try:
-        # 1. Find or Create Client
-        cursor.execute("SELECT id FROM clients WHERE name = %s AND user_id = %s", (client_name, user_id))
-        client = cursor.fetchone()
-        
-        if not client:
-            cursor.execute("INSERT INTO clients (user_id, name, created_at) VALUES (%s, %s, NOW())", (user_id, client_name))
-            conn.commit() # Ensure client is saved to get ID in next queries if needed
-            client_id = cursor.lastrowid
-        else:
-            client_id = client['id']
+        # 1. Resolve client from explicit selection
+        client, client_error = _resolve_selected_client(cursor, user_id, client_id, client_name)
+        if client_error:
+            return {'error': client_error}, 400
+        client_id = client['id']
+
+        if approval_status == 'approved':
+            stock_error = _validate_product_stock(cursor, user_id, items)
+            if stock_error:
+                return {'error': stock_error}, 400
             
         # 2. Find or Create/Update Vehicle (Optional)
         vehicle_id = None
@@ -725,8 +861,10 @@ def update_budget(id):
         existing_budget = cursor.fetchone() or {}
         budget_date = _resolve_budget_datetime(budget_date_raw, existing_budget.get('created_at')) or existing_budget.get('created_at') or datetime.now().replace(microsecond=0)
             
-        # Update Header
-        # Update Header
+        items, item_error = _normalize_budget_items(items)
+        if item_error:
+            return {'error': item_error}, 400
+
         # Recalculate Total
         total_items = sum(float(item['total']) for item in items)
         total_value = max(0, total_items - float(discount))
@@ -743,26 +881,24 @@ def update_budget(id):
         current_approval = current_status.get('approval_status')
         current_stage = current_status.get('stage_status')
 
-        allowed_approval = {'sent', 'approved', 'rejected'}
-        allowed_stage = {'budget', 'ready_for_pickup', 'delivered'}
-        if approval_status not in allowed_approval:
-            approval_status = current_approval or 'sent'
-        if stage_status not in allowed_stage:
-            stage_status = current_stage or 'budget'
+        approval_status, stage_status, status_error = _resolve_status_transition(
+            current_approval,
+            current_stage,
+            approval_status,
+            stage_status,
+        )
+        if status_error:
+            return {'error': status_error}, 400
 
         # Permite "Retirada" mesmo quando ainda estiver aguardando decisão (ex.: cliente vai retirar sem aprovar).
         # But "Entregue" must have a decision to avoid "Entregue + Aguardando" on reports.
-        if approval_status == 'sent' and stage_status == 'delivered':
-            return {'error': 'Defina Aprovado/Reprovado antes de marcar Entregue.'}, 400
+        if approval_status == 'approved':
+            stock_error = _validate_product_stock(cursor, user_id, items)
+            if stock_error:
+                return {'error': stock_error}, 400
 
-        # Guard: avoid skipping stage order when delivering.
-        if stage_status == 'delivered' and current_stage != 'ready_for_pickup':
-            return {'error': 'Marque Retirada antes de marcar Entregue.'}, 400
-
-        fields = [
-            "status = %s",
-            "approval_status = %s",
-            "stage_status = %s",
+        status_fields, status_params = _build_status_update_fields(approval_status, stage_status, budget_date)
+        fields = status_fields + [
             "created_at = %s",
             "expiration_date = %s",
             "total_value = %s",
@@ -771,10 +907,7 @@ def update_budget(id):
             "vehicle_km = %s",
             "mechanic_id = %s",
         ]
-        params = [
-            approval_status,  # legacy column kept as decision
-            approval_status,
-            stage_status,
+        params = status_params + [
             budget_date,
             (budget_date.date() + timedelta(days=7)).strftime('%Y-%m-%d'),
             total_value,
@@ -783,23 +916,6 @@ def update_budget(id):
             vehicle_km,
             mechanic_id,
         ]
-
-        now = budget_date
-        if approval_status != current_approval:
-            if approval_status == 'approved':
-                fields.append("approved_at = %s")
-                params.append(now)
-            elif approval_status == 'rejected':
-                fields.append("rejected_at = %s")
-                params.append(now)
-
-        if stage_status != current_stage:
-            if stage_status == 'ready_for_pickup':
-                fields.append("ready_for_pickup_at = %s")
-                params.append(now)
-            elif stage_status == 'delivered':
-                fields.append("delivered_at = %s")
-                params.append(now)
 
         params.append(id)
         cursor.execute(f"""
@@ -818,17 +934,13 @@ def update_budget(id):
         cursor.execute("DELETE FROM budget_items WHERE budget_id = %s", (id,))
         
         for item in items:
-            product_id = item.get('product_id')
-            if not product_id or str(product_id).lower() in ['null', 'undefined', '']:
-                product_id = None
-            
             is_service = 1 if item.get('is_service') else 0
             is_takeaway = 1 if item.get('is_takeaway') else 0
 
             cursor.execute("""
                 INSERT INTO budget_items (budget_id, product_id, description, quantity, unit_price, total, is_service, is_takeaway, created_at)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW())
-            """, (id, product_id, item['desc'], item['qty'], item['price'], item['total'], is_service, is_takeaway))
+            """, (id, item['product_id'], item['desc'], item['qty'], item['price'], item['total'], is_service, is_takeaway))
 
         # Handle Stock Deduction (if newly approved or remains approved)
         if approval_status == 'approved':
@@ -893,33 +1005,8 @@ def quick_status(id):
                 return {'error': 'Marque Retirada antes de marcar Entregue.'}, 400
             new_stage = 'delivered'
 
-        fields = [
-            "status = %s",
-            "approval_status = %s",
-            "stage_status = %s",
-        ]
-        params = [
-            new_approval,  # legacy column kept as decision
-            new_approval,
-            new_stage,
-        ]
-
         now = datetime.now()
-        if new_approval != current_approval:
-            if new_approval == 'approved':
-                fields.append("approved_at = %s")
-                params.append(now)
-            elif new_approval == 'rejected':
-                fields.append("rejected_at = %s")
-                params.append(now)
-
-        if new_stage != current_stage:
-            if new_stage == 'ready_for_pickup':
-                fields.append("ready_for_pickup_at = %s")
-                params.append(now)
-            elif new_stage == 'delivered':
-                fields.append("delivered_at = %s")
-                params.append(now)
+        fields, params = _build_status_update_fields(new_approval, new_stage, now)
 
         params.extend([id, user_id])
         cursor.execute(f"""

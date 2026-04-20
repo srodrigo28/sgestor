@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 import json
+import re
 from datetime import datetime, timedelta
 from common.database import get_db_connection
 
@@ -48,6 +49,99 @@ def _base_client_payload(form):
 
 def _filter_payload(payload, available_columns):
     return {key: value for key, value in payload.items() if key in available_columns}
+
+
+def _document_digits(value):
+    raw_value = str(value or '').strip()
+    if raw_value.lower() in {'null', 'none', 'undefined', ''}:
+        return ''
+    return re.sub(r'\D', '', raw_value)
+
+
+def _is_repeated_digits(value):
+    return bool(value) and len(set(value)) == 1
+
+
+def _is_valid_cpf(value):
+    digits = _document_digits(value)
+    if len(digits) != 11 or _is_repeated_digits(digits):
+        return False
+
+    total = sum(int(digits[i]) * (10 - i) for i in range(9))
+    remainder = (total * 10) % 11
+    first_digit = 0 if remainder == 10 else remainder
+    if first_digit != int(digits[9]):
+        return False
+
+    total = sum(int(digits[i]) * (11 - i) for i in range(10))
+    remainder = (total * 10) % 11
+    second_digit = 0 if remainder == 10 else remainder
+    return second_digit == int(digits[10])
+
+
+def _is_valid_cnpj(value):
+    digits = _document_digits(value)
+    if len(digits) != 14 or _is_repeated_digits(digits):
+        return False
+
+    def calc_digit(base, weights):
+        total = sum(int(num) * weight for num, weight in zip(base, weights))
+        remainder = total % 11
+        return '0' if remainder < 2 else str(11 - remainder)
+
+    first_weights = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+    second_weights = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+    first_digit = calc_digit(digits[:12], first_weights)
+    second_digit = calc_digit(digits[:12] + first_digit, second_weights)
+    return digits[-2:] == first_digit + second_digit
+
+
+def _validate_document(value):
+    digits = _document_digits(value)
+    if not digits:
+        return None
+    if len(digits) == 11 and _is_valid_cpf(digits):
+        return None
+    if len(digits) == 14 and _is_valid_cnpj(digits):
+        return None
+    return 'Informe um CPF ou CNPJ válido.'
+
+
+def _find_duplicate_client_by_document(cursor, user_id, document_value, current_id=None):
+    digits = _document_digits(document_value)
+    if not digits:
+        return None
+
+    cursor.execute(
+        """
+        SELECT id, name, cpf
+        FROM clients
+        WHERE user_id = %s
+          AND REPLACE(REPLACE(REPLACE(REPLACE(COALESCE(cpf, ''), '.', ''), '-', ''), '/', ''), ' ', '') = %s
+        ORDER BY id DESC
+        """,
+        (user_id, digits),
+    )
+    for row in cursor.fetchall():
+        if current_id and int(row['id']) == int(current_id):
+            continue
+        return row
+    return None
+
+
+def _validate_client_payload(cursor, user_id, payload, current_id=None):
+    if not payload.get('name'):
+        return 'Informe o nome do cliente.'
+
+    document_error = _validate_document(payload.get('cpf'))
+    if document_error:
+        return document_error
+
+    duplicate = _find_duplicate_client_by_document(cursor, user_id, payload.get('cpf'), current_id=current_id)
+    if duplicate:
+        return f"Já existe um cliente cadastrado com este CPF/CNPJ: {duplicate['name']}."
+
+    return None
 
 
 @clients_bp.route('/clients')
@@ -168,6 +262,10 @@ def add_client():
         cursor = conn.cursor(dictionary=True)
         client_columns = _get_client_columns(cursor)
         payload = _filter_payload(_base_client_payload(request.form), client_columns)
+        validation_error = _validate_client_payload(cursor, user_id, payload)
+        if validation_error:
+            flash(validation_error)
+            return redirect(url_for('clients.list'))
 
         columns = ['user_id'] + list(payload.keys()) + ['created_at']
         values = [user_id] + list(payload.values()) + [datetime.now()]
@@ -202,6 +300,11 @@ def edit_client(id):
         client = cursor.fetchone()
 
         if client and client['user_id'] == user_id:
+            validation_error = _validate_client_payload(cursor, user_id, payload, current_id=id)
+            if validation_error:
+                flash(validation_error)
+                return redirect(url_for('clients.list'))
+
             assignments = [f"{column} = %s" for column in payload.keys()]
             assignments.append("updated_at = %s")
             values = list(payload.values()) + [datetime.now(), id]

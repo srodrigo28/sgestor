@@ -266,7 +266,7 @@
                 <!-- Status Select (Only visible in Edit Mode) -->
                 <div id="statusSelectWrapper" class="hidden mt-4 pt-4 border-t border-gray-800">
                     <label class="block mb-2 text-sm font-medium text-gray-400">Decisão do Orçamento</label>
-                    <select id="approvalStatusSelect"
+                    <select id="approvalStatusSelect" onchange="syncStatusSelection()"
                         class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg block w-full p-2.5 mb-3">
                         <option value="sent" {% if budget.approval_status=='sent' %}selected{% endif %}>Aguardando</option>
                         <option value="approved" {% if budget.approval_status=='approved' %}selected{% endif %}>Aprovado</option>
@@ -274,7 +274,7 @@
                     </select>
 
                     <label class="block mb-2 text-sm font-medium text-gray-400">Etapa do Veículo</label>
-                    <select id="stageStatusSelect"
+                    <select id="stageStatusSelect" onchange="syncStatusSelection()"
                         class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg block w-full p-2.5">
                         <option value="budget" {% if budget.stage_status=='budget' %}selected{% endif %}>Orçamento</option>
                         <option value="ready_for_pickup" {% if budget.stage_status=='ready_for_pickup' %}selected{% endif %}>Retirada</option>
@@ -526,8 +526,20 @@
             el.classList.add('bg-[#0f1316]', 'border-blue-500', 'ring-1', 'ring-blue-500'); // Highlight
         });
 
+        syncStatusSelection();
         renderItems(); // Re-render to show delete buttons
         Toastify({ text: "Modo de edição ativado", backgroundColor: "#3b82f6" }).showToast();
+    }
+
+    function syncStatusSelection() {
+        const approvalSelect = document.getElementById('approvalStatusSelect');
+        const stageSelect = document.getElementById('stageStatusSelect');
+        if (!approvalSelect || !stageSelect) return;
+
+        if (approvalSelect.value === 'sent' && stageSelect.value === 'delivered') {
+            stageSelect.value = 'ready_for_pickup';
+            Toastify({ text: "Entregue exige decisÃ£o. Ajustamos a etapa para Retirada.", backgroundColor: "#f59e0b" }).showToast();
+        }
     }
 
     // --- CRUD Items ---
