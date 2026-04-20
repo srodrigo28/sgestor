@@ -274,6 +274,10 @@
                         class="shrink-0 px-4 py-2.5 text-sm font-medium text-blue-500 border-b-2 border-blue-500 focus:outline-none transition-colors">
                         Dados Básicos
                     </button>
+                    <button type="button" onclick="switchTab('complementary')" id="tabComplementary"
+                        class="shrink-0 px-4 py-2.5 text-sm font-medium text-gray-400 hover:text-gray-300 focus:outline-none transition-colors">
+                        Complementar
+                    </button>
                     <button type="button" onclick="switchTab('address')" id="tabAddress"
                         class="shrink-0 px-4 py-2.5 text-sm font-medium text-gray-400 hover:text-gray-300 focus:outline-none transition-colors">
                         Endereço
@@ -286,6 +290,38 @@
                         <input type="text" name="name" required
                             class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3"
                             placeholder="Ex: Joao da Silva">
+                    </div>
+
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-400">WhatsApp</label>
+                        <input type="text" name="phone1" id="phone1Input" maxlength="15"
+                            class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3"
+                            placeholder="(XX) XXXXX-XXXX">
+                    </div>
+
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-400">Telefone 2 <span class="text-xs text-gray-600">(Opcional)</span></label>
+                        <input type="text" name="phone2" id="phone2Input" maxlength="15"
+                            class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3"
+                            placeholder="(XX) XXXXX-XXXX">
+                    </div>
+                </div>
+
+                <div id="contentComplementary" class="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6 animate-fade-in hidden">
+                    <input type="hidden" name="cpf" id="documentInput">
+
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-400">CPF <span class="text-xs text-gray-600">(Opcional)</span></label>
+                        <input type="text" id="cpfInput" maxlength="14"
+                            class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3"
+                            placeholder="000.000.000-00">
+                    </div>
+
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-400">CNPJ <span class="text-xs text-gray-600">(Opcional)</span></label>
+                        <input type="text" id="cnpjInput" maxlength="18"
+                            class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3"
+                            placeholder="00.000.000/0000-00">
                     </div>
 
                     <div>
@@ -303,42 +339,9 @@
                     </div>
 
                     <div>
-                        <label class="block mb-2 text-sm font-medium text-gray-400">Setor</label>
-                        <input type="text" name="sector" list="sectorsList" required
-                            class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3"
-                            placeholder="Ex: Setor Bueno">
-                        <datalist id="sectorsList">
-                            {% for sector in sectors %}
-                            <option value="{{ sector }}">
-                            {% endfor %}
-                        </datalist>
-                    </div>
-
-                    <div>
                         <label class="block mb-2 text-sm font-medium text-gray-400">Início do Contrato <span class="text-xs text-gray-600">(Opcional)</span></label>
                         <input type="date" name="contract_start_date" id="contractStartDateInput"
                             class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3">
-                    </div>
-
-                    <div>
-                        <label class="block mb-2 text-sm font-medium text-gray-400">CPF / CNPJ</label>
-                        <input type="text" name="cpf" id="cpfInput" maxlength="18"
-                            class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3"
-                            placeholder="000.000.000-00">
-                    </div>
-
-                    <div>
-                        <label class="block mb-2 text-sm font-medium text-gray-400">WhatsApp</label>
-                        <input type="text" name="phone1" id="phone1Input" maxlength="15"
-                            class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3"
-                            placeholder="(XX) XXXXX-XXXX">
-                    </div>
-
-                    <div>
-                        <label class="block mb-2 text-sm font-medium text-gray-400">Telefone 2 <span class="text-xs text-gray-600">(Opcional)</span></label>
-                        <input type="text" name="phone2" id="phone2Input" maxlength="15"
-                            class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3"
-                            placeholder="(XX) XXXXX-XXXX">
                     </div>
                 </div>
 
@@ -450,27 +453,51 @@
 
     function switchTab(tab) {
         const basicTab = document.getElementById('tabBasic');
+        const complementaryTab = document.getElementById('tabComplementary');
         const addressTab = document.getElementById('tabAddress');
         const contentBasic = document.getElementById('contentBasic');
+        const contentComplementary = document.getElementById('contentComplementary');
         const contentAddress = document.getElementById('contentAddress');
 
-        if (tab === 'basic') {
-            basicTab.classList.add('text-blue-500', 'border-blue-500');
-            basicTab.classList.remove('text-gray-400', 'hover:text-gray-300');
-            addressTab.classList.remove('text-blue-500', 'border-blue-500');
-            addressTab.classList.add('text-gray-400', 'hover:text-gray-300');
+        const tabs = {
+            basic: { button: basicTab, content: contentBasic },
+            complementary: { button: complementaryTab, content: contentComplementary },
+            address: { button: addressTab, content: contentAddress }
+        };
 
-            contentBasic.classList.remove('hidden');
-            contentAddress.classList.add('hidden');
-        } else {
-            addressTab.classList.add('text-blue-500', 'border-blue-500');
-            addressTab.classList.remove('text-gray-400', 'hover:text-gray-300');
-            basicTab.classList.remove('text-blue-500', 'border-blue-500');
-            basicTab.classList.add('text-gray-400', 'hover:text-gray-300');
+        Object.entries(tabs).forEach(([key, config]) => {
+            if (!config.button || !config.content) return;
+            const active = key === tab;
+            config.button.classList.toggle('text-blue-500', active);
+            config.button.classList.toggle('border-blue-500', active);
+            config.button.classList.toggle('text-gray-400', !active);
+            config.button.classList.toggle('hover:text-gray-300', !active);
+            config.content.classList.toggle('hidden', !active);
+        });
+    }
 
-            contentAddress.classList.remove('hidden');
-            contentBasic.classList.add('hidden');
+    function syncDocumentFields(preferredField = null) {
+        const cpfInput = document.getElementById('cpfInput');
+        const cnpjInput = document.getElementById('cnpjInput');
+        const documentInput = document.getElementById('documentInput');
+        if (!cpfInput || !cnpjInput || !documentInput) return;
+
+        const cpfValue = cpfInput.value.trim();
+        const cnpjValue = cnpjInput.value.trim();
+
+        if (preferredField === 'cpf' && cpfValue) {
+            cnpjInput.value = '';
+            documentInput.value = cpfValue;
+            return;
         }
+
+        if (preferredField === 'cnpj' && cnpjValue) {
+            cpfInput.value = '';
+            documentInput.value = cnpjValue;
+            return;
+        }
+
+        documentInput.value = cpfValue || cnpjValue || '';
     }
 
     function searchCep() {
@@ -504,7 +531,6 @@
         const name = btn.dataset.name;
         const legalName = btn.dataset.legalName;
         const tradeName = btn.dataset.tradeName;
-        const sector = btn.dataset.sector;
         const contractStartDate = btn.dataset.contractStartDate;
         const cpf = btn.dataset.cpf;
         const phone1 = btn.dataset.phone1;
@@ -524,11 +550,18 @@
         document.getElementsByName('name')[0].value = name;
         document.getElementsByName('legal_name')[0].value = legalName;
         document.getElementsByName('trade_name')[0].value = tradeName;
-        document.getElementsByName('sector')[0].value = sector;
         document.getElementsByName('contract_start_date')[0].value = contractStartDate;
-        document.getElementsByName('cpf')[0].value = cpf;
         document.getElementsByName('phone1')[0].value = phone1;
         document.getElementsByName('phone2')[0].value = phone2;
+
+        const documentDigits = (cpf || '').replace(/\D/g, '');
+        const cpfInput = document.getElementById('cpfInput');
+        const cnpjInput = document.getElementById('cnpjInput');
+        const documentInput = document.getElementById('documentInput');
+
+        if (cpfInput) cpfInput.value = documentDigits.length === 11 ? cpf : '';
+        if (cnpjInput) cnpjInput.value = documentDigits.length === 14 ? cpf : '';
+        if (documentInput) documentInput.value = cpf || '';
 
         document.getElementById('cepInput').value = cep;
         document.getElementById('addressInput').value = address;
@@ -547,6 +580,8 @@
         document.getElementById('submitBtn').innerText = 'Salvar Cliente';
         document.getElementById('clientForm').action = "{{ url_for('clients.add_client') }}";
         document.getElementById('clientForm').reset();
+        const documentInput = document.getElementById('documentInput');
+        if (documentInput) documentInput.value = '';
         switchTab('basic');
     }
 
@@ -688,16 +723,21 @@
         const cpfMask = (value) => {
             if (!value) return '';
             value = value.replace(/\D/g, '');
-            if (value.length <= 11) {
-                value = value.replace(/(\d{3})(\d)/, '$1.$2');
-                value = value.replace(/(\d{3})(\d)/, '$1.$2');
-                value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-            } else {
-                value = value.replace(/^(\d{2})(\d)/, '$1.$2');
-                value = value.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
-                value = value.replace(/\.(\d{3})(\d)/, '.$1/$2');
-                value = value.replace(/(\d{4})(\d)/, '$1-$2');
-            }
+            value = value.slice(0, 11);
+            value = value.replace(/(\d{3})(\d)/, '$1.$2');
+            value = value.replace(/(\d{3})(\d)/, '$1.$2');
+            value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+            return value;
+        };
+
+        const cnpjMask = (value) => {
+            if (!value) return '';
+            value = value.replace(/\D/g, '');
+            value = value.slice(0, 14);
+            value = value.replace(/^(\d{2})(\d)/, '$1.$2');
+            value = value.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+            value = value.replace(/\.(\d{3})(\d)/, '.$1/$2');
+            value = value.replace(/(\d{4})(\d)/, '$1-$2');
             return value;
         };
 
@@ -705,6 +745,22 @@
         if (cpfInput) {
             cpfInput.addEventListener('input', (e) => {
                 e.target.value = cpfMask(e.target.value);
+                syncDocumentFields('cpf');
+            });
+        }
+
+        const cnpjInput = document.getElementById('cnpjInput');
+        if (cnpjInput) {
+            cnpjInput.addEventListener('input', (e) => {
+                e.target.value = cnpjMask(e.target.value);
+                syncDocumentFields('cnpj');
+            });
+        }
+
+        const clientForm = document.getElementById('clientForm');
+        if (clientForm) {
+            clientForm.addEventListener('submit', () => {
+                syncDocumentFields();
             });
         }
 

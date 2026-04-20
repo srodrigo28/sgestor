@@ -139,6 +139,7 @@ class ClientsFrontendTests(unittest.TestCase):
         html = response.get_data(as_text=True)
 
         self.assertEqual(response.status_code, 200)
+        self.assertIn("Complementar", html)
         self.assertIn('name="legal_name"', html)
         self.assertIn('placeholder="Ex: Empresa Silva LTDA"', html)
         self.assertIn('name="trade_name"', html)
@@ -154,12 +155,13 @@ class ClientsFrontendTests(unittest.TestCase):
 
         self.assertIn('name="name"', html)
         self.assertIn('placeholder="Ex: Joao da Silva"', html)
-        self.assertIn('name="sector"', html)
-        self.assertIn('placeholder="Ex: Setor Bueno"', html)
         self.assertIn('name="cpf"', html)
         self.assertIn('placeholder="000.000.000-00"', html)
+        self.assertIn('id="cnpjInput"', html)
+        self.assertIn('placeholder="00.000.000/0000-00"', html)
         self.assertIn('name="phone1"', html)
         self.assertIn('placeholder="(XX) XXXXX-XXXX"', html)
+        self.assertNotIn('name="sector"', html)
 
     def test_edit_buttons_include_company_fields_for_modal_population(self):
         response = self.client.get("/clients")
