@@ -145,7 +145,7 @@ def _validate_client_payload(cursor, user_id, payload, current_id=None):
 
 
 @clients_bp.route('/clients')
-def list():
+def list_clients():
     if 'id' not in session:
         return redirect(url_for('auth.home'))
 
@@ -265,7 +265,7 @@ def add_client():
         validation_error = _validate_client_payload(cursor, user_id, payload)
         if validation_error:
             flash(validation_error)
-            return redirect(url_for('clients.list'))
+            return redirect(url_for('clients.list_clients'))
 
         columns = ['user_id'] + list(payload.keys()) + ['created_at']
         values = [user_id] + list(payload.values()) + [datetime.now()]
@@ -281,7 +281,7 @@ def add_client():
     finally:
         conn.close()
 
-    return redirect(url_for('clients.list'))
+    return redirect(url_for('clients.list_clients'))
 
 
 @clients_bp.route('/clients/edit/<int:id>', methods=['POST'])
@@ -303,7 +303,7 @@ def edit_client(id):
             validation_error = _validate_client_payload(cursor, user_id, payload, current_id=id)
             if validation_error:
                 flash(validation_error)
-                return redirect(url_for('clients.list'))
+                return redirect(url_for('clients.list_clients'))
 
             assignments = [f"{column} = %s" for column in payload.keys()]
             assignments.append("updated_at = %s")
@@ -320,7 +320,7 @@ def edit_client(id):
     finally:
         conn.close()
 
-    return redirect(url_for('clients.list'))
+    return redirect(url_for('clients.list_clients'))
 
 
 @clients_bp.route('/clients/delete/<int:id>', methods=['POST'])
@@ -347,4 +347,4 @@ def delete_client(id):
         flash('Cliente não encontrado.')
 
     conn.close()
-    return redirect(url_for('clients.list'))
+    return redirect(url_for('clients.list_clients'))

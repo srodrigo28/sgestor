@@ -183,7 +183,7 @@
                 </button>
 
                 {% if menu_permissions.get('clients') %}
-                <a href="{{ url_for('clients.list') }}" class="flex flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 {% if request.path.startswith('/clients') %}text-blue-400 bg-blue-500/10{% else %}text-gray-400{% endif %}">
+                <a href="{{ url_for('clients.list_clients') }}" class="flex flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 {% if request.path.startswith('/clients') %}text-blue-400 bg-blue-500/10{% else %}text-gray-400{% endif %}">
                     <i class="fas fa-users text-sm"></i>
                     <span>Clientes</span>
                 </a>
