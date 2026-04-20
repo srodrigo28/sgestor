@@ -170,6 +170,7 @@ class ClientsFrontendTests(unittest.TestCase):
         self.assertIn('data-legal-name="Ana Maria LTDA"', html)
         self.assertIn('data-trade-name="Ana Maria Store"', html)
         self.assertIn('data-contract-start-date="2026-03-10"', html)
+        self.assertIn("appUrl(`/clients/edit/${id}`)", html)
 
 
 if __name__ == "__main__":

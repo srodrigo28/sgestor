@@ -545,7 +545,7 @@
 
         document.getElementById('modalTitle').innerText = 'Editar Cliente';
         document.getElementById('submitBtn').innerText = 'Salvar Alterações';
-        document.getElementById('clientForm').action = `/clients/edit/${id}`;
+        document.getElementById('clientForm').action = appUrl(`/clients/edit/${id}`);
 
         document.getElementsByName('name')[0].value = name;
         document.getElementsByName('legal_name')[0].value = legalName;
