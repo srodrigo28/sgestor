@@ -497,10 +497,13 @@ def main() -> None:
         print(f"Erro MySQL: {e.msg}")
         if e.errno == 2003:
             print("   -> Verifique se o MySQL esta rodando.")
+        sys.exit(1)
     except ImportError:
         print("Erro: Biblioteca mysql-connector-python nao encontrada.")
+        sys.exit(1)
     except Exception as e:
         print(f"Erro inesperado: {e}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

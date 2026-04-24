@@ -46,7 +46,7 @@
                                 <select name="role"
                                     class="bg-[#0f1214] border border-gray-700 text-white rounded-lg p-2 text-sm focus:border-blue-500 outline-none appearance-none cursor-pointer">
                                     {% for r in roles %}
-                                    <option value="{{ r }}" {% if user.role == r %}selected{% endif %}>{{ r }}</option>
+                                    <option value="{{ r }}" {% if user.role == r %}selected{% endif %}>{{ role_labels.get(r, r) }}</option>
                                     {% endfor %}
                                 </select>
                                 <button type="submit"
@@ -72,7 +72,7 @@
                         <tr>
                             <th class="px-4 py-3">Menu</th>
                             {% for r in roles %}
-                            <th class="px-4 py-3 text-center">{{ r }}</th>
+                            <th class="px-4 py-3 text-center">{{ role_labels.get(r, r) }}</th>
                             {% endfor %}
                         </tr>
                     </thead>

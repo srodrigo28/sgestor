@@ -12,15 +12,15 @@ INSERT INTO role_menu_permissions (role, menu_key, can_view) VALUES
 ('pessoal', 'admin_users', 0)
 ON DUPLICATE KEY UPDATE can_view = VALUES(can_view);
 
--- 2. Loja (Foco em Vendas/Produtos)
+-- 2. Serviço (perfil historicamente salvo como 'loja')
 INSERT INTO role_menu_permissions (role, menu_key, can_view) VALUES
 ('loja', 'dashboard', 1),
-('loja', 'tasks', 0),       -- Loja foca em vendas, menos tarefas avulsas
+('loja', 'tasks', 0),
 ('loja', 'financial', 1),
 ('loja', 'products', 1),
 ('loja', 'clients', 1),
-('loja', 'budgets', 1),    -- Orçamentos de Venda
-('loja', 'services', 0),   -- Loja não presta serviço de mão de obra
+('loja', 'budgets', 1),
+('loja', 'services', 1),
 ('loja', 'admin_users', 0)
 ON DUPLICATE KEY UPDATE can_view = VALUES(can_view);
 

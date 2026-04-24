@@ -1,3 +1,7 @@
+DELETE FROM role_menu_permissions
+WHERE role IS NULL OR role = ''
+   OR role NOT IN ('admin','oficina','loja','atendimentos','pessoal');
+
 ALTER TABLE role_menu_permissions
 MODIFY COLUMN role ENUM('admin','oficina','loja','atendimentos','pessoal') NOT NULL;
 
@@ -68,7 +72,7 @@ ON DUPLICATE KEY UPDATE can_view = VALUES(can_view);
 INSERT INTO role_menu_permissions (role, menu_key, can_view) VALUES
 ('admin', 'services', 1),
 ('oficina', 'services', 1),
-('loja', 'services', 0),
+('loja', 'services', 1),
 ('atendimentos', 'services', 0),
 ('pessoal', 'services', 0)
 ON DUPLICATE KEY UPDATE can_view = VALUES(can_view);

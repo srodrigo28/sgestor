@@ -11,6 +11,13 @@ from apps.auth.views import login_required
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin', template_folder='../../templates/admin')
 
 ROLE_OPTIONS = ['admin', 'oficina', 'loja', 'atendimentos', 'pessoal']
+ROLE_LABELS = {
+    'admin': 'Administrador',
+    'oficina': 'Oficina',
+    'loja': 'Serviço',
+    'atendimentos': 'Atendimentos',
+    'pessoal': 'Pessoal',
+}
 MENU_OPTIONS = [
     {'key': 'dashboard', 'label': 'Dashboard'},
     {'key': 'attendance', 'label': 'Atendimentos'},
@@ -28,6 +35,18 @@ MENU_OPTIONS = [
 
 def admin_required():
     return session.get('role') == 'admin'
+
+
+def ensure_admin_permission_schema(cursor):
+    cursor.execute("""
+        DELETE FROM role_menu_permissions
+        WHERE role IS NULL OR role = ''
+           OR role NOT IN ('admin','oficina','loja','atendimentos','pessoal')
+    """)
+    cursor.execute("""
+        ALTER TABLE role_menu_permissions
+        MODIFY COLUMN role ENUM('admin','oficina','loja','atendimentos','pessoal') NOT NULL
+    """)
 
 
 def _financial_table(kind: str) -> str:
@@ -60,6 +79,8 @@ def users():
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
+    ensure_admin_permission_schema(cursor)
+    conn.commit()
 
     cursor.execute("SELECT id, name, email, phone, role FROM users ORDER BY id DESC")
     users_list = cursor.fetchall()
@@ -78,6 +99,7 @@ def users():
     return render_template('admin/users.html',
                            users=users_list,
                            roles=ROLE_OPTIONS,
+                           role_labels=ROLE_LABELS,
                            menus=MENU_OPTIONS,
                            permissions=permissions)
 
@@ -206,6 +228,7 @@ def update_permissions():
 
     conn = get_db_connection()
     cursor = conn.cursor()
+    ensure_admin_permission_schema(cursor)
 
     for role in ROLE_OPTIONS:
         for menu in MENU_OPTIONS:

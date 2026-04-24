@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS role_menu_permissions (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    role ENUM('admin','oficina','loja','pessoal') NOT NULL,
+    role ENUM('admin','oficina','loja','atendimentos','pessoal') NOT NULL,
     menu_key VARCHAR(50) NOT NULL,
     can_view TINYINT(1) NOT NULL DEFAULT 1,
     UNIQUE KEY role_menu_unique (role, menu_key)
@@ -32,6 +32,14 @@ INSERT IGNORE INTO role_menu_permissions (role, menu_key, can_view) VALUES
 ('loja','budgets',1),
 ('loja','services',1),
 ('loja','admin_users',0),
+('atendimentos','dashboard',1),
+('atendimentos','tasks',1),
+('atendimentos','financial',1),
+('atendimentos','products',0),
+('atendimentos','clients',1),
+('atendimentos','budgets',0),
+('atendimentos','services',0),
+('atendimentos','admin_users',0),
 ('pessoal','dashboard',1),
 ('pessoal','tasks',1),
 ('pessoal','financial',1),

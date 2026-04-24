@@ -61,7 +61,7 @@ def create_app() -> Flask:
             "products": role in {"admin", "oficina", "loja"},
             "clients": role in {"admin", "oficina", "loja", "atendimentos"},
             "budgets": role in {"admin", "oficina", "loja"},
-            "services": role in {"admin", "oficina"},
+            "services": role in {"admin", "oficina", "loja"},
             "employees": role in {"admin", "oficina"},
             "mechanics": role in {"admin", "oficina"},
             "admin_users": role == "admin",

@@ -21,7 +21,7 @@
             </button>
             <button type="button" onclick="switchTab('loja')" id="tab-loja"
                 class="flex-1 pb-2 text-center text-sm font-medium text-gray-400 border-b-2 border-transparent hover:text-gray-300 transition">
-                Dados da Loja
+                Dados do Serviço
             </button>
         </div>
 
@@ -48,7 +48,7 @@
                 </div>
             </div>
 
-            <!-- Tab: Loja -->
+            <!-- Tab: Serviço -->
             <div id="content-loja" class="hidden space-y-4 animate-fade-in">
                 
                 <!-- Logo Upload -->
@@ -74,9 +74,8 @@
                     <span class="text-xs text-gray-500">Logo para Cabeçalho</span>
                 </div>
 
-                <!-- NEW: Store Name -->
                 <div>
-                     <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Nome da Loja (Fantasia)</label>
+                     <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Nome do Serviço (Fantasia)</label>
                      <input type="text" name="store_name" value="{{ session.get('store_name', '') }}" placeholder="Ex: Auto Center Silva"
                          class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-2 px-3 text-white focus:outline-none focus:border-blue-500 transition">
                 </div>

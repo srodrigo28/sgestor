@@ -69,11 +69,14 @@ def run_migrations():
     print("\nChamando gerenciador de banco de dados (db/migration.py)...")
     try:
         if MIGRATION_FILE.exists():
-            run_command([sys.executable, str(MIGRATION_FILE), "up"], cwd=CORE_DIR)
+            exit_code = run_command([sys.executable, str(MIGRATION_FILE), "up"], cwd=CORE_DIR)
+            return exit_code == 0
         else:
             print("Arquivo db/migration.py nao encontrado. Pulando etapa de banco.")
+            return True
     except Exception as e:
         print(f"Erro ao rodar db/migration.py: {e}")
+        return False
 
 
 def run_app():
@@ -143,7 +146,10 @@ def main():
         # 2. Instalar Bibliotecas (Flask, MySQL)
         install_dependencies()
         # 3. Executar Migrations (Banco de Dados)
-        run_migrations()
+        if not run_migrations():
+            print("\nSetup interrompido: nao foi possivel preparar o banco de dados.")
+            print("Verifique se o MySQL esta rodando e execute novamente.")
+            return
 
     if mode == "init":
         print("\nAmbiente preparado com sucesso.")
