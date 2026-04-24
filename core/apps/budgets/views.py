@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 import json
 from datetime import datetime, timedelta, date
 from common.database import get_db_connection
+from common.employees_schema import ensure_employees_schema
 
 def adjust_stock(cursor, budget_id, user_id, reverse=False):
     """
@@ -38,30 +39,22 @@ def _resolve_month_window(raw_value=None):
         selected = default_value
         start_month = datetime.strptime(selected, '%Y-%m').date()
 
+    if start_month.year != today.year or start_month.month > today.month:
+        selected = default_value
+        start_month = datetime.strptime(selected, '%Y-%m').date()
+
     if start_month.month == 12:
         end_month = date(start_month.year + 1, 1, 1)
     else:
         end_month = date(start_month.year, start_month.month + 1, 1)
 
     month_options = []
-    base = today.replace(day=1)
-    base_total = base.year * 12 + (base.month - 1)
-    for i in range(11, -1, -1):
-        total = base_total - i
-        y = total // 12
-        m = total % 12 + 1
-        value = f"{y:04d}-{m:02d}"
-        label = f"{months_pt[m]}/{str(y)[-2:]}"
+    for m in range(1, today.month + 1):
+        value = f"{today.year:04d}-{m:02d}"
+        label = f"{months_pt[m]}/{str(today.year)[-2:]}"
         month_options.append({'value': value, 'label': label})
 
     return selected, start_month, end_month, month_options
-
-
-def _ensure_mechanics_schema(cursor):
-    try:
-        cursor.execute("ALTER TABLE mechanics ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1")
-    except Exception:
-        pass
 
 
 def _resolve_budget_datetime(raw_value, fallback=None):
@@ -241,9 +234,9 @@ def list():
         params.append(approval_filter)
 
     if search:
-        query += " AND (c.name LIKE %s OR v.plate LIKE %s OR CAST(b.id AS CHAR) LIKE %s)"
+        query += " AND c.name LIKE %s"
         term = f"%{search}%"
-        params.extend([term, term, term])
+        params.append(term)
 
     query += " ORDER BY b.created_at DESC"
     cursor.execute(query, tuple(params))
@@ -502,6 +495,76 @@ def charts():
 
     return {'history': chart_history, 'stage': chart_stage, 'approval': chart_approval}
 
+
+@budgets_bp.route('/budgets/search/clients')
+def search_clients():
+    if 'id' not in session:
+        return {'error': 'Unauthorized'}, 401
+
+    user_id = session['id']
+    term = (request.args.get('q') or '').strip()
+    like_term = f"%{term}%"
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT id, name, cpf
+        FROM clients
+        WHERE user_id = %s
+          AND (%s = '' OR name LIKE %s OR cpf LIKE %s)
+        ORDER BY name
+        LIMIT 5
+    """, (user_id, term, like_term, like_term))
+    clients = cursor.fetchall()
+    conn.close()
+
+    return {'results': clients}
+
+
+@budgets_bp.route('/budgets/search/items')
+def search_items():
+    if 'id' not in session:
+        return {'error': 'Unauthorized'}, 401
+
+    user_id = session['id']
+    item_type = (request.args.get('type') or 'product').strip().lower()
+    term = (request.args.get('q') or '').strip()
+    like_term = f"%{term}%"
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    if item_type == 'service':
+        cursor.execute("""
+            SELECT id, name, price
+            FROM services
+            WHERE user_id = %s
+              AND (%s = '' OR name LIKE %s OR description LIKE %s)
+            ORDER BY name
+            LIMIT 5
+        """, (user_id, term, like_term, like_term))
+        results = cursor.fetchall()
+        for item in results:
+            item['type'] = 'service'
+            item['price'] = float(item.get('price') or 0)
+    else:
+        cursor.execute("""
+            SELECT id, name, sell_price, sku, quantity AS stock_quantity
+            FROM products
+            WHERE user_id = %s
+              AND (%s = '' OR name LIKE %s OR sku LIKE %s)
+            ORDER BY name
+            LIMIT 5
+        """, (user_id, term, like_term, like_term))
+        results = cursor.fetchall()
+        for item in results:
+            item['type'] = 'product'
+            item['sell_price'] = float(item.get('sell_price') or 0)
+            item['stock_quantity'] = float(item.get('stock_quantity') or 0)
+
+    conn.close()
+    return {'results': results}
+
 @budgets_bp.route('/budgets/create', methods=['GET'])
 def create():
     if 'id' not in session:
@@ -511,36 +574,15 @@ def create():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     
-    # Fetch Clients for Autocomplete
-    cursor.execute("SELECT id, name, cpf FROM clients WHERE user_id = %s ORDER BY name", (user_id,))
-    clients = cursor.fetchall()
-    
-    # Fetch Products for Autocomplete (Retail: SKU, Images)
-    cursor.execute("SELECT id, name, sell_price, sku, images, quantity as stock_quantity FROM products WHERE user_id = %s ORDER BY name", (user_id,))
-    products = cursor.fetchall()
-    
-    # Fetch Services for Autocomplete
-    cursor.execute("SELECT id, name, price FROM services WHERE user_id = %s ORDER BY name", (user_id,))
-    services_list = cursor.fetchall()
+    # Fetch employees
+    ensure_employees_schema(cursor)
+    conn.commit()
+    cursor.execute("SELECT id, name FROM employees WHERE user_id = %s AND COALESCE(is_active, 1) = 1 ORDER BY name", (user_id,))
+    employees = cursor.fetchall()
 
-    # Fetch Mechanics
-    _ensure_mechanics_schema(cursor)
-    cursor.execute("SELECT id, name FROM mechanics WHERE user_id = %s AND COALESCE(is_active, 1) = 1 ORDER BY name", (user_id,))
-    mechanics = cursor.fetchall()
-    
-    # Process images (JSON string -> list)
-    for p in products:
-        if p.get('images'):
-            try:
-                p['images'] = json.loads(p['images'])
-            except:
-                p['images'] = []
-        else:
-            p['images'] = []
-    
     conn.close()
         
-    return render_template('budgets/create.html', clients=clients, products=products, services_list=services_list, mechanics=mechanics)
+    return render_template('budgets/create.html', employees=employees)
 
 @budgets_bp.route('/budgets/save', methods=['POST'])
 def save_budget():
@@ -574,9 +616,9 @@ def save_budget():
     except (TypeError, ValueError):
         return {'error': 'Informe uma quilometragem válida para o veículo.'}, 400
 
-    mechanic_id = data.get('mechanic_id')
-    if mechanic_id and (str(mechanic_id).lower() in ['null', 'none', 'undefined'] or str(mechanic_id).strip() == ''):
-        mechanic_id = None
+    employee_id = data.get('employee_id') or data.get('mechanic_id')
+    if employee_id and (str(employee_id).lower() in ['null', 'none', 'undefined'] or str(employee_id).strip() == ''):
+        employee_id = None
     
     notes = data.get('notes')
     items = data.get('items', [])
@@ -692,7 +734,7 @@ def save_budget():
 
         cursor.execute("""
             INSERT INTO budgets (
-                user_id, client_id, vehicle_id, vehicle_km, mechanic_id,
+                user_id, client_id, vehicle_id, vehicle_km, employee_id,
                 status, approval_status, stage_status,
                 approved_at, rejected_at, ready_for_pickup_at, delivered_at,
                 total_value, discount, notes, expiration_date, created_at
@@ -704,7 +746,7 @@ def save_budget():
                 %s, %s, %s, %s, %s
             )
         """, (
-            user_id, client_id, vehicle_id, km, mechanic_id,
+            user_id, client_id, vehicle_id, km, employee_id,
             approval_status, approval_status, stage_status,
             approved_at, rejected_at, ready_for_pickup_at, delivered_at,
             total_value, discount, notes, expiration, budget_date
@@ -811,14 +853,15 @@ def view_budget(id):
     cursor.execute("SELECT id, name, price FROM services WHERE user_id = %s ORDER BY name", (user_id,))
     services_list = cursor.fetchall()
     
-    # Fetch Mechanics for editing
-    _ensure_mechanics_schema(cursor)
-    cursor.execute("SELECT id, name, is_active FROM mechanics WHERE user_id = %s AND (COALESCE(is_active, 1) = 1 OR id = %s) ORDER BY COALESCE(is_active, 1) DESC, name", (user_id, budget.get('mechanic_id') or 0))
-    mechanics = cursor.fetchall()
+    # Fetch employees for editing
+    ensure_employees_schema(cursor)
+    conn.commit()
+    cursor.execute("SELECT id, name, is_active FROM employees WHERE user_id = %s AND (COALESCE(is_active, 1) = 1 OR id = %s) ORDER BY COALESCE(is_active, 1) DESC, name", (user_id, budget.get('employee_id') or 0))
+    employees = cursor.fetchall()
 
     conn.close()
     
-    return render_template('budgets/view.html', budget=budget, items=items, clients=clients, mechanics=mechanics, products=products, services_list=services_list, financial=financial_payload)
+    return render_template('budgets/view.html', budget=budget, items=items, clients=clients, employees=employees, products=products, services_list=services_list, financial=financial_payload)
 
 @budgets_bp.route('/budgets/update/<int:id>', methods=['POST'])
 def update_budget(id):
@@ -844,9 +887,9 @@ def update_budget(id):
     except (TypeError, ValueError):
         return {'error': 'Informe uma quilometragem válida para o veículo.'}, 400
 
-    mechanic_id = data.get('mechanic_id')
-    if mechanic_id and (str(mechanic_id).lower() in ['null', 'none', 'undefined'] or str(mechanic_id).strip() == ''):
-        mechanic_id = None
+    employee_id = data.get('employee_id') or data.get('mechanic_id')
+    if employee_id and (str(employee_id).lower() in ['null', 'none', 'undefined'] or str(employee_id).strip() == ''):
+        employee_id = None
     
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -905,7 +948,7 @@ def update_budget(id):
             "discount = %s",
             "notes = %s",
             "vehicle_km = %s",
-            "mechanic_id = %s",
+            "employee_id = %s",
         ]
         params = status_params + [
             budget_date,
@@ -914,7 +957,7 @@ def update_budget(id):
             discount,
             notes,
             vehicle_km,
-            mechanic_id,
+            employee_id,
         ]
 
         params.append(id)

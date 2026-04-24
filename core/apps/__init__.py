@@ -9,6 +9,7 @@ __all__ = [
     "services",
     "schedule",
     "admin",
+    "employees",
     "mechanics",
     "db_manager",
 ]

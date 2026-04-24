@@ -36,7 +36,10 @@ def get_venv_python():
 
 def run_command(command, cwd=None):
     """Executa um comando e retorna o codigo de saida."""
-    return subprocess.call(command, cwd=str(cwd) if cwd else None)
+    try:
+        return subprocess.call(command, cwd=str(cwd) if cwd else None)
+    except KeyboardInterrupt:
+        return 130
 
 
 def install_dependencies():
@@ -79,7 +82,10 @@ def run_app():
     print("---------------------------------------------------")
     try:
         if MAIN_FILE.exists():
-            run_command([sys.executable, str(MAIN_FILE)], cwd=CORE_DIR)
+            exit_code = run_command([sys.executable, str(MAIN_FILE)], cwd=CORE_DIR)
+            if exit_code == 130:
+                print("\nAplicacao encerrada com sucesso.")
+                print("Servidor finalizado manualmente pelo terminal.")
         else:
             print("Erro: manage.py nao encontrado.")
     except KeyboardInterrupt:
@@ -124,7 +130,10 @@ def main():
         mode_args = sys.argv[1:]
         print("Reiniciando setup dentro da venv para garantir isolamento...")
         # Re-executa este script usando o Python da venv
-        run_command([str(venv_python), __file__] + mode_args)
+        exit_code = run_command([str(venv_python), __file__] + mode_args)
+        if exit_code == 130:
+            print("\nAplicacao encerrada com sucesso.")
+            print("Servidor finalizado manualmente pelo terminal.")
         return
 
     print("Rodando dentro do ambiente virtual.")

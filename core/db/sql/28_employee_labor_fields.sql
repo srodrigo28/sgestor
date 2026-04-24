@@ -1,0 +1,20 @@
+-- Add optional labor/admission fields to employees.
+ALTER TABLE employees ADD COLUMN cpf VARCHAR(14) AFTER phone;
+ALTER TABLE employees ADD COLUMN rg VARCHAR(20) AFTER cpf;
+ALTER TABLE employees ADD COLUMN rg_issuer VARCHAR(20) AFTER rg;
+ALTER TABLE employees ADD COLUMN rg_state VARCHAR(2) AFTER rg_issuer;
+ALTER TABLE employees ADD COLUMN rg_issue_date DATE AFTER rg_state;
+ALTER TABLE employees ADD COLUMN pis_pasep VARCHAR(20) AFTER rg_issue_date;
+ALTER TABLE employees ADD COLUMN ctps_number VARCHAR(20) AFTER pis_pasep;
+ALTER TABLE employees ADD COLUMN ctps_series VARCHAR(10) AFTER ctps_number;
+ALTER TABLE employees ADD COLUMN ctps_state VARCHAR(2) AFTER ctps_series;
+ALTER TABLE employees ADD COLUMN mother_name VARCHAR(100) AFTER hiring_date;
+ALTER TABLE employees ADD COLUMN father_name VARCHAR(100) AFTER mother_name;
+ALTER TABLE employees ADD COLUMN education_level VARCHAR(50) AFTER father_name;
+ALTER TABLE employees ADD COLUMN marital_status VARCHAR(50) AFTER education_level;
+ALTER TABLE employees ADD COLUMN salary DECIMAL(10, 2) AFTER marital_status;
+ALTER TABLE employees ADD COLUMN num_dependents INT DEFAULT 0 AFTER salary;
+ALTER TABLE employees ADD COLUMN job_title VARCHAR(100) AFTER num_dependents;
+ALTER TABLE employees ADD COLUMN contract_type VARCHAR(50) AFTER job_title;
+ALTER TABLE employees ADD COLUMN work_schedule VARCHAR(100) AFTER contract_type;
+ALTER TABLE employees ADD COLUMN labor_notes TEXT AFTER work_schedule;

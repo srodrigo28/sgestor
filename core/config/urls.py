@@ -7,7 +7,7 @@ from apps.budgets.views import budgets_bp
 from apps.clients.views import clients_bp
 from apps.db_manager.views import db_bp
 from apps.financial.views import financial_bp
-from apps.mechanics.views import mechanics_bp
+from apps.employees.views import employees_bp, mechanics_legacy_bp
 from apps.products.views import products_bp
 from apps.schedule.views import schedule_bp
 from apps.services.views import services_bp
@@ -26,4 +26,5 @@ def register_blueprints(app: Flask) -> None:
     app.register_blueprint(schedule_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(db_bp)
-    app.register_blueprint(mechanics_bp)
+    app.register_blueprint(employees_bp)
+    app.register_blueprint(mechanics_legacy_bp)

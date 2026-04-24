@@ -118,17 +118,17 @@
             </div>
         </div>
 
-        <!-- Mecânico Responsável -->
+        <!-- Funcionário Responsável -->
         <div class="card p-6 border border-gray-800 bg-[#171d21] rounded-xl">
              <h3 class="text-lg font-bold text-white mb-4 border-b border-gray-800 pb-2">
                 <i class="fas fa-user-cog text-blue-500 mr-2"></i> Responsável Técnico
             </h3>
             <div>
-                 <label class="block mb-2 text-sm font-medium text-gray-400">Selecione o mecânico</label>
-                 <select name="mechanic_id" id="mechanicInput" disabled class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 editable-field disabled:opacity-50 transition">
+                 <label class="block mb-2 text-sm font-medium text-gray-400">Selecione o Funcionário</label>
+                 <select name="employee_id" id="employeeInput" disabled class="bg-[#0f1316] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 editable-field disabled:opacity-50 transition">
                     <option value="">-- Sem vínculo --</option>
-                    {% for mechanic in mechanics %}
-                    <option value="{{ mechanic.id }}" {% if budget.mechanic_id == mechanic.id %}selected{% endif %}>{{ mechanic.name }}</option>
+                    {% for employee in employees %}
+                    <option value="{{ employee.id }}" {% if budget.employee_id == employee.id %}selected{% endif %}>{{ employee.name }}</option>
                     {% endfor %}
                  </select>
             </div>
@@ -538,7 +538,7 @@
 
         if (approvalSelect.value === 'sent' && stageSelect.value === 'delivered') {
             stageSelect.value = 'ready_for_pickup';
-            Toastify({ text: "Entregue exige decisÃ£o. Ajustamos a etapa para Retirada.", backgroundColor: "#f59e0b" }).showToast();
+            Toastify({ text: "Entregue exige decisão. Ajustamos a etapa para Retirada.", backgroundColor: "#f59e0b" }).showToast();
         }
     }
 
@@ -637,7 +637,7 @@
     async function saveChanges() {
         const payload = {
             vehicle_km: document.getElementById('kmInput').value,
-            mechanic_id: document.getElementById('mechanicInput') ? document.getElementById('mechanicInput').value : '',
+            employee_id: document.getElementById('employeeInput') ? document.getElementById('employeeInput').value : '',
             notes: document.getElementById('notesInput').value,
             discount: document.getElementById('discountInput').value,
             budget_date: document.getElementById('budgetDateInput').value,

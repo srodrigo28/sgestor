@@ -1,0 +1,409 @@
+{% extends "base.html" %}
+
+{% block title %}Novo Funcionário{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-white">Novo Funcionário</h1>
+        <p class="text-gray-400">Cadastre um novo profissional para a oficina ou para o atendimento.</p>
+    </div>
+    <a href="{{ url_for('employees.list_employees') }}" class="text-gray-400 hover:text-white transition">
+        <i class="fas fa-arrow-left"></i> Voltar
+    </a>
+</div>
+
+<div class="bg-gray-800 rounded-lg shadow-xl max-w-4xl mx-auto overflow-hidden">
+    <div class="flex border-b border-gray-700">
+        <button onclick="switchTab('tab-main')" id="btn-tab-main"
+            class="flex-1 py-4 px-6 text-sm font-medium text-blue-500 border-b-2 border-blue-500 focus:outline-none transition">
+            <i class="fas fa-user-circle mr-2"></i> Principal
+        </button>
+        <button onclick="switchTab('tab-address')" id="btn-tab-address"
+            class="flex-1 py-4 px-6 text-sm font-medium text-gray-400 border-b-2 border-transparent hover:text-gray-200 focus:outline-none transition">
+            <i class="fas fa-map-marker-alt mr-2"></i> Endereço
+        </button>
+        <button onclick="switchTab('tab-documents')" id="btn-tab-documents"
+            class="flex-1 py-4 px-6 text-sm font-medium text-gray-400 border-b-2 border-transparent hover:text-gray-200 focus:outline-none transition">
+            <i class="fas fa-id-card mr-2"></i> Documentos
+        </button>
+        <button onclick="switchTab('tab-personal')" id="btn-tab-personal"
+            class="flex-1 py-4 px-6 text-sm font-medium text-gray-400 border-b-2 border-transparent hover:text-gray-200 focus:outline-none transition">
+            <i class="fas fa-user-tag mr-2"></i> Dados Pessoais
+        </button>
+        <button onclick="switchTab('tab-admission')" id="btn-tab-admission"
+            class="flex-1 py-4 px-6 text-sm font-medium text-gray-400 border-b-2 border-transparent hover:text-gray-200 focus:outline-none transition">
+            <i class="fas fa-briefcase mr-2"></i> Admissão
+        </button>
+    </div>
+
+    <form action="{{ url_for('employees.create') }}" method="POST" enctype="multipart/form-data" class="p-6">
+        <div id="tab-main" class="tab-content space-y-6">
+            <div class="flex justify-center mb-6">
+                <div class="relative group cursor-pointer">
+                    <div class="w-32 h-32 rounded-full bg-gray-700 overflow-hidden border-4 border-gray-600">
+                        <img id="photoPreview" class="w-full h-full object-cover hidden">
+                        <div id="photoPlaceholder" class="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                            <i class="fas fa-user text-3xl mb-1"></i>
+                            <span class="text-xs">Foto</span>
+                        </div>
+                    </div>
+                    <label for="photoUpload" class="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition cursor-pointer">
+                        <i class="fas fa-camera text-white"></i>
+                    </label>
+                    <input type="file" name="photo" id="photoUpload" accept="image/*" class="hidden" onchange="previewPhoto(this)">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="col-span-2">
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Nome Completo *</label>
+                    <input type="text" name="name" required class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Telefone / Celular</label>
+                    <input type="text" name="phone" placeholder="(00) 00000-0000" class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition phone-mask">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Data de Nascimento</label>
+                    <input type="date" name="birth_date" class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Data de Contratação</label>
+                    <input type="date" name="hiring_date" class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Experiência (Anos)</label>
+                    <input type="number" name="experience_years" min="0" value="0" class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition">
+                </div>
+            </div>
+
+            <div class="flex justify-end pt-4">
+                <button type="button" onclick="switchTab('tab-address')" class="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition">
+                    Próximo <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+
+        <div id="tab-address" class="tab-content hidden space-y-6">
+            <h3 class="text-lg font-bold text-white border-b border-gray-700 pb-2">Endereço</h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="col-span-1">
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">CEP</label>
+                    <div class="relative">
+                        <input type="text" name="addr_cep" id="addr_cep" placeholder="00000-000" maxlength="9" onblur="fetchAddress(this.value)"
+                            class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition">
+                        <div id="cep_loading" class="hidden absolute right-3 top-3.5">
+                            <i class="fas fa-spinner fa-spin text-blue-500"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-span-2">
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Rua / Logradouro</label>
+                    <input type="text" name="addr_street" id="addr_street" readonly aria-readonly="true"
+                           class="w-full cursor-not-allowed bg-[#11161a] border border-gray-700 rounded-lg py-3 px-4 text-white/90 focus:outline-none transition">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Contato de Emergência</label>
+                    <input type="text" name="emergency_contact" placeholder="(00) 00000-0000" class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition phone-mask">
+                </div>
+                <div class="col-span-2">
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Bairro</label>
+                    <input type="text" name="addr_district" id="addr_district" readonly aria-readonly="true"
+                           class="w-full cursor-not-allowed bg-[#11161a] border border-gray-700 rounded-lg py-3 px-4 text-white/90 focus:outline-none transition">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="col-span-2">
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Cidade</label>
+                    <input type="text" name="addr_city" id="addr_city" readonly aria-readonly="true"
+                           class="w-full cursor-not-allowed bg-[#11161a] border border-gray-700 rounded-lg py-3 px-4 text-white/90 focus:outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Estado</label>
+                    <input type="text" name="addr_state" id="addr_state" readonly aria-readonly="true"
+                           class="w-full cursor-not-allowed bg-[#11161a] border border-gray-700 rounded-lg py-3 px-4 text-white/90 focus:outline-none transition">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Complemento do Endereço</label>
+                    <input type="text" name="address_reference" placeholder="Ex: Apto 12, bloco B, sala 3..." class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Número</label>
+                    <input type="text" name="addr_number" id="addr_number" class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition">
+                </div>
+            </div>
+
+            <div class="flex justify-between pt-6 mt-6 border-t border-gray-700">
+                <button type="button" onclick="switchTab('tab-main')" class="text-gray-400 hover:text-white px-4 py-2 transition">
+                    <i class="fas fa-arrow-left mr-2"></i> Voltar
+                </button>
+                <button type="button" onclick="switchTab('tab-documents')" class="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition">
+                    Próximo <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+
+        <div id="tab-documents" class="tab-content hidden space-y-6">
+            <section class="space-y-4">
+                <h3 class="text-lg font-bold text-white border-b border-gray-700 pb-2">Documentos</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div><label class="block text-xs font-bold text-gray-400 uppercase mb-2">CPF</label><input type="text" name="cpf" maxlength="14" placeholder="000.000.000-00" class="cpf-mask w-full bg-[#11161a] border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition"></div>
+                    <div><label class="block text-xs font-bold text-gray-400 uppercase mb-2">RG</label><input type="text" name="rg" class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition"></div>
+                    <div><label class="block text-xs font-bold text-gray-400 uppercase mb-2">Órgão Emissor</label><input type="text" name="rg_issuer" class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition"></div>
+                    <div><label class="block text-xs font-bold text-gray-400 uppercase mb-2">UF do RG</label><input type="text" name="rg_state" maxlength="2" class="uf-mask w-full bg-[#11161a] border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition"></div>
+                    <div><label class="block text-xs font-bold text-gray-400 uppercase mb-2">Data de Emissão do RG</label><input type="date" name="rg_issue_date" class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition"></div>
+                    <div><label class="block text-xs font-bold text-gray-400 uppercase mb-2">PIS/PASEP</label><input type="text" name="pis_pasep" maxlength="14" class="pis-mask w-full bg-[#11161a] border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition"></div>
+                    <div><label class="block text-xs font-bold text-gray-400 uppercase mb-2">Número da CTPS</label><input type="text" name="ctps_number" class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition"></div>
+                    <div><label class="block text-xs font-bold text-gray-400 uppercase mb-2">Série da CTPS</label><input type="text" name="ctps_series" class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition"></div>
+                    <div><label class="block text-xs font-bold text-gray-400 uppercase mb-2">UF da CTPS</label><input type="text" name="ctps_state" maxlength="2" class="uf-mask w-full bg-[#11161a] border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition"></div>
+                </div>
+            </section>
+
+            <div class="flex justify-between pt-6 mt-6 border-t border-gray-700">
+                <button type="button" onclick="switchTab('tab-address')" class="text-gray-400 hover:text-white px-4 py-2 transition">
+                    <i class="fas fa-arrow-left mr-2"></i> Voltar
+                </button>
+                <button type="button" onclick="switchTab('tab-personal')" class="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition">
+                    Próximo <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+
+        <div id="tab-personal" class="tab-content hidden space-y-6">
+            <section class="space-y-4">
+                <h3 class="text-lg font-bold text-white border-b border-gray-700 pb-2">Dados Pessoais Complementares</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div><label class="block text-xs font-bold text-gray-400 uppercase mb-2">Nome da Mãe</label><input type="text" name="mother_name" class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition"></div>
+                    <div><label class="block text-xs font-bold text-gray-400 uppercase mb-2">Nome do Pai</label><input type="text" name="father_name" class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition"></div>
+                    <div><label class="block text-xs font-bold text-gray-400 uppercase mb-2">Estado Civil</label><select name="marital_status" class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition"><option value="">Selecione</option><option>Solteiro(a)</option><option>Casado(a)</option><option>Divorciado(a)</option><option>Viúvo(a)</option><option>União Estável</option></select></div>
+                    <div><label class="block text-xs font-bold text-gray-400 uppercase mb-2">Escolaridade</label><select name="education_level" class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition"><option value="">Selecione</option><option>Fundamental Incompleto</option><option>Fundamental Completo</option><option>Médio Incompleto</option><option>Médio Completo</option><option>Superior Incompleto</option><option>Superior Completo</option><option>Pós-graduação</option></select></div>
+                    <div><label class="block text-xs font-bold text-gray-400 uppercase mb-2">Número de Dependentes</label><input type="number" name="num_dependents" min="0" value="0" class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition"></div>
+                </div>
+            </section>
+
+            <div class="flex justify-between pt-6 mt-6 border-t border-gray-700">
+                <button type="button" onclick="switchTab('tab-documents')" class="text-gray-400 hover:text-white px-4 py-2 transition">
+                    <i class="fas fa-arrow-left mr-2"></i> Voltar
+                </button>
+                <button type="button" onclick="switchTab('tab-admission')" class="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition">
+                    Próximo <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+
+        <div id="tab-admission" class="tab-content hidden space-y-6">
+            <section class="space-y-4">
+                <h3 class="text-lg font-bold text-white border-b border-gray-700 pb-2">Admissão</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div><label class="block text-xs font-bold text-gray-400 uppercase mb-2">Cargo/Função</label><input type="text" name="job_title" class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition"></div>
+                    <div><label class="block text-xs font-bold text-gray-400 uppercase mb-2">Salário</label><input type="text" name="salary" placeholder="R$ 0,00" class="money-mask w-full bg-[#11161a] border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition"></div>
+                    <div><label class="block text-xs font-bold text-gray-400 uppercase mb-2">Tipo de Contrato</label><input type="text" name="contract_type" placeholder="Ex: CLT, PJ, temporário" class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition"></div>
+                    <div><label class="block text-xs font-bold text-gray-400 uppercase mb-2">Jornada de Trabalho</label><input type="text" name="work_schedule" placeholder="Ex: Seg a Sex, 08h às 18h" class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition"></div>
+                    <div class="md:col-span-2"><label class="block text-xs font-bold text-gray-400 uppercase mb-2">Observações Trabalhistas</label><textarea name="labor_notes" rows="3" class="w-full bg-[#11161a] border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition"></textarea></div>
+                </div>
+            </section>
+
+            <div class="flex justify-between pt-6 mt-6 border-t border-gray-700">
+                <button type="button" onclick="switchTab('tab-personal')" class="text-gray-400 hover:text-white px-4 py-2 transition">
+                    <i class="fas fa-arrow-left mr-2"></i> Voltar
+                </button>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-lg font-bold shadow-lg shadow-blue-500/20 transition transform hover:-translate-y-1">
+                    Salvar Funcionário
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const stateNamesByUf = {
+        AC: 'Acre',
+        AL: 'Alagoas',
+        AP: 'Amapá',
+        AM: 'Amazonas',
+        BA: 'Bahia',
+        CE: 'Ceará',
+        DF: 'Distrito Federal',
+        ES: 'Espírito Santo',
+        GO: 'Goiás',
+        MA: 'Maranhão',
+        MT: 'Mato Grosso',
+        MS: 'Mato Grosso do Sul',
+        MG: 'Minas Gerais',
+        PA: 'Pará',
+        PB: 'Paraíba',
+        PR: 'Paraná',
+        PE: 'Pernambuco',
+        PI: 'Piauí',
+        RJ: 'Rio de Janeiro',
+        RN: 'Rio Grande do Norte',
+        RS: 'Rio Grande do Sul',
+        RO: 'Rondônia',
+        RR: 'Roraima',
+        SC: 'Santa Catarina',
+        SP: 'São Paulo',
+        SE: 'Sergipe',
+        TO: 'Tocantins'
+    };
+
+    function stateNameFromUf(uf) {
+        const value = String(uf || '').trim().toUpperCase();
+        return stateNamesByUf[value] || value;
+    }
+
+    function previewPhoto(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('photoPreview').src = e.target.result;
+                document.getElementById('photoPreview').classList.remove('hidden');
+                document.getElementById('photoPlaceholder').classList.add('hidden');
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+
+        const btnMain = document.getElementById('btn-tab-main');
+        const btnAddr = document.getElementById('btn-tab-address');
+        const btnDocuments = document.getElementById('btn-tab-documents');
+        const btnPersonal = document.getElementById('btn-tab-personal');
+        const btnAdmission = document.getElementById('btn-tab-admission');
+
+        if (btnMain) {
+            btnMain.className = "flex-1 py-4 px-6 text-sm font-medium border-b-2 focus:outline-none transition " +
+                (tabId === 'tab-main' ? "text-blue-500 border-blue-500" : "text-gray-400 border-transparent hover:text-gray-200");
+        }
+
+        if (btnAddr) {
+            btnAddr.className = "flex-1 py-4 px-6 text-sm font-medium border-b-2 focus:outline-none transition " +
+                (tabId === 'tab-address' ? "text-blue-500 border-blue-500" : "text-gray-400 border-transparent hover:text-gray-200");
+        }
+
+        if (btnDocuments) {
+            btnDocuments.className = "flex-1 py-4 px-6 text-sm font-medium border-b-2 focus:outline-none transition " +
+                (tabId === 'tab-documents' ? "text-blue-500 border-blue-500" : "text-gray-400 border-transparent hover:text-gray-200");
+        }
+
+        if (btnPersonal) {
+            btnPersonal.className = "flex-1 py-4 px-6 text-sm font-medium border-b-2 focus:outline-none transition " +
+                (tabId === 'tab-personal' ? "text-blue-500 border-blue-500" : "text-gray-400 border-transparent hover:text-gray-200");
+        }
+
+        if (btnAdmission) {
+            btnAdmission.className = "flex-1 py-4 px-6 text-sm font-medium border-b-2 focus:outline-none transition " +
+                (tabId === 'tab-admission' ? "text-blue-500 border-blue-500" : "text-gray-400 border-transparent hover:text-gray-200");
+        }
+
+        const tab = document.getElementById(tabId);
+        if (tab) {
+            tab.classList.remove('hidden');
+        }
+    }
+
+    async function fetchAddress(cepRaw) {
+        const cep = cepRaw.replace(/\D/g, '');
+        if (cep.length !== 8) return;
+
+        document.getElementById('cep_loading').classList.remove('hidden');
+
+        try {
+            const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+            const data = await response.json();
+
+            document.getElementById('cep_loading').classList.add('hidden');
+
+            if (data.erro) {
+                Toastify({ text: "CEP não encontrado.", backgroundColor: "#ef4444" }).showToast();
+                return;
+            }
+
+            document.getElementById('addr_street').value = data.logradouro;
+            document.getElementById('addr_district').value = data.bairro;
+            document.getElementById('addr_city').value = data.localidade;
+            document.getElementById('addr_state').value = stateNameFromUf(data.uf);
+            document.getElementById('addr_number').focus();
+
+        } catch(e) {
+            document.getElementById('cep_loading').classList.add('hidden');
+            Toastify({ text: "Erro ao buscar CEP.", backgroundColor: "#ef4444" }).showToast();
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const cepInput = document.getElementById('addr_cep');
+        if (cepInput) {
+            cepInput.addEventListener('input', function (e) {
+                let value = e.target.value.replace(/\D/g, '').substring(0, 8);
+                if (value.length > 5) {
+                    value = value.replace(/^(\d{5})(\d{0,3})$/, '$1-$2');
+                }
+                e.target.value = value;
+            });
+        }
+
+        const phoneInputs = document.querySelectorAll('.phone-mask, input[name="phone"]');
+        phoneInputs.forEach(input => {
+            input.addEventListener('input', function (e) {
+                let x = e.target.value.replace(/\D/g, '').match(/(\d{0,2})(\d{0,5})(\d{0,4})/);
+                e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
+            });
+        });
+
+        document.querySelectorAll('.cpf-mask').forEach(input => {
+            input.addEventListener('input', function (e) {
+                let value = e.target.value.replace(/\D/g, '').substring(0, 11);
+                value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                e.target.value = value;
+            });
+        });
+
+        document.querySelectorAll('.pis-mask').forEach(input => {
+            input.addEventListener('input', function (e) {
+                let value = e.target.value.replace(/\D/g, '').substring(0, 11);
+                value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                value = value.replace(/(\d{5})(\d)/, '$1.$2');
+                value = value.replace(/(\d{2})(\d{1})$/, '$1-$2');
+                e.target.value = value;
+            });
+        });
+
+        document.querySelectorAll('.money-mask').forEach(input => {
+            input.addEventListener('input', function (e) {
+                let cents = e.target.value.replace(/\D/g, '');
+                if (!cents) {
+                    e.target.value = '';
+                    return;
+                }
+                let value = (Number(cents) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                e.target.value = value;
+            });
+        });
+
+        document.querySelectorAll('.uf-mask').forEach(input => {
+            input.addEventListener('input', function (e) {
+                e.target.value = e.target.value.replace(/[^a-zA-Z]/g, '').substring(0, 2).toUpperCase();
+            });
+        });
+    });
+</script>
+{% endblock %}

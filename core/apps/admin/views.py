@@ -19,7 +19,7 @@ MENU_OPTIONS = [
     {'key': 'products', 'label': 'Produtos'},
     {'key': 'clients', 'label': 'Clientes'},
     {'key': 'budgets', 'label': 'Orçamentos'},
-    {'key': 'mechanics', 'label': 'Mecânicos'},
+    {'key': 'employees', 'label': 'Funcionários'},
     {'key': 'services', 'label': 'Serviços'},
     {'key': 'schedule', 'label': 'Agendamentos'},
     {'key': 'admin_users', 'label': 'Usuários'},

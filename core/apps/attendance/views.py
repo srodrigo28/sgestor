@@ -2,6 +2,7 @@ from flask import Blueprint, redirect, render_template, request, session, url_fo
 
 from apps.auth.views import login_required
 from common.database import get_db_connection
+from common.employees_schema import ensure_employees_schema
 
 
 attendance_bp = Blueprint(
@@ -65,12 +66,14 @@ def index():
     conn = get_db_connection()
     try:
         cursor = conn.cursor(dictionary=True)
+        ensure_employees_schema(cursor)
+        conn.commit()
         stats = {
             "appointments_today": _fetch_scalar(cursor, "SELECT COUNT(*) AS total FROM appointments WHERE user_id = %s AND DATE(start_time) = CURDATE()", (user_id,)),
             "appointments_pending": _fetch_scalar(cursor, "SELECT COUNT(*) AS total FROM appointments WHERE user_id = %s AND status = 'scheduled' AND start_time >= NOW()", (user_id,)),
             "tasks_open": _fetch_scalar(cursor, "SELECT COUNT(*) AS total FROM tasks WHERE user_id = %s AND status <> 'feito'", (user_id,)),
             "clients_total": _fetch_scalar(cursor, "SELECT COUNT(*) AS total FROM clients WHERE user_id = %s", (user_id,)),
-            "employees_active": _fetch_scalar(cursor, "SELECT COUNT(*) AS total FROM mechanics WHERE user_id = %s AND COALESCE(is_active, 1) = 1", (user_id,)),
+            "employees_active": _fetch_scalar(cursor, "SELECT COUNT(*) AS total FROM employees WHERE user_id = %s AND COALESCE(is_active, 1) = 1", (user_id,)),
             "income_month": _fetch_value(cursor, "SELECT COALESCE(SUM(amount), 0) AS total FROM financial_income WHERE user_id = %s AND entry_date >= DATE_FORMAT(CURDATE(), '%%Y-%%m-01') AND entry_date < DATE_ADD(DATE_FORMAT(CURDATE(), '%%Y-%%m-01'), INTERVAL 1 MONTH)", (user_id,)),
             "expenses_month": _fetch_value(cursor, "SELECT COALESCE(SUM(amount), 0) AS total FROM financial_expenses WHERE user_id = %s AND due_date >= DATE_FORMAT(CURDATE(), '%%Y-%%m-01') AND due_date < DATE_ADD(DATE_FORMAT(CURDATE(), '%%Y-%%m-01'), INTERVAL 1 MONTH)", (user_id,)),
         }

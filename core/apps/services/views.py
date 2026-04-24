@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from datetime import datetime
 from common.database import get_db_connection
+from common.employees_schema import ensure_employees_schema
 
 services_bp = Blueprint('services', __name__)
 
@@ -12,6 +13,8 @@ def list():
     user_id = session['id']
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
+    ensure_employees_schema(cursor)
+    conn.commit()
     
     # Fetch Services
     search = request.args.get('search', '')
@@ -41,16 +44,18 @@ def add():
     name = request.form.get('name')
     description = request.form.get('description')
     price = request.form.get('price')
-    mechanic = request.form.get('mechanic')
+    employee = request.form.get('employee')
     
     conn = get_db_connection()
     cursor = conn.cursor()
+    ensure_employees_schema(cursor)
+    conn.commit()
     
     try:
         cursor.execute("""
-            INSERT INTO services (user_id, name, description, price, mechanic)
+            INSERT INTO services (user_id, name, description, price, employee)
             VALUES (%s, %s, %s, %s, %s)
-        """, (user_id, name, description, price, mechanic))
+        """, (user_id, name, description, price, employee))
         conn.commit()
         flash('Serviço cadastrado com sucesso!')
     except Exception as e:
@@ -70,10 +75,12 @@ def edit(id):
     name = request.form.get('name')
     description = request.form.get('description')
     price = request.form.get('price')
-    mechanic = request.form.get('mechanic')
+    employee = request.form.get('employee')
     
     conn = get_db_connection()
     cursor = conn.cursor()
+    ensure_employees_schema(cursor)
+    conn.commit()
     
     try:
         # Verify ownership
@@ -81,9 +88,9 @@ def edit(id):
         if cursor.fetchone():
             cursor.execute("""
                 UPDATE services 
-                SET name = %s, description = %s, price = %s, mechanic = %s
+                SET name = %s, description = %s, price = %s, employee = %s
                 WHERE id = %s
-            """, (name, description, price, mechanic, id))
+            """, (name, description, price, employee, id))
             conn.commit()
             flash('Serviço atualizado com sucesso!')
         else:

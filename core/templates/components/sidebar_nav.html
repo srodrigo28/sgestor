@@ -60,10 +60,10 @@
         <i class="fas fa-tools w-5 group-hover:text-blue-500 transition"></i> Serviços
     </a>
     {% endif %}
-    {% if menu_permissions.get('mechanics') %}
-    <a href="{{ url_for('mechanics.list_mechanics') }}"
-        class="flex items-center gap-3 p-3 rounded-lg {% if request.path.startswith('/mechanics') %}bg-blue-600/10 text-blue-500 border border-blue-600/20{% else %}text-gray-400 hover:bg-gray-800 hover:text-white transition{% endif %} group">
-        <i class="fas fa-user-cog w-5 group-hover:text-blue-500 transition"></i> Mecânicos
+    {% if menu_permissions.get('employees') or menu_permissions.get('mechanics') %}
+    <a href="{{ url_for('employees.list_employees') }}"
+        class="flex items-center gap-3 p-3 rounded-lg {% if request.path.startswith('/employees') or request.path.startswith('/mechanics') %}bg-blue-600/10 text-blue-500 border border-blue-600/20{% else %}text-gray-400 hover:bg-gray-800 hover:text-white transition{% endif %} group">
+        <i class="fas fa-user-cog w-5 group-hover:text-blue-500 transition"></i> Funcionários
     </a>
     {% endif %}
 

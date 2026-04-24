@@ -21,6 +21,14 @@ def create_app() -> Flask:
     app.secret_key = settings.secret_key
     app.config["APP_ENV"] = settings.app_env
     app.config["DEBUG"] = settings.debug
+    app.config["TEMPLATES_AUTO_RELOAD"] = True
+    app.jinja_env.auto_reload = True
+
+    @app.after_request
+    def force_html_utf8(response):
+        if response.mimetype == "text/html":
+            response.headers["Content-Type"] = "text/html; charset=utf-8"
+        return response
 
     if settings.app_env == "production" and settings.using_default_secret:
         print("WARNING: SECRET_KEY is not set. Using the default (unsafe) fallback.")
@@ -54,6 +62,7 @@ def create_app() -> Flask:
             "clients": role in {"admin", "oficina", "loja", "atendimentos"},
             "budgets": role in {"admin", "oficina", "loja"},
             "services": role in {"admin", "oficina"},
+            "employees": role in {"admin", "oficina"},
             "mechanics": role in {"admin", "oficina"},
             "admin_users": role == "admin",
         }
@@ -73,7 +82,10 @@ def create_app() -> Flask:
                 db_perms = {row["menu_key"]: bool(row["can_view"]) for row in rows}
                 permissions = default_permissions.copy()
                 permissions.update(db_perms or {})
+                if permissions.get("mechanics") and "employees" not in db_perms:
+                    permissions["employees"] = True
                 if role in {"admin", "oficina"}:
+                    permissions["employees"] = True
                     permissions["mechanics"] = True
             finally:
                 conn.close()
