@@ -2,6 +2,7 @@ import sys
 import subprocess
 import venv
 from pathlib import Path
+import os
 
 # Configuracoes
 BASE_DIR = Path(__file__).resolve().parent
@@ -17,6 +18,7 @@ REQUIREMENTS = [
 REQUIREMENTS_FILE = CORE_DIR / "requirements.txt"
 MIGRATION_FILE = CORE_DIR / "db" / "migration.py"
 MAIN_FILE = CORE_DIR / "manage.py"
+ENV_FILE = BASE_DIR / ".env"
 
 
 def is_venv():
@@ -34,10 +36,18 @@ def get_venv_python():
     return VENV_DIR / "bin" / "python"
 
 
+def build_env():
+    """Monta o ambiente para subprocessos usando o .env da raiz do projeto."""
+    env = os.environ.copy()
+    if ENV_FILE.exists():
+        env["ENV_FILE"] = str(ENV_FILE)
+    return env
+
+
 def run_command(command, cwd=None):
     """Executa um comando e retorna o codigo de saida."""
     try:
-        return subprocess.call(command, cwd=str(cwd) if cwd else None)
+        return subprocess.call(command, cwd=str(cwd) if cwd else None, env=build_env())
     except KeyboardInterrupt:
         return 130
 

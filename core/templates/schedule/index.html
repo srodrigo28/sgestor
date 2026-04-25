@@ -10,6 +10,7 @@
     /* Dark Mode Overrides for FullCalendar */
     .fc {
         color: #e5e7eb; /* text-gray-200 */
+        min-width: 0;
     }
     .fc-theme-standard .fc-scrollgrid, 
     .fc-theme-standard td, 
@@ -52,11 +53,90 @@
     .fc-list-event:hover td {
         background-color: #374151 !important;
     }
+    .fc .fc-toolbar {
+        gap: 0.75rem;
+    }
+    .fc .fc-toolbar-title {
+        font-size: 1.875rem;
+        line-height: 1.15;
+    }
+    .fc .fc-button {
+        min-height: 42px;
+    }
+    .fc .fc-daygrid-day-frame {
+        min-height: 92px;
+    }
+    .fc .fc-daygrid-day-number {
+        padding: 0.4rem;
+        font-size: 0.95rem;
+    }
+    .fc .fc-col-header-cell-cushion {
+        padding: 0.55rem 0.3rem;
+        font-size: 0.9rem;
+    }
+    @media (max-width: 767px) {
+        .fc .fc-toolbar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .fc .fc-toolbar.fc-header-toolbar {
+            margin-bottom: 1rem;
+        }
+        .fc .fc-toolbar-chunk {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            min-width: 0;
+        }
+        .fc .fc-toolbar-chunk:first-child {
+            justify-content: space-between;
+        }
+        .fc .fc-toolbar-chunk:last-child {
+            justify-content: center;
+        }
+        .fc .fc-toolbar-title {
+            font-size: 0.95rem;
+            text-align: center;
+            white-space: normal;
+            overflow-wrap: anywhere;
+        }
+        .fc .fc-button-group {
+            display: inline-flex;
+            max-width: 100%;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .fc .fc-button {
+            min-height: 40px;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.88rem;
+        }
+        .fc .fc-daygrid-day-frame {
+            min-height: 64px;
+        }
+        .fc .fc-daygrid-day-number {
+            padding: 0.3rem;
+            font-size: 0.85rem;
+        }
+        .fc .fc-col-header-cell-cushion {
+            padding: 0.4rem 0.15rem;
+            font-size: 0.72rem;
+            text-transform: lowercase;
+        }
+        .fc .fc-scrollgrid {
+            font-size: 0.88rem;
+        }
+        .fc .fc-list-day-cushion,
+        .fc .fc-list-table td {
+            padding-left: 0.65rem;
+            padding-right: 0.65rem;
+        }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="p-6">
+<div class="p-3 sm:p-6">
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 animate-fade-in-down">
         <div>
             <h1 class="text-2xl font-bold text-white flex items-center gap-2">
@@ -71,7 +151,7 @@
         </button>
     </div>
 
-    <div class="bg-[#171d21] rounded-xl border border-gray-800 p-6 shadow-xl animate-fade-in-down" style="animation-delay: 0.1s;">
+    <div class="bg-[#171d21] rounded-xl border border-gray-800 p-3 sm:p-6 shadow-xl animate-fade-in-down overflow-hidden" style="animation-delay: 0.1s;">
         <div id="calendar"></div>
     </div>
 </div>
@@ -171,6 +251,20 @@
                         <!-- badges injected here -->
                     </div>
                 </div>
+                <div id="occupiedSlotPopover" class="hidden fixed z-[70] w-64 rounded-xl border border-gray-700 bg-[#171d21] p-3 shadow-2xl shadow-black/40">
+                    <p id="occupiedPopoverTime" class="text-xs font-semibold uppercase tracking-wide text-red-300"></p>
+                    <p id="occupiedPopoverTitle" class="mt-2 text-sm font-semibold text-white"></p>
+                    <p id="occupiedPopoverClient" class="mt-1 text-xs text-blue-300"></p>
+                    <p id="occupiedPopoverDescription" class="mt-2 text-xs text-gray-400"></p>
+                    <div class="mt-3 flex gap-2">
+                        <button type="button" id="occupiedPopoverEdit" class="flex-1 rounded-lg border border-blue-500/20 bg-blue-500/10 px-3 py-2 text-xs font-medium text-blue-200">
+                            <i class="fas fa-pen mr-1"></i>Editar
+                        </button>
+                        <button type="button" id="occupiedPopoverDelete" class="flex-1 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-200">
+                            <i class="fas fa-trash mr-1"></i>Excluir
+                        </button>
+                    </div>
+                </div>
 
                 <!-- Status (Only for Edit) -->
                 <div id="statusField" class="hidden">
@@ -217,27 +311,71 @@
     // We already have 'events' variable inside DOMContentLoaded, 
     // but we need it accessible globally for our filters
     let globalEvents = [];
+    let clientOptions = [];
+    let occupiedPopoverHideTimer = null;
+    const mobileCalendarMedia = window.matchMedia('(max-width: 767px)');
+
+    function isCompactCalendar() {
+        return mobileCalendarMedia.matches;
+    }
+
+    function getCalendarHeaderToolbar() {
+        if (isCompactCalendar()) {
+            return {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'listWeek,timeGridDay,dayGridMonth'
+            };
+        }
+
+        return {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+        };
+    }
+
+    function getInitialCalendarView() {
+        return isCompactCalendar() ? 'listWeek' : 'dayGridMonth';
+    }
+
+    function syncCalendarLayout() {
+        if (!calendar) return;
+
+        const compact = isCompactCalendar();
+        calendar.setOption('headerToolbar', getCalendarHeaderToolbar());
+        calendar.setOption('dayMaxEvents', compact ? 2 : 1);
+
+        const currentView = calendar.view ? calendar.view.type : '';
+        const desktopViews = ['dayGridMonth', 'timeGridWeek', 'timeGridDay', 'listWeek'];
+        const mobileViews = ['dayGridMonth', 'timeGridDay', 'listWeek'];
+
+        if (compact && !mobileViews.includes(currentView)) {
+            calendar.changeView('listWeek');
+        } else if (!compact && !desktopViews.includes(currentView)) {
+            calendar.changeView('dayGridMonth');
+        }
+
+        calendar.updateSize();
+    }
 
     document.addEventListener('DOMContentLoaded', function() {
         const preselectedClientId = {{ preselected_client_id|tojson }};
         const preselectedClientName = {{ preselected_client_name|tojson }};
         const shouldOpenScheduleModal = {{ open_schedule_modal|tojson }};
+        const editAppointmentId = {{ edit_appointment_id|tojson }};
         const calendarEl = document.getElementById('calendar');
         // Initial Events from Server
         globalEvents = JSON.parse('{{ events_json | safe }}');
         const events = globalEvents;
         
         calendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'dayGridMonth',
+            initialView: getInitialCalendarView(),
             locale: 'pt-br',
-            headerToolbar: {
-                left: 'prev,next today',
-                center: 'title',
-                right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
-            },
+            headerToolbar: getCalendarHeaderToolbar(),
             events: events,
             editable: true,
-            dayMaxEvents: 1, // Limit events to 1 (+ more link)
+            dayMaxEvents: isCompactCalendar() ? 2 : 1, // Limit events to 1 (+ more link)
             selectable: true,
             // Custom handler for "+ X more" to open our day details modal
             moreLinkClick: function(info) {
@@ -258,24 +396,8 @@
             dateClick: function(info) {
                 const dateStr = info.dateStr;
                 const hasTime = dateStr.includes('T');
-                const dateOnly = hasTime ? dateStr.split('T')[0] : dateStr;
-
-                // In Month view, check if day has events
-                // In Week/Day view (hasTime=true), we usually want to ADD at that specific time slot
-                
-                if (!hasTime) {
-                     const dayEvents = events.filter(e => {
-                        const eventStart = e.start.split('T')[0];
-                        return eventStart === dateOnly;
-                    });
-
-                    if (dayEvents.length > 0) {
-                        openDayDetails(dateOnly, dayEvents);
-                        return;
-                    }
-                }
-                
-                // If it's a specific time slot OR an empty day, go to Add Modal
+                // Sempre permita criar um novo horario no dia clicado.
+                // Os horarios ja ocupados aparecem no painel do modal como referencia.
                 openScheduleModal('add', null, dateStr);
             },
             // Click on event to edit
@@ -291,11 +413,12 @@
         });
         
         calendar.render();
+        syncCalendarLayout();
 
         // SETUP CLIENT SEARCH
         const searchInput = document.getElementById('clientSearchDisplay');
         const dropdown = document.getElementById('clientDropdown');
-        const options = dropdown.querySelectorAll('.client-option');
+        clientOptions = Array.from(dropdown.querySelectorAll('.client-option'));
 
         searchInput.addEventListener('focus', () => dropdown.classList.remove('hidden'));
         
@@ -309,7 +432,7 @@
         searchInput.addEventListener('input', (e) => {
             const term = e.target.value.toLowerCase();
             dropdown.classList.remove('hidden');
-            options.forEach(opt => {
+            clientOptions.forEach(opt => {
                 const name = opt.getAttribute('data-name');
                 if (name.includes(term)) {
                     opt.classList.remove('hidden');
@@ -320,8 +443,21 @@
         });
 
         document.getElementById('schedDate').addEventListener('change', updateOccupiedSlots);
+        window.addEventListener('resize', syncCalendarLayout);
+        document.addEventListener('click', function(event) {
+            const popover = document.getElementById('occupiedSlotPopover');
+            if (!popover || popover.classList.contains('hidden')) return;
+            if (!popover.contains(event.target) && !event.target.closest('[data-occupied-slot]')) {
+                hideOccupiedSlotPopover();
+            }
+        });
 
-        if (shouldOpenScheduleModal) {
+        if (editAppointmentId) {
+            const eventToEdit = calendar.getEventById(String(editAppointmentId)) || calendar.getEventById(editAppointmentId);
+            if (eventToEdit) {
+                openScheduleModal('edit', eventToEdit);
+            }
+        } else if (shouldOpenScheduleModal) {
             openScheduleModal('add');
             if (preselectedClientId) {
                 selectClient(preselectedClientId, preselectedClientName);
@@ -365,11 +501,88 @@
             }
 
             const badge = document.createElement('span');
-            badge.className = 'px-2 py-1 round-md bg-red-500/20 text-red-200 text-xs border border-red-500/30 rounded';
+            badge.className = 'px-2 py-1 round-md bg-red-500/20 text-red-200 text-xs border border-red-500/30 rounded cursor-pointer';
+            badge.dataset.occupiedSlot = '1';
             badge.innerText = `${startT} - ${endT}`;
             badge.title = evt.extendedProps?.raw_title || evt.title;
+            badge.addEventListener('mouseenter', function(event) {
+                showOccupiedSlotPopover(evt, event.currentTarget);
+            });
+            badge.addEventListener('mouseleave', scheduleHideOccupiedSlotPopover);
+            badge.addEventListener('click', function(event) {
+                event.preventDefault();
+                showOccupiedSlotPopover(evt, event.currentTarget);
+            });
             list.appendChild(badge);
         });
+    }
+
+    function getEventTimeRangeLabel(evt) {
+        const start = evt.start ? new Date(evt.start) : null;
+        const end = evt.end ? new Date(evt.end) : null;
+        if (!start) return '';
+        const startLabel = start.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+        if (!end) return startLabel;
+        return `${startLabel} - ${end.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}`;
+    }
+
+    function clearOccupiedPopoverHideTimer() {
+        if (occupiedPopoverHideTimer) {
+            clearTimeout(occupiedPopoverHideTimer);
+            occupiedPopoverHideTimer = null;
+        }
+    }
+
+    function scheduleHideOccupiedSlotPopover() {
+        clearOccupiedPopoverHideTimer();
+        occupiedPopoverHideTimer = window.setTimeout(hideOccupiedSlotPopover, 140);
+    }
+
+    function hideOccupiedSlotPopover() {
+        const popover = document.getElementById('occupiedSlotPopover');
+        if (!popover) return;
+        popover.classList.add('hidden');
+    }
+
+    function showOccupiedSlotPopover(evt, anchorEl) {
+        const popover = document.getElementById('occupiedSlotPopover');
+        if (!popover || !anchorEl) return;
+
+        clearOccupiedPopoverHideTimer();
+
+        const clientName = evt.extendedProps?.client_name || 'Sem cliente';
+        const rawTitle = evt.extendedProps?.raw_title || evt.title || 'Agendamento';
+        const description = evt.extendedProps?.description || 'Sem observacoes.';
+
+        document.getElementById('occupiedPopoverTime').textContent = getEventTimeRangeLabel(evt);
+        document.getElementById('occupiedPopoverTitle').textContent = rawTitle;
+        document.getElementById('occupiedPopoverClient').textContent = clientName;
+        document.getElementById('occupiedPopoverDescription').textContent = description;
+
+        document.getElementById('occupiedPopoverEdit').onclick = function() {
+            hideOccupiedSlotPopover();
+            const calendarEvent = calendar.getEventById(String(evt.id)) || calendar.getEventById(evt.id);
+            if (calendarEvent) {
+                openScheduleModal('edit', calendarEvent);
+            }
+        };
+
+        document.getElementById('occupiedPopoverDelete').onclick = function() {
+            hideOccupiedSlotPopover();
+            document.getElementById('deleteForm').action = appUrl('/schedule/delete/' + evt.id);
+            deleteEvent();
+        };
+
+        popover.classList.remove('hidden');
+        popover.onmouseenter = clearOccupiedPopoverHideTimer;
+        popover.onmouseleave = scheduleHideOccupiedSlotPopover;
+
+        const rect = anchorEl.getBoundingClientRect();
+        const top = rect.bottom + 8;
+        const maxLeft = window.innerWidth - popover.offsetWidth - 12;
+        const left = Math.max(12, Math.min(maxLeft, rect.left + (rect.width / 2) - (popover.offsetWidth / 2)));
+        popover.style.top = `${top}px`;
+        popover.style.left = `${left}px`;
     }
 
     function openScheduleModal(mode, event = null, dateStr = null) {
@@ -421,11 +634,13 @@
             const cId = event.extendedProps.client_id;
             if (cId) {
                 document.getElementById('clientSelectId').value = cId;
-                options.forEach(opt => {
+                clientOptions.forEach(opt => {
                     if (String(opt.dataset.id) === String(cId)) {
                         document.getElementById('clientSearchDisplay').value = opt.innerText.trim();
                     }
                 });
+            } else if (event.extendedProps.client_name) {
+                document.getElementById('clientSearchDisplay').value = event.extendedProps.client_name;
             }
 
             document.getElementById('schedTitle').value = event.extendedProps.raw_title;

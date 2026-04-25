@@ -21,6 +21,7 @@ ROLE_LABELS = {
 MENU_OPTIONS = [
     {'key': 'dashboard', 'label': 'Dashboard'},
     {'key': 'attendance', 'label': 'Atendimentos'},
+    {'key': 'schedule_list', 'label': 'Lista'},
     {'key': 'tasks', 'label': 'Tarefas'},
     {'key': 'financial', 'label': 'Financeiro'},
     {'key': 'products', 'label': 'Produtos'},

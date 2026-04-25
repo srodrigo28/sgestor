@@ -13,6 +13,7 @@ def index():
     user_id = session['id']
     selected_client_id = request.args.get('client_id', type=int)
     open_schedule_modal = request.args.get('open') == '1'
+    edit_appointment_id = request.args.get('edit_id', type=int)
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
@@ -54,6 +55,7 @@ def index():
                 'raw_title': appt['title'],
                 'description': appt['description'],
                 'client_id': appt['client_id'],
+                'client_name': appt['client_name'],
                 'status': appt['status']
             }
         })
@@ -68,6 +70,7 @@ def index():
         preselected_client_id=preselected_client['id'] if preselected_client else '',
         preselected_client_name=preselected_client['name'] if preselected_client else '',
         open_schedule_modal=open_schedule_modal,
+        edit_appointment_id=edit_appointment_id,
     )
 
 @schedule_bp.route('/schedule/add', methods=['POST'])
@@ -168,3 +171,41 @@ def delete_appointment(id):
     conn.close()
     flash('Agendamento removido!')
     return redirect(url_for('schedule.index'))
+
+
+@schedule_bp.route('/schedule/quick-status/<int:id>', methods=['POST'])
+def quick_status_appointment(id):
+    if 'id' not in session:
+        return redirect(url_for('auth.home'))
+
+    user_id = session['id']
+    status = (request.form.get('status') or '').strip().lower()
+    allowed_statuses = {'scheduled', 'completed', 'cancelled', 'no_show'}
+
+    if status not in allowed_statuses:
+        flash('Status de agendamento invalido.')
+        return redirect(url_for('schedule.index'))
+
+    next_url = (request.form.get('next') or request.referrer or url_for('schedule.index')).strip()
+    if not next_url.startswith('/'):
+        next_url = url_for('schedule.index')
+
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            UPDATE appointments
+            SET status=%s
+            WHERE id=%s AND user_id=%s
+            """,
+            (status, id, user_id),
+        )
+        conn.commit()
+        flash('Agendamento atualizado com sucesso!')
+    except Exception as e:
+        flash(f'Erro ao atualizar agendamento: {str(e)}')
+    finally:
+        conn.close()
+
+    return redirect(next_url)

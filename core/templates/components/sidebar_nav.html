@@ -24,6 +24,24 @@
     </a>
     {% endif %}
 
+    {% if menu_permissions.get('schedule_list') %}
+    {% if is_mobile %}
+    <button type="button"
+        class="w-full flex items-center gap-3 p-3 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition group {% if mobile_starred_appointments_count %}border border-amber-500/20 bg-amber-500/5 text-amber-200{% endif %}"
+        onclick="closeDrawer(); openMobileAppointments();">
+        <i class="fas fa-list-ul w-5 {% if mobile_starred_appointments_count %}text-amber-300{% else %}group-hover:text-amber-300{% endif %} transition"></i> Lista
+        {% if mobile_starred_appointments_count %}
+        <span class="ml-auto min-w-[20px] h-5 px-1 rounded-full bg-amber-400 text-[#11161a] text-[10px] font-bold flex items-center justify-center">{{ mobile_starred_appointments_count }}</span>
+        {% endif %}
+    </button>
+    {% else %}
+    <a href="{{ url_for('schedule.index') }}"
+        class="flex items-center gap-3 p-3 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition group">
+        <i class="fas fa-list-ul w-5 group-hover:text-amber-300 transition"></i> Lista
+    </a>
+    {% endif %}
+    {% endif %}
+
     {% if menu_permissions.get('tasks') %}
     <a href="{{ url_for('tasks.list') }}"
         class="flex items-center gap-3 p-3 rounded-lg {% if request.path == '/tasks' %}bg-blue-600/10 text-blue-500 border border-blue-600/20{% else %}text-gray-400 hover:bg-gray-800 hover:text-white transition{% endif %} group">

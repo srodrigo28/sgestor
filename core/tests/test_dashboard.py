@@ -69,6 +69,18 @@ class FakeDashboardCursor:
     def fetchall(self):
         if "SELECT menu_key, can_view FROM role_menu_permissions" in self.last_query:
             return []
+        if "FROM appointments a" in self.last_query:
+            return [
+                {
+                    "id": 7,
+                    "title": "Instalacao de alarme",
+                    "description": "Levar sensores",
+                    "start_time": datetime(2026, 4, 20, 14, 0),
+                    "end_time": datetime(2026, 4, 20, 15, 0),
+                    "status": "scheduled",
+                    "client_name": "Oficina Centro",
+                }
+            ]
         return []
 
 
@@ -120,7 +132,21 @@ class DashboardTests(unittest.TestCase):
         self.assertIn('"month": {"approved": 6, "budgets": 9, "clients": 8, "waiting": 4}', html)
         self.assertIn("updateStatSubtitles(period)", html)
         self.assertIn("Clientes cadastrados no mes", html)
-        self.assertIn("20 de abril de 2026", html)
+        self.assertIn("de abril de 2026", html)
+
+    def test_dashboard_renders_mobile_starred_schedule_shortcut_when_pending_appointments_exist(self):
+        response = self.client.get("/dashboard")
+        html = response.get_data(as_text=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Abrir lista de agendamentos", html)
+        self.assertIn("Instalacao de alarme", html)
+        self.assertIn("Oficina Centro", html)
+        self.assertIn(">Lista<", html)
+        self.assertIn(">Agenda<", html)
+        self.assertIn("> Agendamentos", html)
+        self.assertIn("> Lista", html)
+        self.assertIn("/schedule/quick-status/7", html)
 
 
 if __name__ == "__main__":
